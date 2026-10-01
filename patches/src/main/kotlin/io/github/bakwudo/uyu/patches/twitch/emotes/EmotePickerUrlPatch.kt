@@ -18,13 +18,14 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         val classDef = classDefByOrNull(URL_UTIL_CLASS)
             ?: throw PatchException("Kizu emotes: Twitch EmoteUrlUtil was not found.")
 
-        val method = classDef.methods.singleOrNull { candidate ->
+        val method = classDef.methods.firstOrNull { candidate ->
             candidate.name == "generateEmoteUrl" &&
                 candidate.returnType == STRING &&
-                candidate.parameterTypes.map { it.toString() } ==
-                    listOf(STRING, "F")
+                candidate.parameterTypes.size >= 2 &&
+                candidate.parameterTypes[0].toString() == STRING &&
+                candidate.parameterTypes[1].toString() == "F"
         } ?: throw PatchException(
-            "Kizu emotes: expected one public static EmoteUrlUtil.generateEmoteUrl(String,float) method.",
+            "Kizu emotes: Twitch EmoteUrlUtil.generateEmoteUrl(String,float,...) was not found.",
         )
 
         val mutable = mutableClassDefBy(classDef)
