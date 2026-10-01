@@ -20,14 +20,7 @@ import io.github.bakwudo.uyu.patches.util.writesRegister
 
 private const val EXTENSION_CLASS = "$EXTENSION_PACKAGE/appearance/HidePromotionsPatch;"
 
-internal val hidePromotionsPatch = bytecodePatch(
-    name = "Hide promotions",
-    description = "Adds options to hide the subscribe and Bits buttons above chat, the Bits button " +
-        "in the chat box, the gift leaderboard and banners that advertise subscriptions. " +
-        "All of them are hidden by default. They can be shown again in the Appearance section " +
-        "of the uyu settings. Streams open in Twitch's native player instead of the new " +
-        "React Native one, which this relies on.",
-) {
+internal val hidePromotionsPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
 
     dependsOn(settingsPatch, nativeTheatrePatch)
