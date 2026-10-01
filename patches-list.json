@@ -1,0 +1,15 @@
+{
+  "version": "v0.1.0",
+  "patches": [
+    {
+      "name": "Random NSFW Fix",
+      "description": "Fixes the broken Random NSFW button in Boost by replacing the dead r/randnsfw URL with redditrand.com.",
+      "use": true,
+      "dependencies": [],
+      "compatiblePackages": {
+        "com.rubenmayayo.reddit": null
+      },
+      "options": []
+    }
+  ]
+}
