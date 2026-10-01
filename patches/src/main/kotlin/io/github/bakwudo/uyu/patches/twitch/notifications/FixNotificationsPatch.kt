@@ -20,8 +20,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.TWITCH_PACKAGE_NAME
 /** SHA-1 of Twitch's original signing certificate. */
 private const val STOCK_CERT_SHA1 = "8C68C13822723A2B1FA844BED340031BEB1F9463"
 
-@Suppress("unused")
-val fixNotificationsPatch = bytecodePatch(
+internal val fixNotificationsPatch = bytecodePatch(
     name = "Fix notifications",
     description = "Fixes push notifications after patching. Firebase rejects device registration " +
         "because the patched app has a different signing certificate, and a different package name " +
