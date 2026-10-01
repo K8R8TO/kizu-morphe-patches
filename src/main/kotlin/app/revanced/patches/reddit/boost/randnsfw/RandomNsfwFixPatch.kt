@@ -5,9 +5,9 @@ import app.revanced.patcher.patch.BytecodePatch
 import app.revanced.patcher.patch.annotation.CompatiblePackage
 import app.revanced.patcher.patch.annotation.Patch
 import com.android.tools.smali.dexlib2.Opcode
-import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction21c
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.StringReference
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction21c
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableStringReference
 
 @Patch(
@@ -27,14 +27,10 @@ object RandomNsfwFixPatch : BytecodePatch(emptySet()) {
             classDef.mutableMethods.forEach { method ->
                 method.implementation?.mutableInstructions?.forEachIndexed { index, instruction ->
                     if (instruction.opcode != Opcode.CONST_STRING) return@forEachIndexed
-
                     val ref = (instruction as? ReferenceInstruction)?.reference as? StringReference
                         ?: return@forEachIndexed
-
                     if (!ref.string.contains("randnsfw", ignoreCase = true)) return@forEachIndexed
-
                     val register = (instruction as BuilderInstruction21c).registerA
-
                     method.replaceInstruction(
                         index,
                         BuilderInstruction21c(
@@ -43,14 +39,12 @@ object RandomNsfwFixPatch : BytecodePatch(emptySet()) {
                             ImmutableStringReference(REPLACEMENT_URL)
                         )
                     )
-
                     replacedCount++
                 }
             }
         }
 
-        if (replacedCount == 0) {
+        if (replacedCount == 0)
             throw Exception("Random NSFW Fix: Could not find 'randnsfw' string in Boost APK.")
-        }
     }
 }
