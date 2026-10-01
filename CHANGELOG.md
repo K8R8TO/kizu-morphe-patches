@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.4...v1.1.5) (2026-10-01)
+
+
+### Bug Fixes
+
+* restore Twitch promotion runtime support ([0402d6a](https://github.com/K8R8TO/kizu-morphe-patches/commit/0402d6adcfa2f7644a75b54025766b8ba01b2926))
+
 ## [1.1.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.3...v1.1.4) (2026-10-01)
 
 ## [1.1.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.2...v1.1.3) (2026-10-01)
