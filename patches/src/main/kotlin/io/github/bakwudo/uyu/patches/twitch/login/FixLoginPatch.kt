@@ -14,13 +14,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 
 private const val SETUP_BEGIN_EVENT = "play_integrity_setup_begin"
 
-internal val fixLoginPatch = bytecodePatch(
-    name = "Fix login",
-    description = "Fixes the \"This app version/OS is not currently supported\" error that blocks " +
-        "login after patching. Twitch reports a Play Integrity result to its login server and the " +
-        "re-signed app fails that check. This stops the app from sending the attestation, so it " +
-        "behaves like a device without Google Play, where login works normally.",
-) {
+internal val fixLoginPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
 
     execute {
