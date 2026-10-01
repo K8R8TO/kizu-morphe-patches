@@ -32,7 +32,7 @@ jobs:
 
       - name: Build patch bundle and metadata
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gradle :patches:buildAndroid :patches:generatePatchesList
           test -s patches-list.json
@@ -51,17 +51,17 @@ jobs:
         id: release
         uses: cycjimmy/semantic-release-action@v5
         env:
-          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify published metadata
         if: steps.release.outputs.new_release_published == 'true'
         run: |
           jq -e '.patches | length == 1' patches-list.json
-          test -f "patches/build/libs/patches-\${{ steps.release.outputs.new_release_version }}.mpp"
+          test -f "patches/build/libs/patches-${{ steps.release.outputs.new_release_version }}.mpp"
 
       - name: Attest release artifact
         if: steps.release.outputs.new_release_published == 'true'
         uses: actions/attest-build-provenance@v3
         with:
-          subject-name: "Morphe Patches \${{ steps.release.outputs.new_release_git_tag }}"
+          subject-name: "Morphe Patches ${{ steps.release.outputs.new_release_git_tag }}"
           subject-path: "patches/build/libs/patches-*.mpp"
