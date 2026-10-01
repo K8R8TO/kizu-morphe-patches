@@ -10,6 +10,7 @@ private const val URL_UTIL_CLASS = "Ltv/twitch/android/util/EmoteUrlUtil;"
 private const val PICKER_BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmotePickerBridge;"
 private const val STRING = "Ljava/lang/String;"
 
+// Twitch 31.3.1 compatibility
 internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(sharedExtensionPatch)
