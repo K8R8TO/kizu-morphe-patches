@@ -3,5 +3,8 @@
   "description": "PurpleTV features for Twitch",
   "download_url": "https://github.com/K8R8TO/boost-randnsfw-patch/releases/download/v0.3.0/kizu-0.3.0.mpp",
   "signature_download_url": "",
-  "version": "0.3.1"
+  "version": "0.3.1",
+  "devDependencies": {
+    "@MorpheApp/changelog": "git+https://github.com/MorpheApp/changelog.git#bundle"
+  }
 }
