@@ -10,8 +10,9 @@ private const val URL_UTIL_CLASS = "Ltv/twitch/android/util/EmoteUrlUtil;"
 private const val PICKER_BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmotePickerBridge;"
 private const val STRING = "Ljava/lang/String;"
 
-// Twitch 31.3.1 compatibility: the URL helper's dimensions changed.
-// The stable contract we need is the String emote identifier.
+// Twitch 31.3.1 compatibility: Twitch changed the size arguments.
+// Keep the hook constrained to the stable String identifier plus enough
+// parameter registers for the injected fallback path.
 internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(sharedExtensionPatch)
@@ -23,10 +24,10 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         val method = classDef.methods.firstOrNull { candidate ->
             candidate.name == "generateEmoteUrl" &&
                 candidate.returnType == STRING &&
-                candidate.parameterTypes.isNotEmpty() &&
+                candidate.parameterTypes.size >= 3 &&
                 candidate.parameterTypes[0].toString() == STRING
         } ?: throw PatchException(
-            "Kizu emotes: Twitch EmoteUrlUtil.generateEmoteUrl(String,...) was not found.",
+            "Kizu emotes: Twitch EmoteUrlUtil.generateEmoteUrl(String,...,...) was not found.",
         )
 
         val mutable = mutableClassDefBy(classDef)
