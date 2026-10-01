@@ -41,3 +41,6 @@ The generated `.mpp` bundle is written to `patches/build/libs/`.
 ## License
 
 This project follows the license and additional conditions included in the repository's `LICENSE` and `NOTICE` files.
+
+
+<!-- Kizu feature-chain build verification -->
