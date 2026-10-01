@@ -8,6 +8,7 @@ public final class Utils {
     private Utils() {}
 
     public static void setContext(Context context) {
+        io.github.bakwudo.uyu.extension.Utils.setContext(context);
         EmoteSupport.init(context);
     }
 }
