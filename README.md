@@ -1,74 +1,55 @@
-# 👋🧩 Morphe Patches template
+# Kizu Twitch Patches
 
-Template repository for Morphe Patches.
+Morphe-compatible patches for the Twitch Android app, maintained for Kizu's Twitch enhancements.
 
-&nbsp;
-## ❓ About
+This repository contains **Twitch patches only**. It does not contain the Boost for Reddit / Random NSFW patches or any other Reddit patches.
 
-This is a template to create a new Morphe Patches repository.  
-The repository can have multiple patches, and patches from other repositories can be used together.
+## Included patches
 
-For an example repository, see [Morphe Patches](https://github.com/MorpheApp/morphe-patches).
+The current project is being rebuilt incrementally from the known-good `twitch-uyu-settings-shell` implementation. The initial goal is to restore a clean, verifiable Twitch patch bundle before adding or changing features.
 
-Morphe Patches template is based off the prior work of [ReVanced](https://github.com/ReVanced/revanced-patches-template).
-All modifications made by Morphe, along with their dates, can be found in the Git history.
+Planned Twitch functionality includes:
 
+- Kizu Twitch Enhancement
+- Third-party emotes
+- Emote picker and autocomplete support
+- Privacy controls
+- UYU/Kizu settings integration
+- Twitch ad and promotion handling
+- Login and notification compatibility fixes
 
-## 🚀 Get started
+Some implementation components are dependencies of the main Twitch patch and are not necessarily separate user-selectable patches.
 
-To start using this template, follow these steps:
+## Add to Morphe
 
-1. [Create a new repository using this template](https://github.com/new?template_name=morphe-patches-template&template_owner=MorpheApp)
-2. Set up the [build.gradle.kts](patches/build.gradle.kts) file (Specifically, the [group of the project](patches/build.gradle.kts#L1),
-and the [About](patches/build.gradle.kts#L5-L11))
-3. Set up the [README.md](README.md) file[^1] (e.g, title, description, license, summary of the patches
-that are included in the repository), the [issue templates](.github/ISSUE_TEMPLATE)[^2]  and the [contribution guidelines](CONTRIBUTING.md)[^3]
-4. Choose a name for your patches project. Keep in mind you must use a unique name that does not imply or suggest authorship by the Morphe open source project.
-   See the [NOTICE](NOTICE) for details.
+Add this repository as a remote patch source in Morphe Manager:
 
-🎉 You are now ready to start creating patches!
+`github.com/K8R8TO/kizu-morphe-patches`
 
-## 🧑‍💻 Usage
+Morphe supports GitHub repository patch sources and can keep them updated automatically.
 
-To develop and release Morphe Patches using this template, some things need to be considered:
+## Development approach
 
-- Development starts in feature branches. Once a feature branch is ready, it is squashed and merged into the `dev` branch
-- The `dev` branch is merged into the `main` branch once it is ready for release
-- Semantic versioning is used to version Morphe Patches.
-- [Semantic commit](https://kapeli.com/cheat_sheets/Semantic_Commits.docset/Contents/Resources/Documents/index) messages are used for commits
-- Commits on the `dev` branch and `main` branch are automatically released
-via the [release.yml](.github/workflows/release.yml) workflow, which is also responsible for generating the changelog
-and updating the version of Morphe Patches. It is triggered by pushing to the `dev` or `main` branch.
-The workflow uses the `publish` task to publish the release of Morphe Patches
-- The `buildAndroid` task is used to build Morphe Patches so that it can be used on Android.
-The `publish` task depends on the `buildAndroid` task, so it will be run automatically when publishing a release.
+The project is intentionally being developed in small, verifiable steps:
 
-## 📚 Everything else
+1. Import and verify the complete `twitch-uyu-settings-shell` source.
+2. Remove all unrelated Boost/Reddit code and references.
+3. Fix patch metadata generation so Morphe receives the actual Twitch patch list.
+4. Build and validate the first clean Twitch-only release.
+5. Add or restore Twitch features one at a time, verifying each change before moving on.
 
-Optionally you can include a button/link in this readme that users can click to add your 
-patches to Morphe (update the links below after creating your new patches repo):
+Generated release files such as `patches-list.json`, `patches-bundle.json`, and `CHANGELOG.md` are produced by the release workflow and should not be edited manually.
 
-#### How to use these patches
+## Building locally
 
-Click here to add these patches to Morphe: https://morphe.software/add-source?github=xyz-user/xyz-patches
+Build the Android patch bundle with:
 
-Or manually add this repository url as a patch source in Morphe: https://github.com/xyz-user/xyz-patches
+```bash
+./gradlew buildAndroid
+```
 
-### 📙 Contributing
+The generated `.mpp` bundle is written to `patches/build/libs/`.
 
-Thank you for considering contributing to Morphe Patches template.  
-You can find the contribution guidelines [here](CONTRIBUTING.md).
+## License
 
-### 🛠️ Building
-
-To build Morphe Patches template,
-you can follow the [Morphe documentation](https://github.com/MorpheApp/morphe-documentation).
-
-## 📜 License
-
-Morphe Patches are licensed under the [GNU General Public License v3.0](LICENSE), with additional conditions under GPLv3 Section 7:
-
-- **Name Restriction (7c):** The name **"Morphe"** may not be used for derivative works.  
-  Derivatives must adopt a distinct identity unrelated to "Morphe."
-
-See the [LICENSE](LICENSE) file for the full GPLv3 terms and the [NOTICE](NOTICE) file for full conditions of GPLv3 Section 7
+This project follows the license and additional conditions included in the repository's `LICENSE` and `NOTICE` files.
