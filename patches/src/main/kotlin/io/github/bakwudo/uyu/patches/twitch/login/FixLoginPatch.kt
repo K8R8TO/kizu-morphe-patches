@@ -14,8 +14,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 
 private const val SETUP_BEGIN_EVENT = "play_integrity_setup_begin"
 
-@Suppress("unused")
-val fixLoginPatch = bytecodePatch(
+internal val fixLoginPatch = bytecodePatch(
     name = "Fix login",
     description = "Fixes the \"This app version/OS is not currently supported\" error that blocks " +
         "login after patching. Twitch reports a Play Integrity result to its login server and the " +
