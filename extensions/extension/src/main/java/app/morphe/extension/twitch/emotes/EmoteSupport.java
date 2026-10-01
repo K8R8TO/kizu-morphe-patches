@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
+import io.github.bakwudo.uyu.extension.Utils;
+
 @SuppressWarnings("unused")
 public final class EmoteSupport {
     private static final Object LOCK = new Object();
@@ -54,6 +56,21 @@ public final class EmoteSupport {
     private static volatile String lastRoomId;
 
     private EmoteSupport() {
+    }
+
+    public static String getCurrentChannelId() {
+        return lastRoomId;
+    }
+
+    public static java.util.List<Emote> getAllForChannel(String channelId) {
+        try {
+            if (channelId != null && Utils.getContext() != null) {
+                CATALOG.ensureLoaded(Utils.getContext(), channelId);
+            }
+            return CATALOG.getAllForChannel(channelId);
+        } catch (Throwable ignored) {
+            return java.util.Collections.emptyList();
+        }
     }
 
     // Patched into Twitch's ChannelChatConnectionKey constructor. That constructor has no handler of
