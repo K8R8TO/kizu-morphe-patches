@@ -2,12 +2,12 @@ group = "app.morphe"
 
 patches {
     about {
-        name = "XYZ Patches for use with Morphe"
-        description = "Example patches"
-        source = "git@github.com:MorpheApp/morphe-patches-template.git"
-        author = "Awesome dev"
-        contact = "na"
-        website = "https://morphe.software"
+        name = "Kizu Twitch Patches"
+        description = "Twitch Android patches for Kizu enhancements."
+        source = "https://github.com/K8R8TO/kizu-morphe-patches.git"
+        author = "Kizu"
+        contact = "https://github.com/K8R8TO"
+        website = "https://github.com/K8R8TO/kizu-morphe-patches"
         license = "GPLv3"
     }
 }
