@@ -39,8 +39,7 @@ private const val PLAYER_EVENT_HELPER = "uyuOnPlayerEvent"
 
 private const val IVS_PACKAGE = "Lcom/amazonaws/ivs/player/"
 
-@Suppress("unused")
-val blockAdsPatch = bytecodePatch(
+internal val blockAdsPatch = bytecodePatch(
     name = "Block ads",
     description = "Adds an option to block ads. Streams are requested as Twitch's embedded web " +
         "player, which gets fewer ads, and the app no longer requests or plays ads itself. " +
