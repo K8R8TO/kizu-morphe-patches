@@ -1,7 +1,7 @@
 extension {
-    name = "extensions/extension.rve"
+    name = "extensions/twitch.mpe"
 }
 
 android {
-    namespace = "app.revanced.extension"
+    namespace = "app.morphe.extension"
 }
