@@ -17,7 +17,7 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
-import app.morphe.extension.danmaku.DanmakuPreview;
+import io.github.bakwudo.uyu.extension.danmaku.DanmakuPreview;
 
 /**
  * An uyu settings screen. Built in code with platform preferences, so it needs no resources
