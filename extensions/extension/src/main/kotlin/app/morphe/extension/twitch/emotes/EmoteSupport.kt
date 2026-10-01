@@ -21,6 +21,7 @@ object EmoteSupport {
     private var appContext: Context? = null
 
     // This MUST be called when the app starts (usually in SharedExtensionPatch)
+    @JvmStatic
     fun init(context: Context) {
         appContext = context.applicationContext
     }
