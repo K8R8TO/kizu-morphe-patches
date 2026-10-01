@@ -58,6 +58,11 @@ public final class EmoteSupport {
     private EmoteSupport() {
     }
 
+    public static void init(android.content.Context context) {
+        // Runtime initialization is driven by chat row binding; keep this entry point for the
+        // common Morphe extension bootstrap.
+    }
+
     public static String getCurrentChannelId() {
         return lastRoomId;
     }
