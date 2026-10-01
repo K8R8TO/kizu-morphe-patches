@@ -39,15 +39,7 @@ private const val PLAYER_EVENT_HELPER = "uyuOnPlayerEvent"
 
 private const val IVS_PACKAGE = "Lcom/amazonaws/ivs/player/"
 
-internal val blockAdsPatch = bytecodePatch(
-    name = "Block ads",
-    description = "Adds an option to block ads. Streams are requested as Twitch's embedded web " +
-        "player, which gets fewer ads, and the app no longer requests or plays ads itself. " +
-        "Ads that are part of the stream are covered with a black screen and muted until they " +
-        "end. Display ads are not shown. Live streams can optionally be loaded through a proxy. " +
-        "Streams open in Twitch's native player instead of the new React Native one, which this " +
-        "relies on.",
-) {
+internal val blockAdsPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
 
     dependsOn(settingsPatch, nativeTheatrePatch)
