@@ -85,6 +85,20 @@ final class EmoteCatalog {
         return emote == null ? globalBetterTtv.emotes.get(name) : emote;
     }
 
+    java.util.List<Emote> getAllForChannel(String channelId) {
+        java.util.LinkedHashMap<String, Emote> unique = new java.util.LinkedHashMap<>();
+        if (channelId != null) {
+            ChannelState channel = getChannel(channelId, false);
+            if (channel != null) {
+                for (Emote e : channel.sevenTv.emotes.values()) unique.putIfAbsent(e.name, e);
+                for (Emote e : channel.betterTtv.emotes.values()) unique.putIfAbsent(e.name, e);
+            }
+        }
+        for (Emote e : globalSevenTv.emotes.values()) unique.putIfAbsent(e.name, e);
+        for (Emote e : globalBetterTtv.emotes.values()) unique.putIfAbsent(e.name, e);
+        return new java.util.ArrayList<>(unique.values());
+    }
+
     private void schedule(ProviderState state, long now, Runnable load) {
         if (!state.needsRefresh(now) || !state.loading.compareAndSet(false, true)) {
             return;
