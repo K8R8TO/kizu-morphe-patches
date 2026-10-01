@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.0...v1.1.1) (2026-10-01)
+
+
+### Bug Fixes
+
+* hide internal Twitch dependencies ([beef24b](https://github.com/K8R8TO/kizu-morphe-patches/commit/beef24b07fb740d3ee91e198d5d77ceb3ab2f539))
+
 # [1.1.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.0.0...v1.1.0) (2026-10-01)
 
 

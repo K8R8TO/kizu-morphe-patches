@@ -1,60 +1,6 @@
 {
-  "version": "1.1.0",
+  "version": "1.1.1",
   "patches": [
-    {
-      "name": "Block ads",
-      "description": "Adds an option to block ads. Streams are requested as Twitch's embedded web player, which gets fewer ads, and the app no longer requests or plays ads itself. Ads that are part of the stream are covered with a black screen and muted until they end. Display ads are not shown. Live streams can optionally be loaded through a proxy. Streams open in Twitch's native player instead of the new React Native one, which this relies on.",
-      "use": true,
-      "dependencies": [
-        "BytecodePatch",
-        "BytecodePatch"
-      ],
-      "compatiblePackages": {
-        "tv.twitch.android.app": [
-          "31.3.1"
-        ]
-      },
-      "options": []
-    },
-    {
-      "name": "Fix login",
-      "description": "Fixes the \"This app version/OS is not currently supported\" error that blocks login after patching. Twitch reports a Play Integrity result to its login server and the re-signed app fails that check. This stops the app from sending the attestation, so it behaves like a device without Google Play, where login works normally.",
-      "use": true,
-      "dependencies": [],
-      "compatiblePackages": {
-        "tv.twitch.android.app": [
-          "31.3.1"
-        ]
-      },
-      "options": []
-    },
-    {
-      "name": "Fix notifications",
-      "description": "Fixes push notifications after patching. Firebase rejects device registration because the patched app has a different signing certificate, and a different package name when it is installed as a separate app. This sends Twitch's original certificate fingerprint and package name with Firebase Installations requests only.",
-      "use": true,
-      "dependencies": [],
-      "compatiblePackages": {
-        "tv.twitch.android.app": [
-          "31.3.1"
-        ]
-      },
-      "options": []
-    },
-    {
-      "name": "Hide promotions",
-      "description": "Adds options to hide the subscribe and Bits buttons above chat, the Bits button in the chat box, the gift leaderboard and banners that advertise subscriptions. All of them are hidden by default. They can be shown again in the Appearance section of the uyu settings. Streams open in Twitch's native player instead of the new React Native one, which this relies on.",
-      "use": true,
-      "dependencies": [
-        "BytecodePatch",
-        "BytecodePatch"
-      ],
-      "compatiblePackages": {
-        "tv.twitch.android.app": [
-          "31.3.1"
-        ]
-      },
-      "options": []
-    },
     {
       "name": "Twitch Enhancement",
       "description": "Kizu 0.3: live ad proxy, third-party emotes, privacy controls, Bits-button control, and patched-app login/notification compatibility.",
