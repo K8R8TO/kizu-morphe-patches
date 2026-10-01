@@ -1,3 +1,11 @@
+## [1.1.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.6...v1.1.7) (2026-10-01)
+
+
+### Bug Fixes
+
+* match Twitch emote URL size arguments ([74ec6d1](https://github.com/K8R8TO/kizu-morphe-patches/commit/74ec6d119b1b16b93d038806ca323ab164f57b85))
+* support Twitch emote URL helper variants ([807d985](https://github.com/K8R8TO/kizu-morphe-patches/commit/807d9859e07144565388898ce5bcc4660f6105c2))
+
 ## [1.1.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.5...v1.1.6) (2026-10-01)
 
 
