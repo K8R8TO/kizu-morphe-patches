@@ -28,18 +28,6 @@ Add this repository as a remote patch source in Morphe Manager:
 
 Morphe supports GitHub repository patch sources and can keep them updated automatically.
 
-## Development approach
-
-The project is intentionally being developed in small, verifiable steps:
-
-1. Import and verify the complete `twitch-uyu-settings-shell` source.
-2. Remove all unrelated Boost/Reddit code and references.
-3. Fix patch metadata generation so Morphe receives the actual Twitch patch list.
-4. Build and validate the first clean Twitch-only release.
-5. Add or restore Twitch features one at a time, verifying each change before moving on.
-
-Generated release files such as `patches-list.json`, `patches-bundle.json`, and `CHANGELOG.md` are produced by the release workflow and should not be edited manually.
-
 ## Building locally
 
 Build the Android patch bundle with:
