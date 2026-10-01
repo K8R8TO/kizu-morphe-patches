@@ -1,3 +1,11 @@
+## [1.1.9](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.8...v1.1.9) (2026-10-01)
+
+
+### Bug Fixes
+
+* tolerate Twitch autocomplete class changes ([138c263](https://github.com/K8R8TO/kizu-morphe-patches/commit/138c263c61a5e0b5bfefd8720775a3438f090926))
+* write autocomplete patch correctly ([78160f5](https://github.com/K8R8TO/kizu-morphe-patches/commit/78160f55dab9ba890116b5b0948db5ffffb1a371))
+
 ## [1.1.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.7...v1.1.8) (2026-10-01)
 
 
