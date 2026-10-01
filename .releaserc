@@ -15,8 +15,8 @@
       {
         "releaseJson": {
           "path": "patches-bundle.json",
-          "downloadUrlTemplate": "https://github.com/\${owner}/\${repo}/releases/download/v\${version}/patches-\${version}.mpp",
-          "signatureUrlTemplate": "https://github.com/\${owner}/\${repo}/releases/download/v\${version}/patches-\${version}.mpp.asc"
+          "downloadUrlTemplate": "https://github.com/${owner}/${repo}/releases/download/v${version}/patches-${version}.mpp",
+          "signatureUrlTemplate": "https://github.com/${owner}/${repo}/releases/download/v${version}/patches-${version}.mpp.asc"
         }
       }
     ],
@@ -24,7 +24,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "jq '.version=\"v\${nextRelease.version}\"' patches-list.json > patches-list.json.tmp && mv patches-list.json.tmp patches-list.json"
+        "prepareCmd": "jq '.version=\"v${nextRelease.version}\"' patches-list.json > patches-list.json.tmp && mv patches-list.json.tmp patches-list.json"
       }
     ],
     [
@@ -36,7 +36,7 @@
           "patches-bundle.json",
           "patches-list.json"
         ],
-        "message": "chore: Release v\${nextRelease.version} [skip ci]"
+        "message": "chore: Release v${nextRelease.version} [skip ci]"
       }
     ],
     [
