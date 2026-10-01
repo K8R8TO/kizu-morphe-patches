@@ -234,7 +234,7 @@ final class EmoteCatalog {
             JSONObject host = data == null ? null : data.optJSONObject("host");
             String hostUrl = host == null ? "" : host.optString("url", "");
             JSONArray files = host == null ? null : host.optJSONArray("files");
-            String fileName = chooseSevenTvFile(files);
+            String fileName = chooseSevenTvFile(files, data != null && data.optBoolean("animated", false));
             if (name.isEmpty() || hostUrl.isEmpty() || fileName == null) {
                 continue;
             }
@@ -244,28 +244,26 @@ final class EmoteCatalog {
                 hostUrl = "https://" + hostUrl;
             }
             String url = hostUrl.endsWith("/") ? hostUrl + fileName : hostUrl + "/" + fileName;
-            target.put(name, new Emote(name, url, data != null && data.optBoolean("animated", false)));
+            target.put(name, new Emote(name, url, (data != null && data.optBoolean("animated", false)) || fileName.toLowerCase().endsWith(".gif")));
         }
     }
 
-    private static String chooseSevenTvFile(JSONArray files) {
+    private static String chooseSevenTvFile(JSONArray files, boolean animated) {
         if (files == null) {
             return null;
         }
         String fallback = null;
         for (int index = 0; index < files.length(); index++) {
             JSONObject file = files.optJSONObject(index);
-            if (file == null || !"WEBP".equalsIgnoreCase(file.optString("format"))) {
-                continue;
-            }
+            if (file == null) continue;
+            String format = file.optString("format", "");
             String name = file.optString("name", "");
-            if (name.isEmpty()) {
-                continue;
+            if (name.isEmpty()) continue;
+            if (animated && "GIF".equalsIgnoreCase(format)) return name;
+            if ("WEBP".equalsIgnoreCase(format)) {
+                if ("2x.webp".equalsIgnoreCase(name)) return name;
+                if (fallback == null) fallback = name;
             }
-            if ("2x.webp".equalsIgnoreCase(name)) {
-                return name;
-            }
-            fallback = name;
         }
         return fallback;
     }
