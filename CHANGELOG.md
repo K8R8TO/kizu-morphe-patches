@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.0.0...v1.1.0) (2026-10-01)
+
+
+### Features
+
+* restore Kizu Twitch feature chain ([d099f72](https://github.com/K8R8TO/kizu-morphe-patches/commit/d099f72381c6dce80f762f753db4a31c12b0331f))
+
 # 1.0.0 (2026-10-01)
 
 
