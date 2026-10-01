@@ -1,3 +1,10 @@
+## [1.1.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.7...v1.1.8) (2026-10-01)
+
+
+### Bug Fixes
+
+* tolerate Twitch emote URL method renames ([86c0902](https://github.com/K8R8TO/kizu-morphe-patches/commit/86c0902883866f83c8a1b13c4f6c6c3c9278ac03))
+
 ## [1.1.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.6...v1.1.7) (2026-10-01)
 
 

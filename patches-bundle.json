@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T17:04:14",
-  "description": "## [1.1.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.6...v1.1.7) (2026-10-01)\n\n\n### Bug Fixes\n\n* match Twitch emote URL size arguments ([74ec6d1](https://github.com/K8R8TO/kizu-morphe-patches/commit/74ec6d119b1b16b93d038806ca323ab164f57b85))\n* support Twitch emote URL helper variants ([807d985](https://github.com/K8R8TO/kizu-morphe-patches/commit/807d9859e07144565388898ce5bcc4660f6105c2))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.7/patches-1.1.7.mpp",
+  "created_at": "2026-10-01T17:09:19",
+  "description": "## [1.1.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.7...v1.1.8) (2026-10-01)\n\n\n### Bug Fixes\n\n* tolerate Twitch emote URL method renames ([86c0902](https://github.com/K8R8TO/kizu-morphe-patches/commit/86c0902883866f83c8a1b13c4f6c6c3c9278ac03))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.8/patches-1.1.8.mpp",
   "signature_download_url": "",
-  "version": "1.1.7"
+  "version": "1.1.8"
 }
