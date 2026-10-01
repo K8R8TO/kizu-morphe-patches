@@ -18,9 +18,11 @@ kotlin {
     }
 }
 
+val patchListGeneratorClasspath = configurations.create("patchListGeneratorClasspath")
+
 dependencies {
-    // Used by JsonGenerator.
-    implementation(libs.gson)
+    compileOnly(libs.gson)
+    patchListGeneratorClasspath(libs.gson)
 }
 
 tasks {
@@ -29,7 +31,7 @@ tasks {
 
         dependsOn(build)
 
-        classpath = sourceSets["main"].runtimeClasspath
+        classpath = sourceSets["main"].runtimeClasspath + patchListGeneratorClasspath
         mainClass.set("app.morphe.util.PatchListGeneratorKt")
     }
     // Used by gradle-semantic-release-plugin.
