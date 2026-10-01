@@ -1,9 +1,14 @@
 {
-  "branches": ["main"],
+  "branches": [
+    "main",
+    {
+      "name": "dev",
+      "prerelease": true
+    }
+  ],
   "plugins": [
     [
-      "@semantic-release/commit-analyzer",
-      {
+      "@semantic-release/commit-analyzer", {
         "releaseRules": [
           { "type": "build", "scope": "Needs bump", "release": "patch" }
         ]
@@ -11,8 +16,7 @@
     ],
     "@semantic-release/release-notes-generator",
     [
-      "@MorpheApp/changelog",
-      {
+      "@MorpheApp/changelog", {
         "releaseJson": {
           "path": "patches-bundle.json",
           "downloadUrlTemplate": "https://github.com/${owner}/${repo}/releases/download/v${version}/patches-${version}.mpp",
@@ -24,7 +28,7 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "jq '.version=\"v${nextRelease.version}\"' patches-list.json > patches-list.json.tmp && mv patches-list.json.tmp patches-list.json"
+        "prepareCmd": "jq '.version=\"${nextRelease.version}\"' patches-list.json > patches-list.json.tmp && mv patches-list.json.tmp patches-list.json"
       }
     ],
     [
@@ -36,7 +40,7 @@
           "patches-bundle.json",
           "patches-list.json"
         ],
-        "message": "chore: Release v${nextRelease.version} [skip ci]"
+        "message": "chore: Release v${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
       }
     ],
     [
@@ -48,6 +52,13 @@
           }
         ],
         "successComment": false
+      }
+    ],
+    [
+      "@saithodev/semantic-release-backmerge",
+      {
+        "backmergeBranches": [{"from": "main", "to": "dev"}],
+        "clearWorkspace": true
       }
     ]
   ]
