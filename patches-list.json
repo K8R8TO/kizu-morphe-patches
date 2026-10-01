@@ -1,14 +1,11 @@
 {
-  "version": "1.1.9",
+  "version": "1.1.10",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu 0.3: live ad proxy, third-party emotes, privacy controls, Bits-button control, and patched-app login/notification compatibility.",
+      "description": "Kizu Twitch enhancements: third-party emotes, live ad blocking, appearance controls, privacy controls, and patched-app compatibility.",
       "use": true,
       "dependencies": [
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",

@@ -1,3 +1,11 @@
+## [1.1.10](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.9...v1.1.10) (2026-10-01)
+
+
+### Bug Fixes
+
+* load animated third-party emotes ([83b74b7](https://github.com/K8R8TO/kizu-morphe-patches/commit/83b74b7bbc8e6a5652b4825e51de077444b1bc8e))
+* restore native Twitch emote picker ([f9c7aac](https://github.com/K8R8TO/kizu-morphe-patches/commit/f9c7aacc471731f02fa23b71c5cb4b62407b97fb))
+
 ## [1.1.9](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.8...v1.1.9) (2026-10-01)
 
 
