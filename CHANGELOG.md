@@ -1,3 +1,12 @@
+## [1.1.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.5...v1.1.6) (2026-10-01)
+
+
+### Bug Fixes
+
+* mark Twitch 31.3.1 emote URL compatibility ([0e4c69c](https://github.com/K8R8TO/kizu-morphe-patches/commit/0e4c69cf91f6a04b58b92a818b881505f35846c8))
+* rebuild emote URL hook ([1203339](https://github.com/K8R8TO/kizu-morphe-patches/commit/12033395b9f3283e72b2632f6ad33530bae0250c))
+* support Twitch EmoteUrlUtil signature variants ([3f67ee6](https://github.com/K8R8TO/kizu-morphe-patches/commit/3f67ee6599629985e57d43fbf3102a2cc4f8b152))
+
 ## [1.1.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.4...v1.1.5) (2026-10-01)
 
 

@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T16:51:15",
-  "description": "## [1.1.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.4...v1.1.5) (2026-10-01)\n\n\n### Bug Fixes\n\n* restore Twitch promotion runtime support ([0402d6a](https://github.com/K8R8TO/kizu-morphe-patches/commit/0402d6adcfa2f7644a75b54025766b8ba01b2926))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.5/patches-1.1.5.mpp",
+  "created_at": "2026-10-01T16:57:44",
+  "description": "## [1.1.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.5...v1.1.6) (2026-10-01)\n\n\n### Bug Fixes\n\n* mark Twitch 31.3.1 emote URL compatibility ([0e4c69c](https://github.com/K8R8TO/kizu-morphe-patches/commit/0e4c69cf91f6a04b58b92a818b881505f35846c8))\n* rebuild emote URL hook ([1203339](https://github.com/K8R8TO/kizu-morphe-patches/commit/12033395b9f3283e72b2632f6ad33530bae0250c))\n* support Twitch EmoteUrlUtil signature variants ([3f67ee6](https://github.com/K8R8TO/kizu-morphe-patches/commit/3f67ee6599629985e57d43fbf3102a2cc4f8b152))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.6/patches-1.1.6.mpp",
   "signature_download_url": "",
-  "version": "1.1.5"
+  "version": "1.1.6"
 }
