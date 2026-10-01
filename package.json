@@ -1,14 +1,7 @@
 {
-  "name": "kizu-morphe-patches",
-  "private": true,
-  "version": "0.1.0",
-  "description": "Kizu Morphe patches for Boost Reddit",
-  "devDependencies": {
-    "@MorpheApp/changelog": "git+https://github.com/MorpheApp/changelog.git#bundle",
-    "@saithodev/semantic-release-backmerge": "^4.0.1",
-    "@semantic-release/exec": "^6.0.3",
-    "@semantic-release/git": "^10.0.1",
-    "gradle-semantic-release-plugin": "^1.10.1",
-    "semantic-release": "^24.2.9"
-  }
+  "created_at": "2026-09-30T15:00:00",
+  "description": "PurpleTV features for Twitch",
+  "download_url": "https://github.com/K8R8TO/boost-randnsfw-patch/releases/download/v0.3.0/kizu-0.3.0.mpp",
+  "signature_download_url": "",
+  "version": "0.3.1"
 }
