@@ -1,7 +1,7 @@
 {
-  "created_at": "",
-  "description": "",
-  "download_url": "",
+  "created_at": "2026-10-01T13:16:11",
+  "description": "Kizu enhancements for Twitch",
+  "download_url": "https://github.com/K8R8TO/boost-randnsfw-patch/releases/download/v0.4.168/kizu-0.4.168.mpp",
   "signature_download_url": "",
-  "version": ""
+  "version": "0.4.168"
 }
