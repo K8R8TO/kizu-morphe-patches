@@ -20,8 +20,7 @@ import io.github.bakwudo.uyu.patches.util.writesRegister
 
 private const val EXTENSION_CLASS = "$EXTENSION_PACKAGE/appearance/HidePromotionsPatch;"
 
-@Suppress("unused")
-val hidePromotionsPatch = bytecodePatch(
+internal val hidePromotionsPatch = bytecodePatch(
     name = "Hide promotions",
     description = "Adds options to hide the subscribe and Bits buttons above chat, the Bits button " +
         "in the chat box, the gift leaderboard and banners that advertise subscriptions. " +
