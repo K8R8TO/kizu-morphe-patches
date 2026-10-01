@@ -1,3 +1,11 @@
+## [1.1.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.1...v1.1.2) (2026-10-01)
+
+
+### Bug Fixes
+
+* include Kizu settings classes in extension package ([389c985](https://github.com/K8R8TO/kizu-morphe-patches/commit/389c9851f67a6682bfe054a061f430c57d77c931))
+* use existing danmaku fonts package ([6b91a67](https://github.com/K8R8TO/kizu-morphe-patches/commit/6b91a678ed1320e280151d47e6fa5816bed42da0))
+
 ## [1.1.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.0...v1.1.1) (2026-10-01)
 
 

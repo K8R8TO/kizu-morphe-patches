@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T16:01:43",
-  "description": "## [1.1.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.0...v1.1.1) (2026-10-01)\n\n\n### Bug Fixes\n\n* hide internal Twitch dependencies ([beef24b](https://github.com/K8R8TO/kizu-morphe-patches/commit/beef24b07fb740d3ee91e198d5d77ceb3ab2f539))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.1/patches-1.1.1.mpp",
+  "created_at": "2026-10-01T16:32:53",
+  "description": "## [1.1.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.1...v1.1.2) (2026-10-01)\n\n\n### Bug Fixes\n\n* include Kizu settings classes in extension package ([389c985](https://github.com/K8R8TO/kizu-morphe-patches/commit/389c9851f67a6682bfe054a061f430c57d77c931))\n* use existing danmaku fonts package ([6b91a67](https://github.com/K8R8TO/kizu-morphe-patches/commit/6b91a678ed1320e280151d47e6fa5816bed42da0))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.2/patches-1.1.2.mpp",
   "signature_download_url": "",
-  "version": "1.1.1"
+  "version": "1.1.2"
 }
