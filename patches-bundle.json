@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-01T16:32:53",
-  "description": "## [1.1.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.1...v1.1.2) (2026-10-01)\n\n\n### Bug Fixes\n\n* include Kizu settings classes in extension package ([389c985](https://github.com/K8R8TO/kizu-morphe-patches/commit/389c9851f67a6682bfe054a061f430c57d77c931))\n* use existing danmaku fonts package ([6b91a67](https://github.com/K8R8TO/kizu-morphe-patches/commit/6b91a678ed1320e280151d47e6fa5816bed42da0))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.2/patches-1.1.2.mpp",
+  "created_at": "2026-10-01T16:41:56",
+  "description": "## [1.1.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.2...v1.1.3) (2026-10-01)\n\n\n### Bug Fixes\n\n* complete Morphe extension Utils for ads runtime ([d7760a5](https://github.com/K8R8TO/kizu-morphe-patches/commit/d7760a5078ba1a2653ed5950836ce148f3aedbbd))\n* include ads runtime under Morphe extension package ([8588018](https://github.com/K8R8TO/kizu-morphe-patches/commit/85880186586ddc98856f9f9a9486ba07212b755b))\n* include ads runtime under Morphe extension package ([bead82f](https://github.com/K8R8TO/kizu-morphe-patches/commit/bead82f0d003d1a1a57f057eb5e2293713cbf765))\n* include ads runtime under Morphe extension package ([bd9beab](https://github.com/K8R8TO/kizu-morphe-patches/commit/bd9beabe15594e52e5ab22eb7b82d4e7c87d13ae))\n* include ads runtime under Morphe extension package ([e31363e](https://github.com/K8R8TO/kizu-morphe-patches/commit/e31363ec21cf4b1a83e12aa661b273394b9c7799))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.3/patches-1.1.3.mpp",
   "signature_download_url": "",
-  "version": "1.1.2"
+  "version": "1.1.3"
 }

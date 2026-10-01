@@ -1,3 +1,14 @@
+## [1.1.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.2...v1.1.3) (2026-10-01)
+
+
+### Bug Fixes
+
+* complete Morphe extension Utils for ads runtime ([d7760a5](https://github.com/K8R8TO/kizu-morphe-patches/commit/d7760a5078ba1a2653ed5950836ce148f3aedbbd))
+* include ads runtime under Morphe extension package ([8588018](https://github.com/K8R8TO/kizu-morphe-patches/commit/85880186586ddc98856f9f9a9486ba07212b755b))
+* include ads runtime under Morphe extension package ([bead82f](https://github.com/K8R8TO/kizu-morphe-patches/commit/bead82f0d003d1a1a57f057eb5e2293713cbf765))
+* include ads runtime under Morphe extension package ([bd9beab](https://github.com/K8R8TO/kizu-morphe-patches/commit/bd9beabe15594e52e5ab22eb7b82d4e7c87d13ae))
+* include ads runtime under Morphe extension package ([e31363e](https://github.com/K8R8TO/kizu-morphe-patches/commit/e31363ec21cf4b1a83e12aa661b273394b9c7799))
+
 ## [1.1.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.1...v1.1.2) (2026-10-01)
 
 
