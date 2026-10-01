@@ -12,7 +12,7 @@ import android.widget.Toast;
 import java.util.List;
 
 import io.github.bakwudo.uyu.extension.Utils;
-import app.morphe.extension.danmaku.DanmakuFonts;
+import io.github.bakwudo.uyu.extension.danmaku.DanmakuFonts;
 
 /**
  * The danmaku font: a system font, or a TTF / OTF file the user imports with the file picker.
