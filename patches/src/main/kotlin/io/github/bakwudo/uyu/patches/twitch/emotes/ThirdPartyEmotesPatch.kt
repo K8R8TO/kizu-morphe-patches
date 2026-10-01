@@ -16,7 +16,7 @@ private const val CHAT_CLASS = "Lj2d;"
 private const val CHAT_ITEM = "Liop;"
 private const val TEXT_VIEW = "Landroid/widget/TextView;"
 private const val CHAR_SEQUENCE = "Ljava/lang/CharSequence;"
-private const val BUFFER_TYPE = "Landroid/widget/TextView\\$BufferType;"
+private const val BUFFER_TYPE = "Landroid/widget/TextView\$BufferType;"
 
 internal val thirdPartyEmotesPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
