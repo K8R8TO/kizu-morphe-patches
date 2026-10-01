@@ -1,10 +1,11 @@
 {
-  "created_at": "2026-09-30T15:00:00",
-  "description": "PurpleTV features for Twitch",
-  "download_url": "https://github.com/K8R8TO/boost-randnsfw-patch/releases/download/v0.3.0/kizu-0.3.0.mpp",
-  "signature_download_url": "",
-  "version": "0.3.1",
   "devDependencies": {
-    "@MorpheApp/changelog": "git+https://github.com/MorpheApp/changelog.git#bundle"
+    "@cleyrop-org/semantic-release-backmerge": "^6.2.0",
+    "@MorpheApp/changelog": "git+https://github.com/MorpheApp/changelog.git#bundle",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^11.0.1",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
+    "gradle-semantic-release-plugin": "^1.10.3",
+    "semantic-release": "^25.0.9"
   }
 }
