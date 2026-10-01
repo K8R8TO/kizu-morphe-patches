@@ -1,4 +1,19 @@
 {
-  "version": "",
-  "patches": []
+  "version": "1.0.0",
+  "patches": [
+    {
+      "name": "Twitch Enhancement",
+      "description": "Kizu Twitch Enhancement foundation and extension runtime.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch"
+      ],
+      "compatiblePackages": {
+        "tv.twitch.android.app": [
+          "31.3.1"
+        ]
+      },
+      "options": []
+    }
+  ]
 }
