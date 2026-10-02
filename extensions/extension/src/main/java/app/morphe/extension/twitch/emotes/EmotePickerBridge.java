@@ -1,6 +1,26 @@
 package app.morphe.extension.twitch.emotes;
 
 import android.content.Context;
+import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.Selection;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.EditText;
+import android.widget.GridLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+
 import android.util.Log;
 
 import java.lang.reflect.Constructor;
@@ -18,6 +38,31 @@ public final class EmotePickerBridge {
     private static final String TAG = "KizuPicker";
     private static final ConcurrentHashMap<String, String> IMAGE_URLS = new ConcurrentHashMap<>();
     private static final ThreadLocal<Context> URL_CONTEXT = new ThreadLocal<>();
+    private static final Handler MAIN = new Handler(Looper.getMainLooper());
+    private static final EmoteImageLoader IMAGES =
+            new EmoteImageLoader(EmotePickerBridge::imageUpdated);
+    private static final String COMPOSER_WRAPPER_TAG = "kizu.third-party-picker.wrapper";
+    private static final String COMPOSER_BUTTON_TAG = "kizu.third-party-picker.button";
+    private static volatile ComposerSlot COMPOSER_SLOT;
+    private static volatile boolean COMPOSER_WATCH_STARTED;
+    private static final Runnable COMPOSER_WATCHER = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                Activity activity = Utils.getCurrentActivity();
+                if (Settings.EMOTES_PICKER.get()) {
+                    if (activity != null && !activity.isFinishing()) {
+                        installComposerButton(activity);
+                    }
+                } else {
+                    removeComposerButton();
+                }
+            } catch (Throwable t) {
+                Log.w(TAG, "composer watcher failed", t);
+            }
+            MAIN.postDelayed(this, 700L);
+        }
+    };
 
     private static final String T_ASSET = "tv.twitch.android.models.emotes.EmoteModelAssetType";
     private static final String T_KIND = "tv.twitch.android.models.emotes.EmoteModelType";
@@ -66,6 +111,417 @@ public final class EmotePickerBridge {
             }
         } catch (Throwable t) {
             Log.w(TAG, "onPickerOpened failed", t);
+        }
+    }
+
+    /** Starts the optional third-party button watcher. */
+    public static void ensureComposerButton() {
+        if (COMPOSER_WATCH_STARTED) return;
+        COMPOSER_WATCH_STARTED = true;
+        MAIN.post(COMPOSER_WATCHER);
+    }
+
+    private static void installComposerButton(Activity activity) {
+        ComposerSlot slot = COMPOSER_SLOT;
+        if (slot != null && slot.isAttached()) return;
+        if (slot != null) removeComposerButton();
+
+        View nativeButton = findNativePickerButton(activity.getWindow().getDecorView());
+        if (!(nativeButton instanceof ImageView)) return;
+        if (!(nativeButton.getParent() instanceof ViewGroup)) return;
+
+        ViewGroup parent = (ViewGroup) nativeButton.getParent();
+        if (isInsideKizuWrapper(nativeButton)) return;
+
+        int index = parent.indexOfChild(nativeButton);
+        if (index < 0) return;
+
+        ViewGroup.LayoutParams originalParams = nativeButton.getLayoutParams();
+        if (originalParams == null) return;
+
+        int originalWidth = originalParams.width;
+        int originalHeight = originalParams.height;
+        int nativeWidth = nativeButton.getMeasuredWidth();
+        int nativeHeight = nativeButton.getMeasuredHeight();
+
+        if (nativeWidth <= 0) {
+            nativeWidth = originalWidth > 0 && originalWidth != ViewGroup.LayoutParams.MATCH_PARENT
+                    ? originalWidth : dp(activity, 48);
+        }
+        if (nativeHeight <= 0) {
+            nativeHeight = originalHeight > 0 && originalHeight != ViewGroup.LayoutParams.MATCH_PARENT
+                    ? originalHeight : dp(activity, 48);
+        }
+
+        parent.removeViewAt(index);
+
+        // The wrapper grows by the exact space needed for the new button + divider,
+        // causing a sibling message field/weighted area to give up that width.
+        int extraWidth = dp(activity, 41);
+        if (originalWidth > 0 && originalWidth != ViewGroup.LayoutParams.MATCH_PARENT) {
+            originalParams.width = originalWidth + extraWidth;
+        }
+
+        LinearLayout wrapper = new LinearLayout(activity);
+        wrapper.setOrientation(LinearLayout.HORIZONTAL);
+        wrapper.setGravity(Gravity.CENTER_VERTICAL);
+        wrapper.setTag(COMPOSER_WRAPPER_TAG);
+        wrapper.setBackgroundColor(Color.TRANSPARENT);
+        parent.addView(wrapper, index, originalParams);
+
+        TextView thirdParty = new TextView(activity);
+        thirdParty.setTag(COMPOSER_BUTTON_TAG);
+        thirdParty.setText("😉");
+        thirdParty.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        thirdParty.setGravity(Gravity.CENTER);
+        thirdParty.setContentDescription("Third-party emote picker");
+        thirdParty.setClickable(true);
+        thirdParty.setFocusable(true);
+        thirdParty.setMinWidth(dp(activity, 40));
+        thirdParty.setMinHeight(nativeHeight);
+        thirdParty.setPadding(0, 0, 0, 0);
+        thirdParty.setOnClickListener(v -> {
+            try {
+                Activity current = Utils.getCurrentActivity();
+                if (current != null && !current.isFinishing() && Settings.EMOTES_PICKER.get()) {
+                    showPicker(current);
+                }
+            } catch (Throwable t) {
+                Log.w(TAG, "standalone picker open failed", t);
+            }
+        });
+
+        View divider = new View(activity);
+        divider.setBackgroundColor(Color.argb(72, 255, 255, 255));
+
+        LinearLayout.LayoutParams thirdPartyParams =
+                new LinearLayout.LayoutParams(dp(activity, 40), nativeHeight);
+        thirdPartyParams.gravity = Gravity.CENTER_VERTICAL;
+        LinearLayout.LayoutParams dividerParams =
+                new LinearLayout.LayoutParams(dp(activity, 1), dp(activity, 24));
+        dividerParams.gravity = Gravity.CENTER_VERTICAL;
+        LinearLayout.LayoutParams nativeParams =
+                new LinearLayout.LayoutParams(nativeWidth, nativeHeight);
+        nativeParams.gravity = Gravity.CENTER_VERTICAL;
+
+        wrapper.addView(thirdParty, thirdPartyParams);
+        wrapper.addView(divider, dividerParams);
+        wrapper.addView(nativeButton, nativeParams);
+        wrapper.requestLayout();
+        parent.requestLayout();
+
+        COMPOSER_SLOT = new ComposerSlot(
+                parent, wrapper, nativeButton, index, originalParams, originalWidth, originalHeight
+        );
+    }
+
+    private static void removeComposerButton() {
+        ComposerSlot slot = COMPOSER_SLOT;
+        if (slot == null) return;
+
+        try {
+            ViewGroup parent = slot.parent;
+            LinearLayout wrapper = slot.wrapper;
+            View nativeButton = slot.nativeButton;
+            if (parent != null && wrapper != null && wrapper.getParent() == parent) {
+                wrapper.removeView(nativeButton);
+                wrapper.removeAllViews();
+                int index = parent.indexOfChild(wrapper);
+                parent.removeView(wrapper);
+
+                slot.originalParams.width = slot.originalWidth;
+                slot.originalParams.height = slot.originalHeight;
+                int insertAt = Math.max(0, Math.min(slot.originalIndex, parent.getChildCount()));
+                parent.addView(nativeButton, insertAt, slot.originalParams);
+                parent.requestLayout();
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "remove composer button failed", t);
+        } finally {
+            COMPOSER_SLOT = null;
+        }
+    }
+
+    private static View findNativePickerButton(View root) {
+        if (root instanceof ImageView && root.getVisibility() == View.VISIBLE && root.isShown()) {
+            String description = root.getContentDescription() == null
+                    ? "" : root.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT);
+            String resourceName = "";
+            try {
+                int id = root.getId();
+                if (id != View.NO_ID) {
+                    resourceName = root.getResources().getResourceEntryName(id)
+                            .toLowerCase(java.util.Locale.ROOT);
+                }
+            } catch (Throwable ignored) {
+            }
+
+            boolean pickerNamed = description.contains("emote") ||
+                    description.contains("emoji") ||
+                    description.contains("smiley") ||
+                    resourceName.contains("emote") ||
+                    resourceName.contains("emoji") ||
+                    resourceName.contains("smiley");
+
+            if (pickerNamed && hasComposerInputNearby(root)) return root;
+        }
+
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findNativePickerButton(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private static boolean hasComposerInputNearby(View view) {
+        View current = view;
+        for (int depth = 0; depth < 6 && current != null; depth++) {
+            if (current instanceof ViewGroup && containsEditText((ViewGroup) current)) return true;
+            Object parent = current.getParent();
+            current = parent instanceof View ? (View) parent : null;
+        }
+        return false;
+    }
+
+    private static boolean containsEditText(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof EditText) return true;
+            if (child instanceof ViewGroup && containsEditText((ViewGroup) child)) return true;
+        }
+        return false;
+    }
+
+    private static boolean isInsideKizuWrapper(View view) {
+        Object parent = view.getParent();
+        for (int i = 0; i < 6 && parent != null; i++) {
+            if (parent instanceof View &&
+                    COMPOSER_WRAPPER_TAG.equals(((View) parent).getTag())) return true;
+            parent = parent instanceof View ? ((View) parent).getParent() : null;
+        }
+        return false;
+    }
+
+    private static void showPicker(Activity activity) {
+        PickerState previous = CURRENT;
+        if (previous != null && previous.dialog != null && previous.dialog.isShowing()) {
+            previous.dialog.dismiss();
+        }
+
+        View input = activity.getCurrentFocus();
+        if (!(input instanceof EditText)) input = findEditText(activity.getWindow().getDecorView());
+
+        LinearLayout root = new LinearLayout(activity);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setPadding(dp(activity, 8), dp(activity, 2), dp(activity, 8), dp(activity, 8));
+
+        EditText search = new EditText(activity);
+        search.setSingleLine(true);
+        search.setHint("Search emotes");
+        search.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        search.setPadding(dp(activity, 10), 0, dp(activity, 10), 0);
+        root.addView(search, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 42)));
+
+        ScrollView scroll = new ScrollView(activity);
+        GridLayout grid = new GridLayout(activity);
+        int columns = Math.max(4, Math.min(7,
+                activity.getResources().getDisplayMetrics().widthPixels / dp(activity, 58)));
+        grid.setColumnCount(columns);
+        scroll.addView(grid, new ScrollView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        root.addView(scroll, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
+        TextView status = new TextView(activity);
+        status.setGravity(Gravity.CENTER);
+        status.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        status.setText("Loading third-party emotes...");
+        root.addView(status, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 30)));
+
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(activity)
+                .setTitle("Kizu Emotes")
+                .setView(root)
+                .create();
+
+        PickerState state = new PickerState(activity, dialog, grid, search, status, input);
+        CURRENT = state;
+
+        search.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                rebuild(state);
+            }
+            @Override public void afterTextChanged(Editable s) {}
+        });
+
+        dialog.setOnDismissListener(d -> {
+            if (CURRENT == state) CURRENT = null;
+            stopAnimations(grid);
+        });
+        dialog.setOnShowListener(d -> sizeDialog(dialog, activity));
+
+        dialog.show();
+        sizeDialog(dialog, activity);
+
+        final String channel = EmoteSupport.getCurrentChannelId();
+        new Thread(() -> {
+            List<Emote> entries;
+            try {
+                entries = EmoteSupport.getAllForChannelForPicker(channel);
+            } catch (Throwable t) {
+                entries = java.util.Collections.emptyList();
+            }
+            state.entries = entries == null ? java.util.Collections.emptyList() : entries;
+            MAIN.post(() -> {
+                if (CURRENT != state || !dialog.isShowing()) return;
+                status.setText(state.entries.isEmpty()
+                        ? "No third-party emotes loaded"
+                        : state.entries.size() + " emotes");
+                rebuild(state);
+            });
+        }, "kizu-picker-catalog").start();
+    }
+
+    private static void sizeDialog(android.app.AlertDialog dialog, Context context) {
+        Window window = dialog.getWindow();
+        if (window == null) return;
+        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 520));
+        window.setDimAmount(0.65f);
+    }
+
+    private static void rebuild(PickerState state) {
+        if (state == null || state.grid == null) return;
+        state.grid.removeAllViews();
+
+        String query = state.search.getText() == null
+                ? "" : state.search.getText().toString().trim().toLowerCase(java.util.Locale.ROOT);
+
+        int count = 0;
+        for (Emote emote : state.entries) {
+            if (emote == null || emote.name == null || emote.url == null) continue;
+            if (!query.isEmpty() &&
+                    !emote.name.toLowerCase(java.util.Locale.ROOT).contains(query)) continue;
+
+            Drawable drawable = IMAGES.createDrawable(state.activity.getResources(), emote);
+            if (drawable != null) {
+                ImageButton button = new ImageButton(state.activity);
+                button.setBackgroundColor(Color.TRANSPARENT);
+                button.setPadding(dp(state.activity, 5), dp(state.activity, 5),
+                        dp(state.activity, 5), dp(state.activity, 5));
+                button.setContentDescription(emote.name);
+                button.setImageDrawable(drawable);
+                button.setOnClickListener(v -> insertEmote(state, emote.name));
+                state.grid.addView(button, cellParams(state.activity));
+            } else {
+                TextView placeholder = new TextView(state.activity);
+                placeholder.setText(emote.name);
+                placeholder.setGravity(Gravity.CENTER);
+                placeholder.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);
+                placeholder.setMaxLines(2);
+                placeholder.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                placeholder.setOnClickListener(v -> insertEmote(state, emote.name));
+                state.grid.addView(placeholder, cellParams(state.activity));
+                IMAGES.request(state.activity, emote, dp(state.activity, 42));
+            }
+            count++;
+        }
+
+        if (count == 0 && !state.entries.isEmpty()) {
+            TextView empty = new TextView(state.activity);
+            empty.setText("No matching emotes");
+            empty.setGravity(Gravity.CENTER);
+            state.grid.addView(empty, new GridLayout.LayoutParams());
+        }
+    }
+
+    private static GridLayout.LayoutParams cellParams(Context context) {
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        int size = dp(context, 58);
+        params.width = size;
+        params.height = size;
+        params.setMargins(dp(context, 1), dp(context, 1), dp(context, 1), dp(context, 1));
+        return params;
+    }
+
+    private static void insertEmote(PickerState state, String code) {
+        try {
+            View view = state.input instanceof EditText
+                    ? state.input
+                    : findEditText(state.activity.getWindow().getDecorView());
+            if (!(view instanceof EditText)) {
+                state.dialog.dismiss();
+                return;
+            }
+
+            EditText input = (EditText) view;
+            Editable editable = input.getText();
+            if (editable == null) {
+                state.dialog.dismiss();
+                return;
+            }
+
+            int start = Math.max(0, input.getSelectionStart());
+            int end = Math.max(0, input.getSelectionEnd());
+            start = Math.min(start, editable.length());
+            end = Math.min(end, editable.length());
+            if (start > end) {
+                int swap = start;
+                start = end;
+                end = swap;
+            }
+
+            String prefix = start > 0 && !Character.isWhitespace(editable.charAt(start - 1))
+                    ? " " : "";
+            String suffix = end < editable.length() &&
+                    !Character.isWhitespace(editable.charAt(end)) ? " " : "";
+            String value = prefix + code + suffix;
+            editable.replace(start, end, value);
+
+            int cursor = start + value.length() - suffix.length();
+            Selection.setSelection(editable, Math.max(0, Math.min(cursor, editable.length())));
+            input.requestFocus();
+            state.dialog.dismiss();
+        } catch (Throwable t) {
+            Log.e(TAG, "insert failed", t);
+            state.dialog.dismiss();
+        }
+    }
+
+    private static EditText findEditText(View root) {
+        if (root instanceof EditText &&
+                root.getVisibility() == View.VISIBLE && root.isShown()) return (EditText) root;
+        if (root instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) root;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                EditText result = findEditText(group.getChildAt(i));
+                if (result != null) return result;
+            }
+        }
+        return null;
+    }
+
+    private static void imageUpdated(String url) {
+        PickerState state = CURRENT;
+        if (state == null) return;
+        MAIN.post(() -> {
+            if (CURRENT == state && state.dialog.isShowing()) rebuild(state);
+        });
+    }
+
+    private static void stopAnimations(ViewGroup group) {
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = group.getChildAt(i);
+            if (child instanceof ImageView) {
+                Drawable drawable = ((ImageView) child).getDrawable();
+                if (drawable instanceof android.graphics.drawable.AnimatedImageDrawable) {
+                    ((android.graphics.drawable.AnimatedImageDrawable) drawable).stop();
+                }
+            }
         }
     }
 
@@ -310,6 +766,53 @@ public final class EmotePickerBridge {
         if (type == double.class) return Double.class;
         if (type == char.class) return Character.class;
         return type;
+    }
+
+    private static final class PickerState {
+        final Activity activity;
+        final android.app.AlertDialog dialog;
+        final GridLayout grid;
+        final EditText search;
+        final TextView status;
+        final View input;
+        volatile List<Emote> entries = java.util.Collections.emptyList();
+
+        PickerState(Activity activity, android.app.AlertDialog dialog, GridLayout grid,
+                    EditText search, TextView status, View input) {
+            this.activity = activity;
+            this.dialog = dialog;
+            this.grid = grid;
+            this.search = search;
+            this.status = status;
+            this.input = input;
+        }
+    }
+
+    private static final class ComposerSlot {
+        final ViewGroup parent;
+        final LinearLayout wrapper;
+        final View nativeButton;
+        final int originalIndex;
+        final ViewGroup.LayoutParams originalParams;
+        final int originalWidth;
+        final int originalHeight;
+
+        ComposerSlot(ViewGroup parent, LinearLayout wrapper, View nativeButton,
+                     int originalIndex, ViewGroup.LayoutParams originalParams,
+                     int originalWidth, int originalHeight) {
+            this.parent = parent;
+            this.wrapper = wrapper;
+            this.nativeButton = nativeButton;
+            this.originalIndex = originalIndex;
+            this.originalParams = originalParams;
+            this.originalWidth = originalWidth;
+            this.originalHeight = originalHeight;
+        }
+
+        boolean isAttached() {
+            return wrapper != null && wrapper.getParent() == parent &&
+                    nativeButton != null && nativeButton.getParent() == wrapper;
+        }
     }
 
     private static final class Entry {
