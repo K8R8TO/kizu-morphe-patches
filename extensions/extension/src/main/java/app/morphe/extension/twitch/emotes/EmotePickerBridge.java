@@ -33,9 +33,9 @@ public final class EmotePickerBridge {
     }
 
     /**
-     * Twitch 31.3.1: G2 returns Lmtf;, whose b() is the picker emote-model list.
-     * The old bridge targeted pre-31.3.1 fully-qualified model names and therefore
-     * silently failed every time.
+     * Twitch 31.3.1: the presenter returns an EmoteUiSet (obfuscated mtf).
+     * We augment Twitch's existing model list so the normal native picker remains
+     * responsible for layout, selection and insertion into the chat composer.
      */
     public static Object mergeGlobal(Object uiSet) {
         if (!Settings.EMOTES_PICKER.get() || uiSet == null) return uiSet;
@@ -43,29 +43,29 @@ public final class EmotePickerBridge {
             List<Entry> entries = loadForChannel(EmoteSupport.getCurrentChannelId());
             if (entries.isEmpty()) return uiSet;
 
-            Method getEmotes = uiSet.getClass().getDeclaredMethod("b");
+            Method getEmotes = findMethod(uiSet.getClass(), "b");
+            if (getEmotes == null) {
+                Log.w(TAG, "picker: EmoteUiSet emote-list method not found");
+                return uiSet;
+            }
             getEmotes.setAccessible(true);
+
             Object raw = getEmotes.invoke(uiSet);
             if (!(raw instanceof List)) return uiSet;
 
             List<?> original = (List<?>) raw;
             ArrayList<Object> list = new ArrayList<>(original);
-            Object template = null;
-            for (Object item : original) {
-                if (item != null && "mtf".equals(item.getClass().getName())) {
-                    template = item;
-                    break;
-                }
-            }
+
+            Object template = findModelTemplate(original);
             if (template == null) {
-                Log.w(TAG, "picker: no Twitch 31.3.1 emote model template");
+                Log.w(TAG, "picker: no Twitch emote model template");
                 return uiSet;
             }
 
             Class<?> uiModel = template.getClass();
-            Field b = declaredField(uiModel, "b");
-            Field e = declaredField(uiModel, "e");
-            Field f = declaredField(uiModel, "f");
+            Field clickField = declaredField(uiModel, "b");
+            Field sizeField = declaredField(uiModel, "e");
+            Field paddingField = declaredField(uiModel, "f");
 
             ClassLoader cl = uiModel.getClassLoader();
             Class<?> assetType = Class.forName("xof", false, cl);
@@ -76,22 +76,24 @@ public final class EmotePickerBridge {
             Object animatedDescriptor = Enum.valueOf((Class<? extends Enum>) descriptorType, "ANIMATED");
 
             Constructor<?> constructor = findModelConstructor(
-                    uiModel, b.getType(), assetType, descriptorType
+                    uiModel, clickField.getType(), assetType, descriptorType
             );
 
             int added = 0;
             for (Entry entry : entries) {
                 String id = syntheticId(entry);
+                if (containsModelId(list, id)) continue;
+
                 IMAGE_URLS.put(id, entry.url);
                 Object asset = entry.animated ? animatedAsset : staticAsset;
                 Object descriptor = entry.animated ? animatedDescriptor : staticDescriptor;
                 Object model = constructor.newInstance(
                         id,
-                        b.get(template),
+                        clickField.get(template),
                         asset,
                         descriptor,
-                        e.getInt(template),
-                        f.get(template)
+                        sizeField.getInt(template),
+                        paddingField.get(template)
                 );
                 list.add(model);
                 added++;
@@ -99,13 +101,21 @@ public final class EmotePickerBridge {
 
             if (added == 0) return uiSet;
 
-            Method getHeader = uiSet.getClass().getDeclaredMethod("c");
+            Method getHeader = findMethod(uiSet.getClass(), "c");
+            if (getHeader == null) {
+                Log.w(TAG, "picker: EmoteUiSet header method not found");
+                return uiSet;
+            }
             getHeader.setAccessible(true);
+
             Object header = getHeader.invoke(uiSet);
-            Constructor<?> setConstructor = uiSet.getClass().getDeclaredConstructor(
-                    getHeader.getReturnType(), List.class
-            );
+            Constructor<?> setConstructor = findSetConstructor(uiSet.getClass(), getHeader.getReturnType());
+            if (setConstructor == null) {
+                Log.w(TAG, "picker: EmoteUiSet constructor not found");
+                return uiSet;
+            }
             setConstructor.setAccessible(true);
+
             Object result = setConstructor.newInstance(header, list);
             Log.d(TAG, "picker added " + added + "/" + entries.size());
             return result;
@@ -113,6 +123,58 @@ public final class EmotePickerBridge {
             Log.e(TAG, "mergeGlobal failed", t);
             return uiSet;
         }
+    }
+
+    private static Object findModelTemplate(List<?> original) {
+        for (Object item : original) {
+            if (item == null) continue;
+            if ("mtf".equals(item.getClass().getName())) return item;
+            try {
+                declaredField(item.getClass(), "b");
+                declaredField(item.getClass(), "e");
+                declaredField(item.getClass(), "f");
+                return item;
+            } catch (Throwable ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static boolean containsModelId(List<?> list, String id) {
+        for (Object item : list) {
+            if (item == null) continue;
+            try {
+                Field idField = declaredField(item.getClass(), "a");
+                Object value = idField.get(item);
+                if (id.equals(value)) return true;
+            } catch (Throwable ignored) {
+            }
+        }
+        return false;
+    }
+
+    private static Method findMethod(Class<?> type, String name) {
+        Class<?> current = type;
+        while (current != null) {
+            try {
+                return current.getDeclaredMethod(name);
+            } catch (NoSuchMethodException ignored) {
+                current = current.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private static Constructor<?> findSetConstructor(Class<?> setClass, Class<?> headerType) {
+        for (Constructor<?> c : setClass.getDeclaredConstructors()) {
+            Class<?>[] p = c.getParameterTypes();
+            if (p.length == 2 &&
+                    p[0].isAssignableFrom(headerType) &&
+                    List.class.isAssignableFrom(p[1])) {
+                return c;
+            }
+        }
+        return null;
     }
 
     private static Constructor<?> findModelConstructor(
@@ -134,7 +196,7 @@ public final class EmotePickerBridge {
                 return c;
             }
         }
-        throw new NoSuchMethodException("Twitch 31.3.1 EmoteUiModel constructor");
+        throw new NoSuchMethodException("Twitch EmoteUiModel constructor");
     }
 
     private static Field declaredField(Class<?> type, String name) throws NoSuchFieldException {
@@ -170,6 +232,7 @@ public final class EmotePickerBridge {
         final String code;
         final String url;
         final boolean animated;
+
         Entry(String code, String url, boolean animated) {
             this.code = code;
             this.url = url;
