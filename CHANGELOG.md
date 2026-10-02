@@ -1,3 +1,10 @@
+## [1.2.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.5...v1.2.6) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** hook actual 31.3.1 EmoteUrlUtil picker method ([4c1c79c](https://github.com/K8R8TO/kizu-morphe-patches/commit/4c1c79c53057c32f5d582edaf288bf34828815f6))
+
 ## [1.2.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.4...v1.2.5) (2026-10-02)
 
 
