@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-02T16:59:33",
-  "description": "# [1.4.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.3.0...v1.4.0) (2026-10-02)\n\n\n### Bug Fixes\n\n* **twitch:** correct proxy selector settings text ([33b89cc](https://github.com/K8R8TO/kizu-morphe-patches/commit/33b89cc38691c99d81a77ebcf30d89bb9ca3e990))\n* **twitch:** open standalone picker from resumed activity ([a120604](https://github.com/K8R8TO/kizu-morphe-patches/commit/a1206041dc8487c9f197d7617fe1a31266f8fa51))\n* **twitch:** resolve current activity for standalone picker ([be778d9](https://github.com/K8R8TO/kizu-morphe-patches/commit/be778d905e0f6e5031e22807ca62e27540a45b27))\n* **twitch:** use Kizu activity tracker for picker ([08a2ebd](https://github.com/K8R8TO/kizu-morphe-patches/commit/08a2ebd8552c1d9c3ed7a8ccc2200696d4bc9b95))\n\n\n### Features\n\n* **twitch:** add built-in ad proxy selector ([7a87516](https://github.com/K8R8TO/kizu-morphe-patches/commit/7a87516f8327e9cddee746571bda4c2f656e1d5c))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.4.0/patches-1.4.0.mpp",
+  "created_at": "2026-10-02T17:21:14",
+  "description": "# [1.5.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.4.0...v1.5.0) (2026-10-02)\n\n\n### Bug Fixes\n\n* **twitch:** correct native picker header reflection ([5cf63c7](https://github.com/K8R8TO/kizu-morphe-patches/commit/5cf63c7040ed2f30f0ba16ecd67d2b325da800fb))\n* **twitch:** preserve native picker dimensions for Kizu models ([771e232](https://github.com/K8R8TO/kizu-morphe-patches/commit/771e2320a71d15b53b573f483173e51c4812b1ec))\n\n\n### Features\n\n* **twitch:** integrate Kizu emotes into native picker ([17eb3b8](https://github.com/K8R8TO/kizu-morphe-patches/commit/17eb3b8137c22d250b386602872c6740e4de754c))\n* **twitch:** integrate Kizu emotes into native picker ([9548f6c](https://github.com/K8R8TO/kizu-morphe-patches/commit/9548f6c4560aa6f0d54b3a933a70a9a7f3125f2a))\n* **twitch:** integrate Kizu emotes into native picker ([97b3ea5](https://github.com/K8R8TO/kizu-morphe-patches/commit/97b3ea56cf7cfc65958cf70923a7aee9028b81fe))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.5.0/patches-1.5.0.mpp",
   "signature_download_url": "",
-  "version": "1.4.0"
+  "version": "1.5.0"
 }

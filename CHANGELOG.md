@@ -1,3 +1,18 @@
+# [1.5.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.4.0...v1.5.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** correct native picker header reflection ([5cf63c7](https://github.com/K8R8TO/kizu-morphe-patches/commit/5cf63c7040ed2f30f0ba16ecd67d2b325da800fb))
+* **twitch:** preserve native picker dimensions for Kizu models ([771e232](https://github.com/K8R8TO/kizu-morphe-patches/commit/771e2320a71d15b53b573f483173e51c4812b1ec))
+
+
+### Features
+
+* **twitch:** integrate Kizu emotes into native picker ([17eb3b8](https://github.com/K8R8TO/kizu-morphe-patches/commit/17eb3b8137c22d250b386602872c6740e4de754c))
+* **twitch:** integrate Kizu emotes into native picker ([9548f6c](https://github.com/K8R8TO/kizu-morphe-patches/commit/9548f6c4560aa6f0d54b3a933a70a9a7f3125f2a))
+* **twitch:** integrate Kizu emotes into native picker ([97b3ea5](https://github.com/K8R8TO/kizu-morphe-patches/commit/97b3ea56cf7cfc65958cf70923a7aee9028b81fe))
+
 # [1.4.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.3.0...v1.4.0) (2026-10-02)
 
 

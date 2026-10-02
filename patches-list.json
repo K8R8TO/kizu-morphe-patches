@@ -1,11 +1,12 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements: third-party emotes in chat and a separate third-party emote menu, animated emote playback, live ad blocking, appearance controls, privacy controls, and patched-app compatibility.",
+      "description": "Kizu Twitch enhancements: third-party emotes in chat and the native Twitch emote menu, animated emote playback, live ad blocking, appearance controls, privacy controls, and patched-app compatibility.",
       "use": true,
       "dependencies": [
+        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
