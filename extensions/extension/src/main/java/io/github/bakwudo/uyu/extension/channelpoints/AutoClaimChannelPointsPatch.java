@@ -4,7 +4,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Objects;
 
 import io.github.bakwudo.uyu.extension.settings.Settings;
@@ -12,6 +14,11 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 public final class AutoClaimChannelPointsPatch {
     private static final long POLL_INTERVAL_MS = 3_000L;
     private static final long RETRY_DELAY_MS = 3_000L;
+    private static final String COMMUNITY_POINTS_MODEL_CLASS =
+            "tv.twitch.android.models.communitypoints.CommunityPointsModel";
+    private static final String CHAT_MODE_METADATA_CLASS =
+            "tv.twitch.android.shared.one.chat.pub.ChatModeMetadata";
+
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     private static String lastClaimId;
@@ -63,9 +70,9 @@ public final class AutoClaimChannelPointsPatch {
     }
 
     /**
-     * Called whenever Twitch updates the provider's current CommunityPointsModel.
-     * The provider is retained so the poller can read the latest model directly even
-     * when Twitch does not emit another model-update callback when the bonus appears.
+     * Called from the existing CommunityPointsModel update hook. The provider is retained
+     * so the poller can inspect Twitch's live model every three seconds without changing
+     * the provider class or channel-connection lifecycle.
      */
     public static synchronized void startPolling(Object provider) {
         if (provider == null) {
@@ -82,26 +89,80 @@ public final class AutoClaimChannelPointsPatch {
         MAIN.postDelayed(POLL, POLL_INTERVAL_MS);
     }
 
-    /**
-     * Called when Twitch creates a new channel-chat connection. This prevents a poller
-     * from carrying a stale provider across a stream/channel transition.
-     */
-    public static synchronized void reset() {
-        activeProvider = null;
-        polling = false;
-        lastClaimId = null;
-        lastClaimTime = 0L;
-        MAIN.removeCallbacks(POLL);
-    }
-
     private static void checkCurrentClaim(Object provider) {
         try {
-            Method method = provider.getClass().getDeclaredMethod(
-                    "kizuAutoClaimCurrent", provider.getClass()
-            );
-            method.setAccessible(true);
-            method.invoke(null, provider);
+            Field modelField = findCommunityPointsModelField(provider.getClass());
+            if (modelField == null) {
+                return;
+            }
+
+            modelField.setAccessible(true);
+            Object model = modelField.get(provider);
+            if (model == null) {
+                return;
+            }
+
+            Method getClaim = model.getClass().getDeclaredMethod("getClaim");
+            getClaim.setAccessible(true);
+            Object claim = getClaim.invoke(model);
+            if (claim == null) {
+                return;
+            }
+
+            String claimId = findClaimId(claim);
+            if (claimId == null || !shouldClaim(claimId)) {
+                return;
+            }
+
+            Method claimMethod = findClaimMethod(provider.getClass());
+            if (claimMethod == null) {
+                return;
+            }
+
+            claimMethod.setAccessible(true);
+            claimMethod.invoke(provider, claimId, null);
         } catch (Throwable ignored) {
         }
+    }
+
+    private static Field findCommunityPointsModelField(Class<?> providerClass) {
+        for (Field field : providerClass.getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers())) {
+                continue;
+            }
+
+            if (COMMUNITY_POINTS_MODEL_CLASS.equals(field.getType().getName())) {
+                return field;
+            }
+        }
+        return null;
+    }
+
+    private static String findClaimId(Object claim) throws IllegalAccessException {
+        for (Field field : claim.getClass().getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers()) || field.getType() != String.class) {
+                continue;
+            }
+
+            field.setAccessible(true);
+            Object value = field.get(claim);
+            if (value instanceof String && !((String) value).isEmpty()) {
+                return (String) value;
+            }
+        }
+        return null;
+    }
+
+    private static Method findClaimMethod(Class<?> providerClass) {
+        for (Method method : providerClass.getMethods()) {
+            Class<?>[] params = method.getParameterTypes();
+            if (params.length == 2 &&
+                    params[0] == String.class &&
+                    CHAT_MODE_METADATA_CLASS.equals(params[1].getName()) &&
+                    method.getReturnType() == void.class) {
+                return method;
+            }
+        }
+        return null;
     }
 }
