@@ -1,3 +1,16 @@
+# [1.7.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.4...v1.7.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* reattach third-party picker after stream recreation ([e520e0d](https://github.com/K8R8TO/kizu-morphe-patches/commit/e520e0db53061ec412baad9b1f27cef52d828438))
+* restore picker lifecycle and add safe channel points watcher ([163863c](https://github.com/K8R8TO/kizu-morphe-patches/commit/163863c26c52df9fcfd81201c162bb264f4b44f8))
+
+
+### Features
+
+* add safe channel points auto-claim patch ([c439240](https://github.com/K8R8TO/kizu-morphe-patches/commit/c43924090653a5fc21d4a09735ec64ebfa2bab32))
+
 ## [1.6.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.3...v1.6.4) (2026-10-02)
 
 
