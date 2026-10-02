@@ -893,7 +893,7 @@ public final class EmotePickerBridge {
         boolean isAttached(Activity currentActivity) {
             return activity == currentActivity &&
                     wrapper != null && wrapper.getParent() == parent &&
-                    nativeButton != null && nativeButton.getParent() == wrapper;
+                    nativeButton != null && nativeButton.getParent() == parent;
         }
     }
 
