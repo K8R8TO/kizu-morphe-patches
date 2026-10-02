@@ -1,3 +1,18 @@
+# [1.4.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.3.0...v1.4.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** correct proxy selector settings text ([33b89cc](https://github.com/K8R8TO/kizu-morphe-patches/commit/33b89cc38691c99d81a77ebcf30d89bb9ca3e990))
+* **twitch:** open standalone picker from resumed activity ([a120604](https://github.com/K8R8TO/kizu-morphe-patches/commit/a1206041dc8487c9f197d7617fe1a31266f8fa51))
+* **twitch:** resolve current activity for standalone picker ([be778d9](https://github.com/K8R8TO/kizu-morphe-patches/commit/be778d905e0f6e5031e22807ca62e27540a45b27))
+* **twitch:** use Kizu activity tracker for picker ([08a2ebd](https://github.com/K8R8TO/kizu-morphe-patches/commit/08a2ebd8552c1d9c3ed7a8ccc2200696d4bc9b95))
+
+
+### Features
+
+* **twitch:** add built-in ad proxy selector ([7a87516](https://github.com/K8R8TO/kizu-morphe-patches/commit/7a87516f8327e9cddee746571bda4c2f656e1d5c))
+
 # [1.3.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.7...v1.3.0) (2026-10-02)
 
 
