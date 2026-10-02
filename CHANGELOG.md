@@ -1,3 +1,10 @@
+## [1.2.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.4...v1.2.5) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** match actual 31.3.1 emote URL generator ([82ef09b](https://github.com/K8R8TO/kizu-morphe-patches/commit/82ef09b6b01891d30264f2f085187b512010f0e6))
+
 ## [1.2.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.3...v1.2.4) (2026-10-02)
 
 
