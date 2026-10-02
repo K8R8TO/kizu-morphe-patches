@@ -768,6 +768,12 @@ public final class EmotePickerBridge {
         return type;
     }
 
+    private static int dp(Context context, int value) {
+        return Math.round(TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP, value,
+                context.getResources().getDisplayMetrics()));
+    }
+
     private static final class PickerState {
         final Activity activity;
         final android.app.AlertDialog dialog;
