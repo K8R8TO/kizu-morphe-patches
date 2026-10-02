@@ -1,6 +1,7 @@
 package app.morphe.extension.settings;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -35,6 +36,38 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private String section;
     private CharSequence previousTitle;
     private FontPreference fontPreference;
+
+    private static final String[] PROXY_NAMES = {
+            "Default (Luminous EU2)",
+            "Luminous EU (Russia)",
+            "Luminous EU2 (Ukraine)",
+            "Luminous EU3 (Bulgaria)",
+            "Luminous Asia (Kazakhstan)",
+            "PerfProd EU",
+            "PerfProd EU2",
+            "PerfProd EU3 (Russia)",
+            "PerfProd EU4",
+            "PerfProd EU5",
+            "PerfProd NA (Phoenix)",
+            "PerfProd Asia",
+            "PerfProd South America (New York)",
+    };
+
+    private static final String[] PROXY_URLS = {
+            "",
+            "https://eu.luminous.dev/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://eu2.luminous.dev/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://eu3.luminous.dev/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://as.luminous.dev/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-eu.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-eu2.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-eu3.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-eu4.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-eu5.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-na.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-as.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+            "https://lb-sa.cdn-perfprod.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+    };
 
     static UyuSettingsFragment create(String section) {
         UyuSettingsFragment fragment = new UyuSettingsFragment();
@@ -135,14 +168,50 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private void addAdsSettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.BLOCK_ADS, "Block ads",
                 "Blocks live, VOD and display ads. Ads that are part of the stream itself are covered with a black screen and muted until they end.");
+
+        Preference proxySelector = new Preference(screen.getContext());
+        proxySelector.setTitle("Proxy");
+        proxySelector.setSummary(proxyName(Settings.ADS_PROXY_URL.get()));
+        proxySelector.setOnPreferenceClickListener(clicked -> {
+            Activity activity = getActivity();
+            if (activity == null) return true;
+            String current = Settings.ADS_PROXY_URL.get();
+            int selected = proxyIndex(current);
+            new AlertDialog.Builder(activity)
+                    .setTitle("Ad-blocking proxy")
+                    .setSingleChoiceItems(PROXY_NAMES, selected, (dialog, which) -> {
+                        Settings.ADS_PROXY_URL.save(PROXY_URLS[which]);
+                        proxySelector.setSummary(PROXY_NAMES[which]);
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return true;
+        });
+        screen.addPreference(proxySelector);
+
         Preference proxy = new TextPreference(screen.getContext(), Settings.ADS_PROXY_URL,
-                "https://example.com/live/{channel}", "Not set. Ads are blocked on the device only.");
+                "https://example.com/live/{channel}?allow_source=true&allow_audio_only=true&fast_bread=true",
+                "Using the built-in default: Luminous EU2. Edit to use a custom proxy URL.");
         proxy.setTitle("Proxy URL");
         screen.addPreference(proxy);
+
         Preference note = new Preference(screen.getContext());
-        note.setSummary("Optional. Live streams are loaded through this proxy, which can remove the ads that are part of the stream. {channel} is replaced with the channel name; without it, the name is added to the end.\n\nWith a proxy, the ad-free viewing of your subscriptions and Turbo no longer applies, and the proxy's operator can see which channels you watch. If the proxy fails, uyu shows \"Proxy failed\" and blocks ads on the device only.");
+        note.setSummary("Optional. Live streams are loaded through the selected proxy, which can remove the ads that are part of the stream. {channel} is replaced with the channel name; without it, the name is added to the end.\\n\\nPublic proxies can go offline or change behavior. The proxy operator can see which channels you watch. If the proxy fails, uyu shows \\"Proxy failed\\" and falls back to Twitch while device-side ad blocking remains active.");
         note.setSelectable(false);
         screen.addPreference(note);
+    }
+
+    private static int proxyIndex(String value) {
+        for (int i = 0; i < PROXY_URLS.length; i++) {
+            if (PROXY_URLS[i].equals(value)) return i;
+        }
+        return -1;
+    }
+
+    private static String proxyName(String value) {
+        int index = proxyIndex(value);
+        return index >= 0 ? PROXY_NAMES[index] : "Custom proxy URL";
     }
 
     private void addEmoteSettings(PreferenceScreen screen) {
