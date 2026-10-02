@@ -874,7 +874,8 @@ public final class EmotePickerBridge {
         ComposerSlot(Activity activity, ViewGroup parent, LinearLayout wrapper, View nativeButton,
                      int originalIndex, ViewGroup.LayoutParams originalParams,
                      int originalWidth, int originalHeight) {
-            this.activity = activity;\n            this.parent = parent;
+            this.activity = activity;
+            this.parent = parent;
             this.wrapper = wrapper;
             this.nativeButton = nativeButton;
             this.originalIndex = originalIndex;
