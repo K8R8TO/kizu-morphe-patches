@@ -136,6 +136,9 @@ public final class EmotePickerBridge {
         if (nativeButton == null) return;
         if (!(nativeButton.getParent() instanceof ViewGroup)) return;
 
+        // Keep Twitch's native picker button in its original parent. Only add our
+        // third-party control beside it; changing the native button's parent can
+        // break Twitch's own picker state/lifecycle when a stream is re-entered.
         ViewGroup parent = (ViewGroup) nativeButton.getParent();
         if (isInsideKizuWrapper(nativeButton)) return;
 
@@ -159,21 +162,16 @@ public final class EmotePickerBridge {
                     ? originalHeight : dp(activity, 48);
         }
 
-        parent.removeViewAt(index);
-
-        // The wrapper grows by the exact space needed for the new button + divider,
-        // causing a sibling message field/weighted area to give up that width.
-        int extraWidth = dp(activity, 41);
-        if (originalWidth > 0 && originalWidth != ViewGroup.LayoutParams.MATCH_PARENT) {
-            originalParams.width = originalWidth + extraWidth;
-        }
-
+        // Do not remove or reparent the native Twitch control. Add a small sibling
+        // container immediately before it so Twitch retains its original view hierarchy.
         LinearLayout wrapper = new LinearLayout(activity);
         wrapper.setOrientation(LinearLayout.HORIZONTAL);
         wrapper.setGravity(Gravity.CENTER_VERTICAL);
         wrapper.setTag(COMPOSER_WRAPPER_TAG);
         wrapper.setBackgroundColor(Color.TRANSPARENT);
-        parent.addView(wrapper, index, originalParams);
+        parent.addView(wrapper, index, new LinearLayout.LayoutParams(
+                dp(activity, 41), nativeHeight
+        ));
 
         TextView thirdParty = new TextView(activity);
         thirdParty.setTag(COMPOSER_BUTTON_TAG);
@@ -188,16 +186,12 @@ public final class EmotePickerBridge {
         thirdParty.setPadding(0, 0, 0, 0);
         thirdParty.setOnClickListener(v -> {
             try {
-                if (!Settings.EMOTES_PICKER.get()) return;
-                // Let Twitch open its own picker. This gives the Kizu button the exact
-                // native picker presentation, sizing, animation and lifecycle behavior.
-                // mergeGlobal() already injects Kizu emotes into the native ALL model.
-                ComposerSlot currentSlot = COMPOSER_SLOT;
-                if (currentSlot != null && currentSlot.isAttached(Utils.getCurrentActivity())) {
-                    currentSlot.nativeButton.performClick();
+                Activity current = Utils.getCurrentActivity();
+                if (current != null && !current.isFinishing() && Settings.EMOTES_PICKER.get()) {
+                    showPicker(current);
                 }
             } catch (Throwable t) {
-                Log.w(TAG, "native picker open failed", t);
+                Log.w(TAG, "third-party picker open failed", t);
             }
         });
 
@@ -210,13 +204,10 @@ public final class EmotePickerBridge {
         LinearLayout.LayoutParams dividerParams =
                 new LinearLayout.LayoutParams(dp(activity, 1), dp(activity, 24));
         dividerParams.gravity = Gravity.CENTER_VERTICAL;
-        LinearLayout.LayoutParams nativeParams =
-                new LinearLayout.LayoutParams(nativeWidth, nativeHeight);
-        nativeParams.gravity = Gravity.CENTER_VERTICAL;
-
+        // Native Twitch button keeps its own original LayoutParams and remains
+        // untouched in the original parent.
         wrapper.addView(thirdParty, thirdPartyParams);
         wrapper.addView(divider, dividerParams);
-        wrapper.addView(nativeButton, nativeParams);
         wrapper.requestLayout();
         parent.requestLayout();
 
@@ -234,15 +225,8 @@ public final class EmotePickerBridge {
             LinearLayout wrapper = slot.wrapper;
             View nativeButton = slot.nativeButton;
             if (parent != null && wrapper != null && wrapper.getParent() == parent) {
-                wrapper.removeView(nativeButton);
                 wrapper.removeAllViews();
-                int index = parent.indexOfChild(wrapper);
                 parent.removeView(wrapper);
-
-                slot.originalParams.width = slot.originalWidth;
-                slot.originalParams.height = slot.originalHeight;
-                int insertAt = Math.max(0, Math.min(slot.originalIndex, parent.getChildCount()));
-                parent.addView(nativeButton, insertAt, slot.originalParams);
                 parent.requestLayout();
             }
         } catch (Throwable t) {
@@ -295,9 +279,6 @@ public final class EmotePickerBridge {
 
     private static void discardStaleComposerSlot(ComposerSlot slot) {
         try {
-            if (slot.activity != null && (slot.activity.isFinishing() || slot.activity.isDestroyed())) {
-                return;
-            }
             removeComposerButton();
         } catch (Throwable ignored) {
         }
