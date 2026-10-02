@@ -71,9 +71,7 @@ public final class EmotePickerBridge {
             Class<?> assetType = Class.forName("xof", false, cl);
             Class<?> descriptorType = Class.forName("qof", false, cl);
             Object staticAsset = Enum.valueOf((Class<? extends Enum>) assetType, "STATIC");
-            Object animatedAsset = Enum.valueOf((Class<? extends Enum>) assetType, "ANIMATED");
             Object staticDescriptor = Enum.valueOf((Class<? extends Enum>) descriptorType, "NONE");
-            Object animatedDescriptor = Enum.valueOf((Class<? extends Enum>) descriptorType, "ANIMATED");
 
             Constructor<?> constructor = findModelConstructor(
                     uiModel, clickField.getType(), assetType, descriptorType
@@ -85,8 +83,15 @@ public final class EmotePickerBridge {
                 if (containsModelId(list, id)) continue;
 
                 IMAGE_URLS.put(id, entry.url);
-                Object asset = entry.animated ? animatedAsset : staticAsset;
-                Object descriptor = entry.animated ? animatedDescriptor : staticDescriptor;
+                // Third-party assets must stay on Twitch's normal image-URL path. Twitch's
+                // native ANIMATED model path constructs a Twitch CDN URL directly from
+                // the model id, bypassing EmoteUrlUtil (and therefore our external URL
+                // bridge). Keep the injected model STATIC so EmoteUrlUtil resolves the
+                // KIZU-* id to the provider URL. Animated GIFs remain animated in the
+                // normal image pipeline, while native Twitch animated models are left
+                // completely untouched.
+                Object asset = staticAsset;
+                Object descriptor = staticDescriptor;
                 Object model = constructor.newInstance(
                         id,
                         clickField.get(template),
