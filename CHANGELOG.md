@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.0...v1.2.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** route picker emotes through external URL resolver ([748389c](https://github.com/K8R8TO/kizu-morphe-patches/commit/748389c1f190684bd7d9fcc657a01a0a2c558d74))
+
 # [1.2.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.19...v1.2.0) (2026-10-02)
 
 
