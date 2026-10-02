@@ -1,3 +1,17 @@
+## [1.1.13](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.12...v1.1.13) (2026-10-02)
+
+
+### Bug Fixes
+
+* add animated drawable bounds support ([63f5694](https://github.com/K8R8TO/kizu-morphe-patches/commit/63f569482ad7b31dc02f9a354926280cbe8b5ec0))
+* force third-party emote animations on ([b5609ad](https://github.com/K8R8TO/kizu-morphe-patches/commit/b5609ad3f72e1fe1ad165e7d60dc5e0f4644ffe3))
+* preload emote catalog for picker ([a02cdb2](https://github.com/K8R8TO/kizu-morphe-patches/commit/a02cdb24a887f7ad4e4db6e546c9ea94264afc91))
+* restore byte buffer import ([143d867](https://github.com/K8R8TO/kizu-morphe-patches/commit/143d867cdaa92c6a2dad9e524b0c7599f436c66d))
+* retain image decoder import ([2838c70](https://github.com/K8R8TO/kizu-morphe-patches/commit/2838c7063ee070b66df91339233c10ae4dfc3b57))
+* start custom animated emote drawable ([27372a7](https://github.com/K8R8TO/kizu-morphe-patches/commit/27372a77101177eaf6239a3ed144959d045e7145))
+* use looping gif drawable for animated emotes ([62dea55](https://github.com/K8R8TO/kizu-morphe-patches/commit/62dea555fab57327811b25b0050bad0402b4c0f1))
+* wait for emote catalog before picker merge ([71bcf99](https://github.com/K8R8TO/kizu-morphe-patches/commit/71bcf99e0dd869041c10233588e996753d4f495a))
+
 ## [1.1.12](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.11...v1.1.12) (2026-10-02)
 
 
