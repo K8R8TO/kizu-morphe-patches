@@ -557,8 +557,50 @@ public final class EmotePickerBridge {
         popup.setOutsideTouchable(true);
         popup.setFocusable(true);
         popup.setElevation(dp(activity, 10));
-        popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NOT_NEEDED);
+        // This popup contains a real EditText. It must opt into IME handling or the
+        // field can receive focus and blink a cursor without actually opening the
+        // software keyboard on Android.
+        popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+        popup.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         popup.setClippingEnabled(true);
+
+        // Keep the popup itself focused initially so opening the picker does not
+        // unexpectedly summon the keyboard. Tapping the search field below transfers
+        // focus to the EditText and explicitly requests the IME.
+        root.setFocusableInTouchMode(true);
+        root.requestFocus();
+
+        search.setFocusableInTouchMode(true);
+        search.setOnClickListener(v -> {
+            v.requestFocus();
+            MAIN.postDelayed(() -> {
+                try {
+                    android.view.inputmethod.InputMethodManager imm =
+                            (android.view.inputmethod.InputMethodManager)
+                                    activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.showSoftInput(v, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                    }
+                } catch (Throwable t) {
+                    Log.w(TAG, "search keyboard open failed", t);
+                }
+            }, 60L);
+        });
+        search.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) return;
+            MAIN.postDelayed(() -> {
+                try {
+                    android.view.inputmethod.InputMethodManager imm =
+                            (android.view.inputmethod.InputMethodManager)
+                                    activity.getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                    if (imm != null) {
+                        imm.showSoftInput(v, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                    }
+                } catch (Throwable t) {
+                    Log.w(TAG, "search keyboard open failed", t);
+                }
+            }, 60L);
+        });
 
         View anchor = findComposerPickerButton(activity);
         if (anchor == null) {

@@ -1,3 +1,10 @@
+# [1.7.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.4...v1.7.5) (2026-10-03)
+
+### Bug Fixes
+
+* open the software keyboard when tapping the third-party emote picker search field
+* keep the existing picker filtering behavior while typing
+
 # [1.7.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.3...v1.7.4) (2026-10-03)
 
 ### Bug Fixes
