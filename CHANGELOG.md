@@ -1,3 +1,11 @@
+## [1.6.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.3...v1.6.4) (2026-10-02)
+
+
+### Bug Fixes
+
+* lazy load picker emotes while scrolling ([a58e7ad](https://github.com/K8R8TO/kizu-morphe-patches/commit/a58e7adcb39f0b4d3f271581a39500f8521d2aab))
+* optimize third-party picker layout and loading ([29e4490](https://github.com/K8R8TO/kizu-morphe-patches/commit/29e449002225fb22627bf0f44a8c4aae5377e401))
+
 ## [1.6.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.2...v1.6.3) (2026-10-02)
 
 
