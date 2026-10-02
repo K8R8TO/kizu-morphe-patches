@@ -4,8 +4,8 @@ import android.os.SystemClock;
 
 import java.util.Objects;
 
-import io.github.bakwudo.uyu.extension.Utils;
-import io.github.bakwudo.uyu.extension.settings.Settings;
+import app.morphe.extension.Utils;
+import app.morphe.extension.settings.Settings;
 
 @SuppressWarnings("unused")
 public final class AutoClaimChannelPointsPatch {
