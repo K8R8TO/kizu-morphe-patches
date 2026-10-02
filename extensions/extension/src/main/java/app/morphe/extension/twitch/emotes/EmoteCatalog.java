@@ -282,10 +282,11 @@ final class EmoteCatalog {
             if (id.isEmpty() || name.isEmpty()) {
                 continue;
             }
+            boolean animated = item.optBoolean("animated", false);
             target.put(name, new Emote(
                     name,
-                    "https://cdn.betterttv.net/emote/" + id + "/2x.webp",
-                    item.optBoolean("animated", false)
+                    "https://cdn.betterttv.net/emote/" + id + (animated ? "/2x.gif" : "/2x.webp"),
+                    animated
             ));
         }
     }
