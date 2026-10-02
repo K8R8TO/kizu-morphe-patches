@@ -863,6 +863,7 @@ public final class EmotePickerBridge {
     }
 
     private static final class ComposerSlot {
+        final Activity activity;
         final ViewGroup parent;
         final LinearLayout wrapper;
         final View nativeButton;
@@ -884,8 +885,9 @@ public final class EmotePickerBridge {
             this.originalHeight = originalHeight;
         }
 
-        boolean isAttached() {
-            return wrapper != null && wrapper.getParent() == parent &&
+        boolean isAttached(Activity currentActivity) {
+            return activity == currentActivity &&
+                    wrapper != null && wrapper.getParent() == parent &&
                     nativeButton != null && nativeButton.getParent() == wrapper;
         }
     }
