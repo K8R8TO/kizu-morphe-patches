@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import app.morphe.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 public final class EmotePickerBridge {
@@ -183,7 +184,7 @@ public final class EmotePickerBridge {
                 clickedUnlocked, emoteModel, input, null, null, 12, null
         );
 
-        Context context = null;
+        Context context = Utils.getContext();
         Object descriptor = enumConstant(imageDescriptor, "NONE");
         int widthRes = 0;
         int paddingRes = 0;
