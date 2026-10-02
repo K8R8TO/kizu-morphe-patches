@@ -24,7 +24,26 @@ Internal dependencies are deliberately kept hidden from Morphe's user-facing pat
 
 ## Sources, attribution and reused work
 
-This project is a derivative work assembled from several open-source projects and public technical sources. We want to be explicit about what is being reused or adapted rather than presenting those parts as original Kizu work.
+This project is a derivative work assembled from several open-source projects and public technical sources. We want to be explicit about what is being reused or adapted rather than presenting those parts as original work.
+
+### 1. UYU — `bakwudo/uyu`
+
+**Repository:** https://github.com/bakwudo/uyu
+
+**Relevant project:** the Android Twitch patch bundle **uyu**, including its Twitch 31.3.1 implementation.
+
+**Used/adapted:**
+
+- UYU's Twitch patch structure and implementation for the Twitch features carried into this project.
+- UYU's settings integration and Twitch settings entry.
+- UYU's login compatibility implementation.
+- UYU's notification compatibility implementation.
+- UYU's ad blocking / promotion handling implementation and related runtime hooks.
+- UYU's danmaku/chat overlay implementation where applicable.
+- UYU's Twitch-version-specific fingerprints, extension/runtime structure and supporting utilities where applicable.
+- UYU's Twitch 31.3.1 targeting work as a reference for adapting the project to the same Twitch build.
+
+This project modifies and extends those implementations rather than presenting them as wholly original work.
 
 ### 2. Hooman — `arandomhooman/hoomans-morphe-patches`
 
@@ -36,41 +55,14 @@ This project is a derivative work assembled from several open-source projects an
 
 - The third-party emote architecture for loading 7TV and BTTV emote sets.
 - The `EmoteCatalog`, `EmoteSupport`, `EmoteImageLoader`, `Emote` and `CenteredImageSpan` implementation concepts/code used for third-party emote retrieval, caching, rendering and chat integration.
-- The Morphe Twitch emote patch/fingerprint approach where applicable.
+- The Twitch emote patch/fingerprint approach where applicable.
 - The 7TV and BTTV API endpoints used by that implementation.
 
-**Not claimed as original Kizu work:** the underlying 7TV/BTTV chat-emote implementation is substantially based on/adapted from Hooman's work. We are modifying it for the newer Twitch version and extending it with picker and animation support.
+**Not claimed as original work:** the underlying 7TV/BTTV chat-emote implementation is substantially based on/adapted from Hooman's work. It is being modified here for newer Twitch versions and extended with picker and animation support.
 
-Hooman's repository itself states that its patches are based on prior ReVanced work. Its current Twitch patch supports Twitch 30.7.2, while this project targets newer Twitch builds.
+Hooman's repository itself documents its upstream references and prior work. Its current Twitch patch supports Twitch 30.7.2, while this project targets newer Twitch builds.
 
-### 3. Morphe
-
-**Project:** https://github.com/MorpheApp
-
-Morphe is the patching framework this repository targets.
-
-**Used:**
-
-- Morphe patch APIs and patch-bundle format.
-- Morphe-compatible extension/patch project structure.
-- Morphe patch-source and build/release conventions.
-
-This repository is **not** the Morphe project and does not claim Morphe authorship.
-
-### 4. ReVanced
-
-**Project:** https://github.com/ReVanced
-
-The Morphe patch template documents that Morphe's template is based on prior ReVanced work.
-
-**Used indirectly:**
-
-- The upstream patching concepts and project conventions inherited through the Morphe template.
-- General patch/fingerprint architecture where inherited from the Morphe/ReVanced ecosystem.
-
-We are not claiming that the current Twitch-specific implementations were written by ReVanced.
-
-### 5. Twitch Android application
+### 3. Twitch Android application
 
 **Target:** Twitch Android `31.3.1` / build `3103016`
 
@@ -86,7 +78,7 @@ A genuine Twitch APKM was inspected to identify the current app's obfuscated cla
 
 The Twitch application itself is proprietary. Its code is not presented here as project source.
 
-### 6. 7TV
+### 4. 7TV
 
 **Project/API:** https://7tv.app/
 
@@ -94,8 +86,9 @@ The Twitch application itself is proprietary. Its code is not presented here as 
 
 - Public 7TV emote-set data/API endpoints.
 - 7TV emote IDs, names and image URLs required to display third-party emotes.
+- Animated/static emote asset URLs used by the third-party emote loader.
 
-### 7. BetterTTV (BTTV)
+### 5. BetterTTV (BTTV)
 
 **Project/API:** https://betterttv.com/
 
@@ -103,8 +96,9 @@ The Twitch application itself is proprietary. Its code is not presented here as 
 
 - Public BTTV emote-set data/API endpoints.
 - BTTV emote IDs, names and image URLs required to display third-party emotes.
+- Animated/static emote asset URLs used by the third-party emote loader.
 
-### 8. Android / AOSP documentation
+### 6. Android / AOSP documentation
 
 **Android documentation:** https://developer.android.com/
 
@@ -120,7 +114,7 @@ The Twitch application itself is proprietary. Its code is not presented here as 
 
 The following work is being developed specifically for this project rather than being represented as copied upstream functionality:
 
-- Porting the Twitch features to the target Twitch version.
+- Porting and adapting the combined Twitch features to the target Twitch version.
 - Reverse-engineering Twitch 31.3.1's obfuscated emote-picker models.
 - The Kizu third-party emote picker bridge.
 - Integration between the adapted Hooman emote system and Twitch's native emote picker.
