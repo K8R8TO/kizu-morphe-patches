@@ -1,3 +1,19 @@
+## [1.6.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.0...v1.6.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** restore picker across stream activities and native controls ([4c7e79a](https://github.com/K8R8TO/kizu-morphe-patches/commit/4c7e79a56c98c308713bc968f7bda36b3ac1b18e))
+
+
+### Reverts
+
+* **twitch:** remove broken channel points auto-claim patch ([81b1af5](https://github.com/K8R8TO/kizu-morphe-patches/commit/81b1af556e34f124a228635bc83ae8159ce3d5b4))
+* **twitch:** remove broken channel points auto-claim patch ([5f7ff32](https://github.com/K8R8TO/kizu-morphe-patches/commit/5f7ff32f00cc65b72ba2d863efa2dcf9dfb61eff))
+* **twitch:** remove broken channel points auto-claim patch ([fa3b4a5](https://github.com/K8R8TO/kizu-morphe-patches/commit/fa3b4a5168d5bf4d87b45e0fac45c4af8735e105))
+* **twitch:** remove unstable theme recreation ([cd3ca07](https://github.com/K8R8TO/kizu-morphe-patches/commit/cd3ca07587c0b88865a4febc8547b95697f4cf61))
+* **twitch:** restore stable theme detection ([550bb07](https://github.com/K8R8TO/kizu-morphe-patches/commit/550bb074f546d68883f0ef354d0abad5bee6462e))
+
 # [1.6.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.5.2...v1.6.0) (2026-10-02)
 
 
