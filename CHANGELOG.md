@@ -1,3 +1,10 @@
+## [1.1.18](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.17...v1.1.18) (2026-10-02)
+
+
+### Bug Fixes
+
+* make native emote picker merge more robust ([7cf3c8b](https://github.com/K8R8TO/kizu-morphe-patches/commit/7cf3c8b76e8e12de781e66ca47bf35b20ec3a7c5))
+
 ## [1.1.17](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.16...v1.1.17) (2026-10-02)
 
 
