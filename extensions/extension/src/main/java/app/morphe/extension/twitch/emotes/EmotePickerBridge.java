@@ -1,5 +1,6 @@
 package app.morphe.extension.twitch.emotes;
 
+import android.content.Context;
 import android.util.Log;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -12,8 +13,19 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 public final class EmotePickerBridge {
     private static final String TAG = "KizuPicker";
     private static final ConcurrentHashMap<String, String> IMAGE_URLS = new ConcurrentHashMap<>();
+    private static final ThreadLocal<Context> URL_CONTEXT = new ThreadLocal<>();
 
     private EmotePickerBridge() {}
+
+    public static void saveUrlContext(Context context) {
+        URL_CONTEXT.set(context);
+    }
+
+    public static Context restoreUrlContext() {
+        Context context = URL_CONTEXT.get();
+        URL_CONTEXT.remove();
+        return context;
+    }
 
     public static String getEmoteUrl(String id) {
         if (id == null || !id.startsWith("KIZU-")) return null;
@@ -24,10 +36,6 @@ public final class EmotePickerBridge {
         return getEmoteUrl(id);
     }
 
-    /**
-     * Called from Twitch's animated picker URL builder. The second argument is
-     * intentionally treated as opaque so this hook survives enum obfuscation.
-     */
     public static String getAnimatedPickerEmoteUrl(String id, Object ignoredAnimationSetting) {
         return getEmoteUrl(id);
     }
@@ -40,11 +48,6 @@ public final class EmotePickerBridge {
         }
     }
 
-    /**
-     * Twitch 31.3.1: the presenter returns an EmoteUiSet (obfuscated mtf).
-     * We augment Twitch's existing model list so the normal native picker remains
-     * responsible for layout, selection and insertion into the chat composer.
-     */
     public static Object mergeGlobal(Object uiSet) {
         if (!Settings.EMOTES_PICKER.get() || uiSet == null) return uiSet;
         try {
@@ -236,12 +239,6 @@ public final class EmotePickerBridge {
         }
     }
 
-    /**
-     * Twitch's native picker recognizes our injected model as animated, but its
-     * image pipeline does not reliably decode 7TV's animated WebP assets. 7TV
-     * publishes equivalent GIF assets for animated emotes, so use GIF only for
-     * the native picker. The chat renderer keeps its existing WebP path untouched.
-     */
     private static String pickerUrl(String url, boolean animated) {
         if (!animated || url == null) return url;
         if (url.endsWith(".webp")) {
