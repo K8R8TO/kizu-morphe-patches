@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.util.Log;
 
 import app.morphe.extension.twitch.emotes.EmoteSupport;
+import app.morphe.extension.twitch.emotes.EmotePickerBridge;
 
 public final class Utils {
     private static final String TAG = "kizu";
@@ -21,7 +22,13 @@ public final class Utils {
             new Application.ActivityLifecycleCallbacks() {
                 @Override public void onActivityCreated(Activity activity, Bundle state) {}
                 @Override public void onActivityStarted(Activity activity) {}
-                @Override public void onActivityResumed(Activity activity) { currentActivity = activity; }
+                @Override public void onActivityResumed(Activity activity) {
+                    currentActivity = activity;
+                    try {
+                        EmotePickerBridge.ensureComposerButton();
+                    } catch (Throwable ignored) {
+                    }
+                }
                 @Override public void onActivityPaused(Activity activity) {
                     if (currentActivity == activity) currentActivity = null;
                 }
