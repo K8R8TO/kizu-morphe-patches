@@ -84,7 +84,7 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                 addInstructionsWithLabels(
                     0,
                     """
-                        invoke-static { p0 }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;)V
+                        invoke-static { p0, p1 }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;Ljava/lang/Object;)V
                         if-eqz p1, :done
                         invoke-virtual { p1 }, $COMMUNITY_POINTS_MODEL->getClaim()$claimType
                         move-result-object v0
