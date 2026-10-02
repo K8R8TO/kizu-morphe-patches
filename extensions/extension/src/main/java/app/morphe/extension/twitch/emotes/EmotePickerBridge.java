@@ -24,6 +24,14 @@ public final class EmotePickerBridge {
         return getEmoteUrl(id);
     }
 
+    /**
+     * Called from Twitch's animated picker URL builder. The second argument is
+     * intentionally treated as opaque so this hook survives enum obfuscation.
+     */
+    public static String getAnimatedPickerEmoteUrl(String id, Object ignoredAnimationSetting) {
+        return getEmoteUrl(id);
+    }
+
     public static void onPickerOpened(Object ignored) {
         try {
             Log.d(TAG, "picker channel=" + EmoteSupport.getCurrentChannelId());
