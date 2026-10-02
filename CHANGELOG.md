@@ -1,3 +1,11 @@
+## [1.2.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.2...v1.2.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** hook animated emote picker URL builder ([a9ca8c2](https://github.com/K8R8TO/kizu-morphe-patches/commit/a9ca8c26268c04f8fc8bba0a9d22a6170d85d37a))
+* **twitch:** provide external URLs to animated picker loader ([cdd76c1](https://github.com/K8R8TO/kizu-morphe-patches/commit/cdd76c1ed683fcbf960478cab5581961a4ae1532))
+
 ## [1.2.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.1...v1.2.2) (2026-10-02)
 
 
