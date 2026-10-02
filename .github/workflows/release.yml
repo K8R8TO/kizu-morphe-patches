@@ -37,20 +37,22 @@ jobs:
 
       - name: Verify release artifact
         run: |
-          test -f patches/build/libs/patches-1.7.1.mpp
-          ls -lh patches/build/libs/patches-1.7.1.mpp
+          test -f patches/build/libs/patches-1.7.2.mpp
+          ls -lh patches/build/libs/patches-1.7.2.mpp
 
       - name: Create maintenance release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.7.1
-          name: v1.7.1
+          tag_name: v1.7.2
+          name: v1.7.2
           target_commitish: ${{ github.sha }}
           body: |
-            Kizu release 1.7.1.
+            Kizu release 1.7.2.
+
+            Fixes third-party emote picker lifecycle when Twitch rebuilds the chat composer on stream re-entry.
 
             Fixes third-party emote picker placement/re-entry and uses Twitch's native Channel Points claim path without modifying the points balance.
-          files: patches/build/libs/patches-1.7.1.mpp
+          files: patches/build/libs/patches-1.7.2.mpp
           fail_on_unmatched_files: true
           make_latest: true
         env:
@@ -60,4 +62,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release view v1.7.1 --json tagName,assets --jq '.tagName + " " + ([.assets[].name] | join(","))'
+          gh release view v1.7.2 --json tagName,assets --jq '.tagName + " " + ([.assets[].name] | join(","))'
