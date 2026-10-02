@@ -18,13 +18,16 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         val classDef = classDefByOrNull(URL_UTIL_CLASS)
             ?: throw PatchException("Kizu emotes: Twitch EmoteUrlUtil was not found.")
 
+        // Twitch 31.3.1 does contain generateEmoteUrl, but its parameter list
+        // is not the String,float signature used by the old donor patch.
+        // Match the actual URL generator by its stable String input/output
+        // contract and preserve the remaining parameters.
         val method = classDef.methods.singleOrNull { candidate ->
             candidate.name == "generateEmoteUrl" &&
                 candidate.returnType == STRING &&
-                candidate.parameterTypes.map { it.toString() } ==
-                    listOf(STRING, "F")
+                candidate.parameterTypes.firstOrNull()?.toString() == STRING
         } ?: throw PatchException(
-            "Kizu emotes: expected one public static EmoteUrlUtil.generateEmoteUrl(String,float) method.",
+            "Kizu emotes: could not uniquely identify Twitch EmoteUrlUtil.generateEmoteUrl(String,...).",
         )
 
         val mutable = mutableClassDefBy(classDef)
@@ -34,13 +37,17 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
                 it.parameterTypes == method.parameterTypes
         }
 
+        // Use the first register after the parameter registers for the bridge
+        // result, so this remains valid if Twitch adds/removes URL parameters.
+        val resultRegister = "p" + method.parameterTypes.size
+
         target.addInstructions(
             0,
             """
                 invoke-static {p0}, $PICKER_BRIDGE->getEmoteUrl(Ljava/lang/String;)Ljava/lang/String;
-                move-result-object p2
-                if-eqz p2, :kizu_emote_url_fallback
-                return-object p2
+                move-result-object $resultRegister
+                if-eqz $resultRegister, :kizu_emote_url_fallback
+                return-object $resultRegister
                 :kizu_emote_url_fallback
             """.trimIndent(),
         )
