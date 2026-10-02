@@ -1,3 +1,11 @@
+## [1.2.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.6...v1.2.7) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** avoid picker URL hook register clobbering ([11ae75b](https://github.com/K8R8TO/kizu-morphe-patches/commit/11ae75b90dd1b1a3fad63b3ce9c610cef681e7cd))
+* **twitch:** preserve native picker URL context ([ed75977](https://github.com/K8R8TO/kizu-morphe-patches/commit/ed7597744b1e79be8b8ce3b6b48168df9c8d567d))
+
 ## [1.2.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.5...v1.2.6) (2026-10-02)
 
 

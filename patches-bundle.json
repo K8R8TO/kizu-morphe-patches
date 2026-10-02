@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-02T15:13:24",
-  "description": "## [1.2.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.5...v1.2.6) (2026-10-02)\n\n\n### Bug Fixes\n\n* **twitch:** hook actual 31.3.1 EmoteUrlUtil picker method ([4c1c79c](https://github.com/K8R8TO/kizu-morphe-patches/commit/4c1c79c53057c32f5d582edaf288bf34828815f6))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.2.6/patches-1.2.6.mpp",
+  "created_at": "2026-10-02T16:12:28",
+  "description": "## [1.2.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.6...v1.2.7) (2026-10-02)\n\n\n### Bug Fixes\n\n* **twitch:** avoid picker URL hook register clobbering ([11ae75b](https://github.com/K8R8TO/kizu-morphe-patches/commit/11ae75b90dd1b1a3fad63b3ce9c610cef681e7cd))\n* **twitch:** preserve native picker URL context ([ed75977](https://github.com/K8R8TO/kizu-morphe-patches/commit/ed7597744b1e79be8b8ce3b6b48168df9c8d567d))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.2.7/patches-1.2.7.mpp",
   "signature_download_url": "",
-  "version": "1.2.6"
+  "version": "1.2.7"
 }
