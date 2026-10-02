@@ -121,14 +121,14 @@ final class EmoteImageLoader {
             ImageData data = null;
             if (cached != null) {
                 try {
-                    data = decode(cached, emote.animated, targetDimension);
+                    data = decode(cached, shouldDecodeAsDrawable(emote), targetDimension);
                 } catch (Exception ignored) {
                     deleteCache(cache);
                 }
             }
             if (data == null) {
                 byte[] downloaded = download(emote.url);
-                data = decode(downloaded, emote.animated, targetDimension);
+                data = decode(downloaded, shouldDecodeAsDrawable(emote), targetDimension);
                 writeCache(directory, cache, downloaded);
             }
             memory.put(emote.url, data);
@@ -142,6 +142,14 @@ final class EmoteImageLoader {
                 onUpdated.accept(emote.url);
             }
         }
+    }
+
+    private static boolean shouldDecodeAsDrawable(Emote emote) {
+        String url = emote.url == null ? "" : emote.url.toLowerCase(java.util.Locale.ROOT);
+        // 7TV serves both static and animated emotes as WebP. Do not trust only the API's
+        // animated flag: let ImageDecoder inspect the actual WebP container so an animated
+        // WebP cannot be flattened into a single bitmap.
+        return emote.animated || url.endsWith(".webp") || url.contains(".webp?");
     }
 
     private static ImageData decode(byte[] bytes, boolean animated, int targetDimension)
