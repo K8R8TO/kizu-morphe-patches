@@ -18,12 +18,13 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         val classDef = classDefByOrNull(URL_UTIL_CLASS)
             ?: throw PatchException("Kizu emotes: Twitch EmoteUrlUtil was not found.")
 
-        val method = classDef.methods.firstOrNull { candidate ->
-            candidate.returnType == STRING &&
-                candidate.parameterTypes.isNotEmpty() &&
-                candidate.parameterTypes[0].toString() == STRING
+        val method = classDef.methods.singleOrNull { candidate ->
+            candidate.name == "b" &&
+                candidate.returnType == STRING &&
+                candidate.parameterTypes.map { it.toString() } ==
+                    listOf(STRING, STRING)
         } ?: throw PatchException(
-            "Kizu emotes: no Twitch EmoteUrlUtil String-returning URL helper was found.",
+            "Kizu emotes: Twitch 31.3.1 EmoteUrlUtil.b(String,String) was not found.",
         )
 
         val mutable = mutableClassDefBy(classDef)
@@ -36,10 +37,10 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         target.addInstructions(
             0,
             """
-                invoke-static {p0}, $PICKER_BRIDGE->getEmoteUrl(Ljava/lang/String;)Ljava/lang/String;
-                move-result-object p2
-                if-eqz p2, :kizu_emote_url_fallback
-                return-object p2
+                invoke-static {p0, p1}, $PICKER_BRIDGE->getEmoteUrl(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+                move-result-object v0
+                if-eqz v0, :kizu_emote_url_fallback
+                return-object v0
                 :kizu_emote_url_fallback
             """.trimIndent(),
         )
