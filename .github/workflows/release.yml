@@ -56,8 +56,8 @@ jobs:
             -f target_commitish="${GITHUB_SHA}" \
             -f name="${TAG}" \
             -f body="Kizu maintenance release ${VERSION}." \
-            -f draft=false \
-            -f prerelease=false)"
+            -F draft=false \
+            -F prerelease=false)"
 
           echo "${RELEASE_JSON}" | jq -e '.id' >/dev/null
           gh release upload "${TAG}" "${ASSET}" --clobber
