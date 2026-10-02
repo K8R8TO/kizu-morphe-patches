@@ -1,3 +1,12 @@
+## [1.6.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.1...v1.6.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* preserve native emote picker hierarchy and restore third-party picker ([3fc7495](https://github.com/K8R8TO/kizu-morphe-patches/commit/3fc7495666415e7326d432d6958231551e7f78eb))
+* reattach emote picker on activity resume ([0261ce4](https://github.com/K8R8TO/kizu-morphe-patches/commit/0261ce4867438b356847bb181fb47677799f80ef))
+* validate native picker attachment without reparenting it ([fe3261a](https://github.com/K8R8TO/kizu-morphe-patches/commit/fe3261af57b43243fe36c0295ed8efb371f0d95d))
+
 ## [1.6.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.0...v1.6.1) (2026-10-02)
 
 
