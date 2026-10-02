@@ -164,13 +164,10 @@ final class EmoteImageLoader {
             } catch (IllegalArgumentException failure) {
                 throw new IOException("Invalid animated emote dimensions", failure);
             }
-            Drawable.ConstantState state = decoded.getConstantState();
-            if (state != null) {
-                int width = Math.max(1, decoded.getIntrinsicWidth());
-                int height = Math.max(1, decoded.getIntrinsicHeight());
-                long estimate = (long) width * height * 4L * 4L;
-                return new ImageData(null, bytes, Math.min(MAX_IMAGE_BYTES, saturatedInt(bytes.length)));
-            }
+            // Do not require ConstantState here. AnimatedImageDrawable can be a valid,
+            // fully animated Drawable even when its ConstantState is unavailable. Requiring
+            // ConstantState silently flattened those animated WebP assets into a Bitmap.
+            return new ImageData(null, bytes, Math.min(MAX_IMAGE_BYTES, saturatedInt(bytes.length)));
         }
 
         Bitmap bitmap = decodeBitmap(bytes, targetDimension);
