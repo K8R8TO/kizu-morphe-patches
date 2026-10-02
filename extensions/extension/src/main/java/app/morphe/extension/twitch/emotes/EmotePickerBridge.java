@@ -261,6 +261,12 @@ public final class EmotePickerBridge {
                     resourceName.contains("smiley") ||
                     resourceName.contains("sticker");
 
+            // Never mistake Kizu's own controls for Twitch's native picker.
+            Object tag = root.getTag();
+            if (COMPOSER_WRAPPER_TAG.equals(tag) || COMPOSER_BUTTON_TAG.equals(tag)) {
+                return null;
+            }
+
             if (pickerNamed && hasComposerInputNearby(root)
                     && (root.isClickable() || root.isFocusable() || root instanceof ImageView)) {
                 return root;
@@ -333,12 +339,13 @@ public final class EmotePickerBridge {
         search.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         search.setPadding(dp(activity, 10), 0, dp(activity, 10), 0);
         root.addView(search, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 42)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 40)));
 
         ScrollView scroll = new ScrollView(activity);
         GridLayout grid = new GridLayout(activity);
-        int columns = Math.max(4, Math.min(7,
-                activity.getResources().getDisplayMetrics().widthPixels / dp(activity, 58)));
+        int columns = Math.max(4, Math.min(6,
+                Math.max(1, (activity.getResources().getDisplayMetrics().widthPixels - dp(activity, 24)))
+                        / dp(activity, 56)));
         grid.setColumnCount(columns);
         scroll.addView(grid, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -347,15 +354,19 @@ public final class EmotePickerBridge {
 
         TextView status = new TextView(activity);
         status.setGravity(Gravity.CENTER);
-        status.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        status.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         status.setText("Loading third-party emotes...");
         root.addView(status, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 30)));
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 28)));
+
+        int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
+        int popupWidth = Math.min(dp(activity, 360), Math.max(dp(activity, 280), screenWidth - dp(activity, 24)));
+        int popupHeight = dp(activity, 320);
 
         final PopupWindow popup = new PopupWindow(
                 root,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(activity, 520),
+                popupWidth,
+                popupHeight,
                 true
         );
         GradientDrawable background = new GradientDrawable();
@@ -365,12 +376,12 @@ public final class EmotePickerBridge {
         popup.setOutsideTouchable(true);
         popup.setFocusable(true);
         popup.setElevation(dp(activity, 10));
-        popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+        popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NOT_NEEDED);
         popup.setClippingEnabled(true);
 
         View anchor = findComposerPickerButton(activity);
         if (anchor == null) {
-            anchor = activity.getWindow().getDecorView();
+            return;
         }
 
         PickerState state = new PickerState(activity, popup, grid, search, status, input, anchor);
@@ -389,12 +400,10 @@ public final class EmotePickerBridge {
             stopAnimations(grid);
         });
 
-        popup.showAsDropDown(
-                anchor,
-                0,
-                -(dp(activity, 520) + anchor.getHeight() + dp(activity, 6)),
-                Gravity.CENTER_HORIZONTAL
-        );
+        // Use Android's anchored dropdown positioning. It stays a compact panel instead
+        // of creating a full-width/full-chat window; if there is not enough room below
+        // the composer, PopupWindow automatically places it above the anchor.
+        popup.showAsDropDown(anchor, 0, dp(activity, 4), Gravity.CENTER_HORIZONTAL);
 
         final String channel = EmoteSupport.getCurrentChannelId();
         new Thread(() -> {
