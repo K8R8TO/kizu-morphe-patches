@@ -1,3 +1,11 @@
+# [1.7.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.1...v1.7.2) (2026-10-03)
+
+
+### Bug Fixes
+
+* fix third-party emote picker re-entry lifecycle
+* republish the Twitch Enhancement bundle with the corrected Morphe source metadata for the 1.7.2 maintenance release
+
 # [1.7.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.0...v1.7.1) (2026-10-03)
 
 
