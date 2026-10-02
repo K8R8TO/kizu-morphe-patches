@@ -1,3 +1,10 @@
+## [1.1.14](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.13...v1.1.14) (2026-10-02)
+
+
+### Bug Fixes
+
+* restore native animated image decoding ([e777f8a](https://github.com/K8R8TO/kizu-morphe-patches/commit/e777f8a29eb6941c47956e056cd1fb439e8aab48))
+
 ## [1.1.13](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.12...v1.1.13) (2026-10-02)
 
 
