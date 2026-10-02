@@ -1,3 +1,13 @@
+# [1.3.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.7...v1.3.0) (2026-10-02)
+
+
+### Features
+
+* **twitch:** add standalone picker setting ([f52fd92](https://github.com/K8R8TO/kizu-morphe-patches/commit/f52fd92ccc92437ee1b556e9649e5f933b219f59))
+* **twitch:** add standalone third-party emote picker ([d347afd](https://github.com/K8R8TO/kizu-morphe-patches/commit/d347afdfa322cd173f4e850ecebfdb8e3a2b936f))
+* **twitch:** hook standalone third-party picker ([8b8ce1b](https://github.com/K8R8TO/kizu-morphe-patches/commit/8b8ce1bc0412e4d9d0124cca4d5c4b3fbaadf6d6))
+* **twitch:** replace native third-party picker ([b6fe0c1](https://github.com/K8R8TO/kizu-morphe-patches/commit/b6fe0c152ca0fdcbab6e5d4a2989a66acdf4d4ca))
+
 ## [1.2.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.6...v1.2.7) (2026-10-02)
 
 
