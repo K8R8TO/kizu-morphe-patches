@@ -1,3 +1,10 @@
+## [1.1.19](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.18...v1.1.19) (2026-10-02)
+
+
+### Bug Fixes
+
+* restore semantic release version calculation ([3378d9c](https://github.com/K8R8TO/kizu-morphe-patches/commit/3378d9c7599b7112ab76946407c6ec39592d7b08))
+
 ## [1.1.18](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.17...v1.1.18) (2026-10-02)
 
 
