@@ -14,8 +14,6 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 public final class AutoClaimChannelPointsPatch {
     private static final long POLL_INTERVAL_MS = 3_000L;
     private static final long RETRY_DELAY_MS = 3_000L;
-    private static final String COMMUNITY_POINTS_MODEL_CLASS =
-            "tv.twitch.android.models.communitypoints.CommunityPointsModel";
     private static final String CHAT_MODE_METADATA_CLASS =
             "tv.twitch.android.shared.one.chat.pub.ChatModeMetadata";
 
@@ -25,13 +23,15 @@ public final class AutoClaimChannelPointsPatch {
     private static long lastClaimTime;
 
     private static volatile Object activeProvider;
+    private static volatile Object activeModel;
     private static boolean polling;
 
     private static final Runnable POLL = new Runnable() {
         @Override
         public void run() {
             Object provider = activeProvider;
-            if (provider == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
+            Object model = activeModel;
+            if (provider == null || model == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
                 synchronized (AutoClaimChannelPointsPatch.class) {
                     if (provider == activeProvider) {
                         polling = false;
@@ -40,10 +40,10 @@ public final class AutoClaimChannelPointsPatch {
                 return;
             }
 
-            checkCurrentClaim(provider);
+            checkCurrentClaim(provider, model);
 
             synchronized (AutoClaimChannelPointsPatch.class) {
-                if (!polling || activeProvider != provider) {
+                if (!polling || activeProvider != provider || activeModel != model) {
                     return;
                 }
                 MAIN.postDelayed(this, POLL_INTERVAL_MS);
@@ -70,16 +70,16 @@ public final class AutoClaimChannelPointsPatch {
     }
 
     /**
-     * Called from the existing CommunityPointsModel update hook. The provider is retained
-     * so the poller can inspect Twitch's live model every three seconds without changing
-     * the provider class or channel-connection lifecycle.
+     * Called from the existing CommunityPointsModel update hook. The exact live model object
+     * is retained, so polling never has to reflectively search Twitch's provider fields.
      */
-    public static synchronized void startPolling(Object provider) {
-        if (provider == null) {
+    public static synchronized void startPolling(Object provider, Object model) {
+        if (provider == null || model == null) {
             return;
         }
 
         activeProvider = provider;
+        activeModel = model;
         if (polling) {
             return;
         }
@@ -89,19 +89,8 @@ public final class AutoClaimChannelPointsPatch {
         MAIN.postDelayed(POLL, POLL_INTERVAL_MS);
     }
 
-    private static void checkCurrentClaim(Object provider) {
+    private static void checkCurrentClaim(Object provider, Object model) {
         try {
-            Field modelField = findCommunityPointsModelField(provider.getClass());
-            if (modelField == null) {
-                return;
-            }
-
-            modelField.setAccessible(true);
-            Object model = modelField.get(provider);
-            if (model == null) {
-                return;
-            }
-
             Method getClaim = model.getClass().getDeclaredMethod("getClaim");
             getClaim.setAccessible(true);
             Object claim = getClaim.invoke(model);
@@ -123,19 +112,6 @@ public final class AutoClaimChannelPointsPatch {
             claimMethod.invoke(provider, claimId, null);
         } catch (Throwable ignored) {
         }
-    }
-
-    private static Field findCommunityPointsModelField(Class<?> providerClass) {
-        for (Field field : providerClass.getDeclaredFields()) {
-            if (Modifier.isStatic(field.getModifiers())) {
-                continue;
-            }
-
-            if (COMMUNITY_POINTS_MODEL_CLASS.equals(field.getType().getName())) {
-                return field;
-            }
-        }
-        return null;
     }
 
     private static String findClaimId(Object claim) throws IllegalAccessException {
