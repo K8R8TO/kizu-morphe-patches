@@ -1,5 +1,12 @@
 ## [1.1.16](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.15...v1.1.16) (2026-10-02)
 
+
+### Bug Fixes
+
+* decode 7TV WebP as drawable ([7013b86](https://github.com/K8R8TO/kizu-morphe-patches/commit/7013b86b03c10f9f201251d8a58737a7be8a5313))
+
+## [1.1.16](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.15...v1.1.16) (2026-10-02)
+
 ### Bug Fixes
 
 * decode 7TV WebP assets as drawables so animated WebP is not flattened
