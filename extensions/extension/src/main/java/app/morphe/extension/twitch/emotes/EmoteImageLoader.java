@@ -72,13 +72,21 @@ final class EmoteImageLoader {
         if (data == null) {
             return null;
         }
-        if (data.drawableState != null) {
-            Drawable drawable = data.drawableState.newDrawable(resources);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-                    drawable instanceof android.graphics.drawable.AnimatedImageDrawable) {
-                ((android.graphics.drawable.AnimatedImageDrawable) drawable).start();
+        if (data.animatedBytes != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            try {
+                Drawable drawable = ImageDecoder.decodeDrawable(
+                        ImageDecoder.createSource(ByteBuffer.wrap(data.animatedBytes))
+                );
+                if (drawable instanceof android.graphics.drawable.AnimatedImageDrawable) {
+                    android.graphics.drawable.AnimatedImageDrawable animated =
+                            (android.graphics.drawable.AnimatedImageDrawable) drawable;
+                    animated.setRepeatCount(android.graphics.drawable.AnimatedImageDrawable.REPEAT_INFINITE);
+                    animated.start();
+                }
+                return drawable;
+            } catch (Throwable ignored) {
+                return null;
             }
-            return drawable;
         }
         return data.bitmap == null ? null : new BitmapDrawable(resources, data.bitmap);
     }
@@ -153,7 +161,7 @@ final class EmoteImageLoader {
                 int width = Math.max(1, decoded.getIntrinsicWidth());
                 int height = Math.max(1, decoded.getIntrinsicHeight());
                 long estimate = (long) width * height * 4L * 4L;
-                return new ImageData(null, state, saturatedInt(estimate));
+                return new ImageData(null, bytes, Math.min(MAX_IMAGE_BYTES, saturatedInt(bytes.length)));
             }
         }
 
@@ -367,12 +375,12 @@ final class EmoteImageLoader {
 
     private static final class ImageData {
         final Bitmap bitmap;
-        final Drawable.ConstantState drawableState;
+        final byte[] animatedBytes;
         final int costBytes;
 
-        ImageData(Bitmap bitmap, Drawable.ConstantState drawableState, int costBytes) {
+        ImageData(Bitmap bitmap, byte[] animatedBytes, int costBytes) {
             this.bitmap = bitmap;
-            this.drawableState = drawableState;
+            this.animatedBytes = animatedBytes;
             this.costBytes = costBytes;
         }
     }
