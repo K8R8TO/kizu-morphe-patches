@@ -408,6 +408,16 @@ public final class EmotePickerBridge {
 
         PickerState state = new PickerState(activity, popup, grid, search, status, input, anchor);
         CURRENT = state;
+        scroll.setOnScrollChangeListener((v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+            int first = Math.max(0, (scrollY / dp(activity, 58)) * 4);
+            int last = Math.min(state.entries.size(), first + 12);
+            for (int i = first; i < last; i++) {
+                Emote emote = state.entries.get(i);
+                if (emote != null && emote.url != null) {
+                    IMAGES.request(activity, emote, dp(activity, 42));
+                }
+            }
+        });
 
         search.addTextChangedListener(new android.text.TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
