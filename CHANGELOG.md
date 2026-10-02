@@ -1,3 +1,10 @@
+# [1.7.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.3...v1.7.4) (2026-10-03)
+
+### Bug Fixes
+
+* re-inject the third-party emote picker when Twitch replaces the native composer while switching streams
+* distinguish a new native picker from a temporarily hidden existing composer
+
 # [1.7.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.2...v1.7.3) (2026-10-03)
 
 ### Bug Fixes
