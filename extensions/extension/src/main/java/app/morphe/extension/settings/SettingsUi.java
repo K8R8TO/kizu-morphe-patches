@@ -36,11 +36,6 @@ final class SettingsUi {
     }
 
     static boolean isDark(Context context) {
-        int nightMask = context.getResources().getConfiguration().uiMode
-                & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-        if (nightMask == android.content.res.Configuration.UI_MODE_NIGHT_YES) return true;
-        if (nightMask == android.content.res.Configuration.UI_MODE_NIGHT_NO) return false;
-
         int background = backgroundColor(context);
         double luminance = 0.299 * Color.red(background) + 0.587 * Color.green(background)
                 + 0.114 * Color.blue(background);
