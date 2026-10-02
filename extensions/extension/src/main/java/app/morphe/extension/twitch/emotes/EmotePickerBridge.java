@@ -13,7 +13,6 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewParent;
 import android.view.Window;
 import android.widget.EditText;
 import android.widget.GridLayout;
@@ -128,10 +127,13 @@ public final class EmotePickerBridge {
     private static void installComposerButton(Activity activity) {
         ComposerSlot slot = COMPOSER_SLOT;
         if (slot != null && slot.isAttached(activity)) return;
-        if (slot != null) removeComposerButton();
+        if (slot != null) {
+            discardStaleComposerSlot(slot);
+            COMPOSER_SLOT = null;
+        }
 
         View nativeButton = findNativePickerButton(activity.getWindow().getDecorView());
-        if (!(nativeButton instanceof ImageView)) return;
+        if (nativeButton == null) return;
         if (!(nativeButton.getParent() instanceof ViewGroup)) return;
 
         ViewGroup parent = (ViewGroup) nativeButton.getParent();
@@ -251,24 +253,9 @@ public final class EmotePickerBridge {
     }
 
     private static View findNativePickerButton(View root) {
-        if (!(root instanceof ViewGroup)) {
-            return null;
-        }
+        if (root == null) return null;
 
-        // First prefer an obvious emote/emoji picker control.
-        View named = findPickerCandidate(root, true);
-        if (named != null) return named;
-
-        // Twitch has changed the concrete ImageView/button type and accessibility labels
-        // across releases. Fall back to the rightmost clickable image-like control in the
-        // composer rather than requiring a particular class name.
-        return findPickerCandidate(root, false);
-    }
-
-    private static View findPickerCandidate(View root, boolean requirePickerName) {
-        View best = null;
-        int bestScore = Integer.MIN_VALUE;
-        if (root instanceof View) {
+        if (root.getVisibility() == View.VISIBLE && root.isShown()) {
             String description = root.getContentDescription() == null
                     ? "" : root.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT);
             String resourceName = "";
@@ -281,7 +268,6 @@ public final class EmotePickerBridge {
             } catch (Throwable ignored) {
             }
 
-            boolean imageLike = root instanceof ImageView || root instanceof ImageButton;
             boolean pickerNamed = description.contains("emote") ||
                     description.contains("emoji") ||
                     description.contains("smiley") ||
@@ -291,39 +277,30 @@ public final class EmotePickerBridge {
                     resourceName.contains("smiley") ||
                     resourceName.contains("sticker");
 
-            if (imageLike && root.getVisibility() == View.VISIBLE && root.isShown()
-                    && root.isClickable() && hasComposerInputNearby(root)) {
-                if (!requirePickerName || pickerNamed) {
-                    int score = pickerNamed ? 100 : 0;
-                    ViewParent parent = root.getParent();
-                    if (parent instanceof ViewGroup) {
-                        score += ((ViewGroup) parent).indexOfChild(root);
-                    }
-                    if (root instanceof ImageButton) score += 5;
-                    best = root;
-                    bestScore = score;
-                }
+            if (pickerNamed && hasComposerInputNearby(root)
+                    && (root.isClickable() || root.isFocusable() || root instanceof ImageView)) {
+                return root;
             }
         }
 
         if (root instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) root;
             for (int i = 0; i < group.getChildCount(); i++) {
-                View candidate = findPickerCandidate(group.getChildAt(i), requirePickerName);
-                if (candidate == null) continue;
-
-                String description = candidate.getContentDescription() == null
-                        ? "" : candidate.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT);
-                int score = description.contains("emote") || description.contains("emoji")
-                        || description.contains("smiley") || description.contains("sticker") ? 100 : 0;
-                if (candidate instanceof ImageButton) score += 5;
-                if (score > bestScore) {
-                    best = candidate;
-                    bestScore = score;
-                }
+                View found = findNativePickerButton(group.getChildAt(i));
+                if (found != null) return found;
             }
         }
-        return best;
+        return null;
+    }
+
+    private static void discardStaleComposerSlot(ComposerSlot slot) {
+        try {
+            if (slot.activity != null && (slot.activity.isFinishing() || slot.activity.isDestroyed())) {
+                return;
+            }
+            removeComposerButton();
+        } catch (Throwable ignored) {
+        }
     }
 
     private static boolean hasComposerInputNearby(View view) {
