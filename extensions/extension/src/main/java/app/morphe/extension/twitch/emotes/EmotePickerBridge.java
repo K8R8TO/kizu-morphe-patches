@@ -52,7 +52,7 @@ public final class EmotePickerBridge {
     public static void onPickerOpened(Object ignored) {
         try {
             if (!Settings.EMOTES_PICKER.get()) return;
-            final Activity activity = Utils.findActivity(Utils.getContext());
+            final Activity activity = Utils.getCurrentActivity();
             if (activity == null || activity.isFinishing()) return;
             MAIN.postDelayed(() -> {
                 try {
