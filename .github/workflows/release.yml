@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -51,6 +53,12 @@ jobs:
           if bundle.get("download_url") != expected:
               raise SystemExit("patches-bundle.json download_url does not match release version")
           PY
+
+      - name: Pin local release tag for metadata generation
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git tag -f "v${VERSION}" "${GITHUB_SHA}"
 
       - name: Build
         env:
@@ -92,9 +100,8 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create maintenance release
-        if: steps.tag.outputs.exists != 'true'
-        uses: softprops/action-gh-release@v2
+      - name: Publish release asset
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }}
@@ -102,12 +109,12 @@ jobs:
           body: Kizu release ${{ steps.version.outputs.version }}.
           files: patches/build/libs/patches-${{ steps.version.outputs.version }}.mpp
           fail_on_unmatched_files: true
+          overwrite_files: true
           make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify release asset
-        if: steps.tag.outputs.exists != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
