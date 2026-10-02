@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-02T11:49:50",
-  "description": "## [1.2.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.2...v1.2.3) (2026-10-02)\n\n\n### Bug Fixes\n\n* **twitch:** hook animated emote picker URL builder ([a9ca8c2](https://github.com/K8R8TO/kizu-morphe-patches/commit/a9ca8c26268c04f8fc8bba0a9d22a6170d85d37a))\n* **twitch:** provide external URLs to animated picker loader ([cdd76c1](https://github.com/K8R8TO/kizu-morphe-patches/commit/cdd76c1ed683fcbf960478cab5581961a4ae1532))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.2.3/patches-1.2.3.mpp",
+  "created_at": "2026-10-02T11:56:19",
+  "description": "## [1.2.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.3...v1.2.4) (2026-10-02)\n\n\n### Bug Fixes\n\n* **twitch:** use 31.3.1 EmoteUrlUtil picker path ([f936fe7](https://github.com/K8R8TO/kizu-morphe-patches/commit/f936fe7c997a6c36ff2244ac659e0105a1ad453b))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.2.4/patches-1.2.4.mpp",
   "signature_download_url": "",
-  "version": "1.2.3"
+  "version": "1.2.4"
 }

@@ -1,3 +1,10 @@
+## [1.2.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.3...v1.2.4) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** use 31.3.1 EmoteUrlUtil picker path ([f936fe7](https://github.com/K8R8TO/kizu-morphe-patches/commit/f936fe7c997a6c36ff2244ac659e0105a1ad453b))
+
 ## [1.2.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.2...v1.2.3) (2026-10-02)
 
 
