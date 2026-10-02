@@ -170,14 +170,21 @@ public final class EmotePickerBridge {
         watchLayout(decor);
 
         ComposerSlot slot = COMPOSER_SLOT;
-        if (slot != null && slot.isAttached(activity)) return;
 
-        // Twitch can temporarily hide or rebuild the composer during minimize/maximize.
-        // Do not tear down a valid wrapper just because the native picker is not currently
-        // discoverable; let the watcher/layout listener retry once the composer is back.
+        // Discover the current native picker BEFORE accepting the cached slot. Twitch can
+        // keep the old composer view attached while switching streams, so a slot can still
+        // look structurally valid even though a completely new native picker now exists.
+        // During minimize/maximize the native picker may temporarily be undiscoverable; in
+        // that case leave the existing slot alone and let the layout watcher retry.
         View nativeButton = findNativePickerButton(decor);
         if (nativeButton == null) return;
         if (!(nativeButton.getParent() instanceof ViewGroup)) return;
+
+        // The cached slot is valid only if it belongs to this exact native picker. This is
+        // what distinguishes a temporary hidden composer from a real stream/composer swap.
+        if (slot != null && slot.isAttached(activity) && slot.nativeButton == nativeButton) {
+            return;
+        }
 
         // A different native picker was discovered. Replace the stale slot and remove any
         // orphaned Kizu wrappers so repeated Twitch view reconstruction cannot create duplicates.
