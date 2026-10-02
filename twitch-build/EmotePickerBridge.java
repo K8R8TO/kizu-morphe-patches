@@ -214,7 +214,7 @@ public final class EmotePickerBridge {
         parent.requestLayout();
 
         COMPOSER_SLOT = new ComposerSlot(
-                parent, wrapper, nativeButton, index, originalParams, originalWidth, originalHeight
+                activity, parent, wrapper, nativeButton, index, originalParams, originalWidth, originalHeight
         );
     }
 
