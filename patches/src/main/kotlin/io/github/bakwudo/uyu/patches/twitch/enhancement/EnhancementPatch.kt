@@ -5,6 +5,7 @@ import io.github.bakwudo.uyu.patches.twitch.ads.blockAdsPatch
 import io.github.bakwudo.uyu.patches.twitch.appearance.hidePromotionsPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerPatch
+import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerUrlPatch
 import io.github.bakwudo.uyu.patches.twitch.login.fixLoginPatch
 import io.github.bakwudo.uyu.patches.twitch.notifications.fixNotificationsPatch
 import io.github.bakwudo.uyu.patches.twitch.privacy.privacyPatch
@@ -25,6 +26,7 @@ val twitchEnhancementPatch = bytecodePatch(
         hidePromotionsPatch,
         thirdPartyEmotesPatch,
         thirdPartyEmotePickerPatch,
+        thirdPartyEmotePickerUrlPatch,
         privacyPatch,
     )
 }
