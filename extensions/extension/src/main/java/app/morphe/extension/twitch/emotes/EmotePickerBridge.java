@@ -150,7 +150,7 @@ public final class EmotePickerBridge {
 
     private static List<Entry> loadForChannel(String channelId) {
         try {
-            List<Emote> source = EmoteSupport.getAllForChannel(channelId);
+            List<Emote> source = EmoteSupport.getAllForChannelForPicker(channelId);
             if (source == null || source.isEmpty()) return java.util.Collections.emptyList();
             List<Entry> out = new ArrayList<>(source.size());
             for (Emote value : source) {
