@@ -218,7 +218,7 @@ public final class EmotePickerBridge {
             for (Emote value : source) {
                 if (value != null && value.name != null && !value.name.isEmpty() &&
                         value.url != null && !value.url.isEmpty()) {
-                    out.add(new Entry(value.name, value.url, value.animated));
+                    out.add(new Entry(value.name, pickerUrl(value.url, value.animated), value.animated));
                 }
             }
             return out;
@@ -226,6 +226,20 @@ public final class EmotePickerBridge {
             Log.e(TAG, "loadForChannel failed", t);
             return java.util.Collections.emptyList();
         }
+    }
+
+    /**
+     * Twitch's native picker recognizes our injected model as animated, but its
+     * image pipeline does not reliably decode 7TV's animated WebP assets. 7TV
+     * publishes equivalent GIF assets for animated emotes, so use GIF only for
+     * the native picker. The chat renderer keeps its existing WebP path untouched.
+     */
+    private static String pickerUrl(String url, boolean animated) {
+        if (!animated || url == null) return url;
+        if (url.endsWith(".webp")) {
+            return url.substring(0, url.length() - 5) + ".gif";
+        }
+        return url;
     }
 
     private static final class Entry {
