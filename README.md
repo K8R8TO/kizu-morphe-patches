@@ -26,7 +26,7 @@ Internal dependencies are deliberately kept hidden from Morphe's user-facing pat
 
 This project is a derivative work assembled from several open-source projects and public technical sources. We want to be explicit about what is being reused or adapted rather than presenting those parts as original Kizu work.
 
-### 1. Kizu / `K8R8TO/boost-randnsfw-patch`
+### 1. Existing Kizu Twitch/UYU implementation
 
 **Repository:** https://github.com/K8R8TO/boost-randnsfw-patch
 
@@ -40,7 +40,7 @@ This project is a derivative work assembled from several open-source projects an
 - Existing Twitch login, notification, ads/promotions, privacy and settings patch work that we are rebuilding and repairing for the current Twitch version.
 - Existing patch metadata/build configuration where applicable.
 
-This is the primary upstream source for the Kizu-specific Twitch work.
+
 
 ### 2. Hooman — `arandomhooman/hoomans-morphe-patches`
 
