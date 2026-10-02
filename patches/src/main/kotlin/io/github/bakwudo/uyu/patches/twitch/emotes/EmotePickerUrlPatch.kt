@@ -8,6 +8,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
 private const val URL_UTIL_CLASS = "Ltv/twitch/android/util/EmoteUrlUtil;"
 private const val PICKER_BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmotePickerBridge;"
+private const val CONTEXT = "Landroid/content/Context;"
 private const val STRING = "Ljava/lang/String;"
 
 internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
@@ -18,16 +19,15 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         val classDef = classDefByOrNull(URL_UTIL_CLASS)
             ?: throw PatchException("Kizu emotes: Twitch EmoteUrlUtil was not found.")
 
-        // Twitch 31.3.1 does contain generateEmoteUrl, but its parameter list
-        // is not the String,float signature used by the old donor patch.
-        // Match the actual URL generator by its stable String input/output
-        // contract and preserve the remaining parameters.
+        // Twitch 31.3.1 has no generateEmoteUrl method. Its native emote
+        // URL builder is the obfuscated static c(Context, String): String.
         val method = classDef.methods.singleOrNull { candidate ->
-            candidate.name == "generateEmoteUrl" &&
+            candidate.name == "c" &&
                 candidate.returnType == STRING &&
-                candidate.parameterTypes.firstOrNull()?.toString() == STRING
+                candidate.parameterTypes.map { it.toString() } ==
+                    listOf(CONTEXT, STRING)
         } ?: throw PatchException(
-            "Kizu emotes: could not uniquely identify Twitch EmoteUrlUtil.generateEmoteUrl(String,...).",
+            "Kizu emotes: expected Twitch 31.3.1 EmoteUrlUtil.c(Context,String):String.",
         )
 
         val mutable = mutableClassDefBy(classDef)
@@ -37,17 +37,13 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
                 it.parameterTypes == method.parameterTypes
         }
 
-        // Use the first register after the parameter registers for the bridge
-        // result, so this remains valid if Twitch adds/removes URL parameters.
-        val resultRegister = "p" + method.parameterTypes.size
-
         target.addInstructions(
             0,
             """
-                invoke-static {p0}, $PICKER_BRIDGE->getEmoteUrl(Ljava/lang/String;)Ljava/lang/String;
-                move-result-object $resultRegister
-                if-eqz $resultRegister, :kizu_emote_url_fallback
-                return-object $resultRegister
+                invoke-static {p1}, $PICKER_BRIDGE->getEmoteUrl(Ljava/lang/String;)Ljava/lang/String;
+                move-result-object p2
+                if-eqz p2, :kizu_emote_url_fallback
+                return-object p2
                 :kizu_emote_url_fallback
             """.trimIndent(),
         )
