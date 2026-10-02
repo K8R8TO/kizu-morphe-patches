@@ -16,12 +16,19 @@ public final class Utils {
     private static volatile Context context;
     private static volatile Activity currentActivity;
     private static volatile Application registeredApplication;
+    private static volatile String lastThemeActivityClass;
+    private static volatile int lastThemeActivityNight = -1;
+    private static volatile int lastSystemNight = -1;
+    private static volatile boolean themeRepairScheduled;
 
     private static final Application.ActivityLifecycleCallbacks ACTIVITY_CALLBACKS =
             new Application.ActivityLifecycleCallbacks() {
                 @Override public void onActivityCreated(Activity activity, Bundle state) {}
                 @Override public void onActivityStarted(Activity activity) {}
-                @Override public void onActivityResumed(Activity activity) { currentActivity = activity; }
+                @Override public void onActivityResumed(Activity activity) {
+                    currentActivity = activity;
+                    stabilizeTheme(activity);
+                }
                 @Override public void onActivityPaused(Activity activity) {
                     if (currentActivity == activity) currentActivity = null;
                 }
@@ -51,6 +58,48 @@ public final class Utils {
                     application.registerActivityLifecycleCallbacks(ACTIVITY_CALLBACKS);
                 }
             }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
+     * Twitch's Default/System theme can occasionally restore a newly-resumed Activity with
+     * the opposite night configuration even though the device mode has not changed. Do not
+     * force a light or dark mode here; simply recreate the same Activity once when its
+     * configuration unexpectedly flips. Explicit Twitch theme changes still settle normally
+     * after the recreation.
+     */
+    private static void stabilizeTheme(Activity activity) {
+        try {
+            if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
+
+            int activityNight = activity.getResources().getConfiguration().uiMode
+                    & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+            int systemNight = activity.getResources().getConfiguration().uiMode
+                    & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+
+            String activityClass = activity.getClass().getName();
+            if (activityClass.equals(lastThemeActivityClass)
+                    && lastSystemNight == systemNight
+                    && lastThemeActivityNight != -1
+                    && lastThemeActivityNight != activityNight
+                    && !themeRepairScheduled) {
+                themeRepairScheduled = true;
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                    try {
+                        if (!activity.isFinishing() && !activity.isDestroyed()) {
+                            activity.recreate();
+                        }
+                    } catch (Throwable ignored) {
+                    } finally {
+                        themeRepairScheduled = false;
+                    }
+                }, 60L);
+            }
+
+            lastThemeActivityClass = activityClass;
+            lastThemeActivityNight = activityNight;
+            lastSystemNight = systemNight;
         } catch (Throwable ignored) {
         }
     }
