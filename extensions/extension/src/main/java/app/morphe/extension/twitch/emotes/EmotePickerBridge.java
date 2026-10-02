@@ -55,8 +55,13 @@ public final class EmotePickerBridge {
             try {
                 Activity activity = Utils.getCurrentActivity();
                 if (Settings.EMOTES_PICKER.get()) {
-                    if (activity != null && !activity.isFinishing()) {
+                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
                         installComposerButton(activity);
+                    } else if (activity == null) {
+                        ComposerSlot slot = COMPOSER_SLOT;
+                        if (slot != null && !slot.wrapper.isAttachedToWindow()) {
+                            COMPOSER_SLOT = null;
+                        }
                     }
                 } else {
                     removeComposerButton();
@@ -248,19 +253,50 @@ public final class EmotePickerBridge {
         wrapper.requestLayout();
         parent.requestLayout();
 
-        COMPOSER_SLOT = new ComposerSlot(
+        ComposerSlot newSlot = new ComposerSlot(
                 activity, parent, wrapper, nativeButton, index, originalParams, originalWidth, originalHeight
         );
+        COMPOSER_SLOT = newSlot;
+
+        // Twitch rebuilds the chat composer when leaving/re-entering a stream. The old
+        // wrapper can retain a Java parent reference even after Android detaches it from
+        // the window, so listen for that exact transition and immediately arm a reattach.
+        wrapper.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View view) {
+                // Nothing to do; the watcher validates the slot after attachment.
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View view) {
+                ComposerSlot current = COMPOSER_SLOT;
+                if (current != newSlot || current.wrapper != view) return;
+                COMPOSER_SLOT = null;
+                PickerState picker = CURRENT;
+                if (picker != null && picker.popup != null) {
+                    try { picker.popup.dismiss(); } catch (Throwable ignored) {}
+                }
+                CURRENT = null;
+                MAIN.postDelayed(() -> {
+                    try {
+                        if (Settings.EMOTES_PICKER.get()) ensureComposerButton();
+                    } catch (Throwable ignored) {
+                    }
+                }, 100L);
+            }
+        });
     }
 
     private static void removeComposerButton() {
         ComposerSlot slot = COMPOSER_SLOT;
         if (slot == null) return;
 
+        // Clear the slot before removing the wrapper so our detach listener knows this
+        // is an intentional removal rather than Twitch rebuilding the composer.
+        COMPOSER_SLOT = null;
         try {
             ViewGroup parent = slot.parent;
             LinearLayout wrapper = slot.wrapper;
-            View nativeButton = slot.nativeButton;
             if (parent != null && wrapper != null && wrapper.getParent() == parent) {
                 wrapper.removeAllViews();
                 parent.removeView(wrapper);
@@ -268,8 +304,6 @@ public final class EmotePickerBridge {
             }
         } catch (Throwable t) {
             Log.w(TAG, "remove composer button failed", t);
-        } finally {
-            COMPOSER_SLOT = null;
         }
     }
 
@@ -1004,8 +1038,15 @@ public final class EmotePickerBridge {
 
         boolean isAttached(Activity currentActivity) {
             return activity == currentActivity &&
-                    wrapper != null && wrapper.getParent() == parent &&
-                    nativeButton != null && nativeButton.getParent() == parent;
+                    wrapper != null &&
+                    nativeButton != null &&
+                    parent != null &&
+                    wrapper.getParent() == parent &&
+                    nativeButton.getParent() == parent &&
+                    wrapper.isAttachedToWindow() &&
+                    nativeButton.isAttachedToWindow() &&
+                    wrapper.isShown() &&
+                    nativeButton.isShown();
         }
     }
 
