@@ -33,7 +33,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           chmod +x gradlew
-          ./gradlew :patches:buildAndroid generatePatchesList clean
+          ./gradlew :patches:buildAndroid generatePatchesList
+
+      - name: Verify release artifact
+        run: |
+          test -f patches/build/libs/patches-1.7.0.1.mpp
+          ls -lh patches/build/libs/patches-1.7.0.1.mpp
 
       - name: Create maintenance release
         uses: softprops/action-gh-release@v2
