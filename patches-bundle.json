@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-03T00:00:00",
-  "description": "# [1.7.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.4...v1.7.5) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* open the software keyboard when tapping the third-party emote picker search field",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.5/patches-1.7.5.mpp",
+  "description": "# [1.7.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.5...v1.7.6) (2026-10-03)\\n\\n### Features\\n\\n* check for pending Channel Points bonus chests every 3 seconds while auto-claim is enabled",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.6/patches-1.7.6.mpp",
   "signature_download_url": "",
-  "version": "1.7.5"
+  "version": "1.7.6"
 }

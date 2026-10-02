@@ -1,3 +1,11 @@
+# [1.7.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.5...v1.7.6) (2026-10-03)
+
+### Features
+
+* check for pending Channel Points bonus chests every 3 seconds while auto-claim is enabled
+* retry a still-pending bonus at most once per 3-second poll interval
+* reset the auto-claim poller when Twitch creates a new channel connection
+
 # [1.7.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.4...v1.7.5) (2026-10-03)
 
 ### Bug Fixes
