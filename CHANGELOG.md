@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.1...v1.2.2) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** restore working native picker model types ([2508b2a](https://github.com/K8R8TO/kizu-morphe-patches/commit/2508b2a6fefb098c9705ce4b71eec3add73da31c))
+
 ## [1.2.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.2.0...v1.2.1) (2026-10-02)
 
 
