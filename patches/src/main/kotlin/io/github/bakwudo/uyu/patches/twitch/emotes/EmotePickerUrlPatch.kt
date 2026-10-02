@@ -19,8 +19,6 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         val classDef = classDefByOrNull(URL_UTIL_CLASS)
             ?: throw PatchException("Kizu emotes: Twitch EmoteUrlUtil was not found.")
 
-        // Twitch 31.3.1 has no generateEmoteUrl method. Its native emote
-        // URL builder is the obfuscated static c(Context, String): String.
         val method = classDef.methods.singleOrNull { candidate ->
             candidate.name == "c" &&
                 candidate.returnType == STRING &&
@@ -37,14 +35,21 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
                 it.parameterTypes == method.parameterTypes
         }
 
+        // Do not use p2 here: c(Context,String) has only p0/p1 parameters, and
+        // clobbering an implicit local register can corrupt the native URL path.
+        // Reuse p0 as the temporary result and restore the original Context before
+        // falling through to Twitch's untouched implementation.
         target.addInstructions(
             0,
             """
-                invoke-static {p1}, $PICKER_BRIDGE->getEmoteUrl(Ljava/lang/String;)Ljava/lang/String;
-                move-result-object p2
-                if-eqz p2, :kizu_emote_url_fallback
-                return-object p2
+                invoke-static {p0}, $PICKER_BRIDGE->saveUrlContext($CONTEXT)V
+                invoke-static {p1}, $PICKER_BRIDGE->getEmoteUrl($STRING)$STRING
+                move-result-object p0
+                if-eqz p0, :kizu_emote_url_fallback
+                return-object p0
                 :kizu_emote_url_fallback
+                invoke-static {}, $PICKER_BRIDGE->restoreUrlContext()$CONTEXT
+                move-result-object p0
             """.trimIndent(),
         )
     }
