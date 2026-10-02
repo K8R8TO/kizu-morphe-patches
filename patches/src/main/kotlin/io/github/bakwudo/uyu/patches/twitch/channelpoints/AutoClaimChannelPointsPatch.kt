@@ -10,7 +10,7 @@ import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
-io.github.bakwudo.uyu.patches.twitch.settings.setPatchIncluded
+import io.github.bakwudo.uyu.patches.twitch.settings.setPatchIncluded
 import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
@@ -43,8 +43,9 @@ val autoClaimChannelPointsPatch = bytecodePatch(
             it.type == "Ljava/lang/String;" && !AccessFlags.STATIC.isSet(it.accessFlags)
         } ?: throw PatchException("Claim id field not found in $claimType.")
 
-        // Keep the known-good v1.7.5 inline claim hook, and start the runtime poller
-        // from the same existing model-update callback. Do not touch the channel constructor.
+        // Preserve the exact v1.7.5 hook into Twitch's existing model-update method.
+        // Polling starts from the already-proven helper below, so no extra Twitch lifecycle
+        // method is modified.
         val updateFingerprint = communityPointsModelUpdateFingerprint(provider.type)
         updateFingerprint.method.apply {
             val match = updateFingerprint.instructionMatches.singleOrNull()
@@ -63,10 +64,6 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                 match.index + 1,
                 "invoke-static { v$providerRegister, v$modelRegister }, " +
                     "${provider.type}->${HELPER_METHOD_NAME}(${provider.type}$COMMUNITY_POINTS_MODEL)V",
-            )
-            addInstruction(
-                match.index + 2,
-                "invoke-static { v$providerRegister }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;)V",
             )
         }
 
@@ -87,6 +84,7 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                 addInstructionsWithLabels(
                     0,
                     """
+                        invoke-static { p0 }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;)V
                         if-eqz p1, :done
                         invoke-virtual { p1 }, $COMMUNITY_POINTS_MODEL->getClaim()$claimType
                         move-result-object v0
