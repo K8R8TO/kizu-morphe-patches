@@ -1,3 +1,9 @@
+## [1.1.17](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.16...v1.1.17) (2026-10-02)
+
+### Bug Fixes
+
+* keep native animated WebP drawables instead of flattening them when ConstantState is unavailable ([6f1bc4c](https://github.com/K8R8TO/kizu-morphe-patches/commit/6f1bc4c34eaefc81dca7a1deb372d7767bbbc72))
+
 ## [1.1.16](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.15...v1.1.16) (2026-10-02)
 
 
