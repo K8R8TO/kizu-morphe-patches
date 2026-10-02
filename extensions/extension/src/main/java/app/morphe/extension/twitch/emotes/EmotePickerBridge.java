@@ -570,6 +570,7 @@ public final class EmotePickerBridge {
         root.setFocusableInTouchMode(true);
         root.requestFocus();
 
+        // Search is intentionally focused only after the user taps the field.
         search.setFocusableInTouchMode(true);
         search.setOnClickListener(v -> {
             v.requestFocus();
