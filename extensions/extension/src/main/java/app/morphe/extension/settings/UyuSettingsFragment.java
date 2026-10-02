@@ -197,7 +197,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         screen.addPreference(proxy);
 
         Preference note = new Preference(screen.getContext());
-        note.setSummary("Optional. Live streams are loaded through the selected proxy, which can remove the ads that are part of the stream. {channel} is replaced with the channel name; without it, the name is added to the end.\\n\\nPublic proxies can go offline or change behavior. The proxy operator can see which channels you watch. If the proxy fails, uyu shows \\"Proxy failed\\" and falls back to Twitch while device-side ad blocking remains active.");
+        note.setSummary("Optional. Live streams are loaded through the selected proxy, which can remove the ads that are part of the stream. {channel} is replaced with the channel name; without it, the name is added to the end.\n\nPublic proxies can go offline or change behavior. The proxy operator can see which channels you watch. If the proxy fails, uyu shows Proxy failed and falls back to Twitch while device-side ad blocking remains active.");
         note.setSelectable(false);
         screen.addPreference(note);
     }
