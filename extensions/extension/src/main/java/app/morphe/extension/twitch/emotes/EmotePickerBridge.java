@@ -166,16 +166,24 @@ public final class EmotePickerBridge {
     }
 
     private static void installComposerButton(Activity activity) {
+        View decor = activity.getWindow().getDecorView();
+        watchLayout(decor);
+
         ComposerSlot slot = COMPOSER_SLOT;
         if (slot != null && slot.isAttached(activity)) return;
-        if (slot != null) {
-            discardStaleComposerSlot(slot);
-            COMPOSER_SLOT = null;
-        }
 
-        View nativeButton = findNativePickerButton(activity.getWindow().getDecorView());
+        // Twitch can temporarily hide or rebuild the composer during minimize/maximize.
+        // Do not tear down a valid wrapper just because the native picker is not currently
+        // discoverable; let the watcher/layout listener retry once the composer is back.
+        View nativeButton = findNativePickerButton(decor);
         if (nativeButton == null) return;
         if (!(nativeButton.getParent() instanceof ViewGroup)) return;
+
+        // A different native picker was discovered. Replace the stale slot and remove any
+        // orphaned Kizu wrappers so repeated Twitch view reconstruction cannot create duplicates.
+        if (slot != null) discardStaleComposerSlot(slot);
+        COMPOSER_SLOT = null;
+        removeStrayWrappers(decor);
 
         // Keep Twitch's native picker button in its original parent. Only add our
         // third-party control beside it; changing the native button's parent can
@@ -210,7 +218,7 @@ public final class EmotePickerBridge {
         wrapper.setGravity(Gravity.CENTER_VERTICAL);
         wrapper.setTag(COMPOSER_WRAPPER_TAG);
         wrapper.setBackgroundColor(Color.TRANSPARENT);
-        int insertIndex = Math.min(parent.getChildCount(), index + 1);
+        int insertIndex = index; // immediately LEFT of the native button
         parent.addView(wrapper, insertIndex, new LinearLayout.LayoutParams(
                 dp(activity, 41), nativeHeight
         ));
@@ -285,6 +293,56 @@ public final class EmotePickerBridge {
                 }, 100L);
             }
         });
+    }
+
+    private static java.lang.ref.WeakReference<View> WATCHED_DECOR;
+    private static final Runnable LAYOUT_REFRESH = () -> {
+        try {
+            Activity activity = Utils.getCurrentActivity();
+            if (activity != null && !activity.isFinishing() &&
+                    !activity.isDestroyed() && Settings.EMOTES_PICKER.get()) {
+                installComposerButton(activity);
+            }
+        } catch (Throwable t) {
+            Log.w(TAG, "layout refresh failed", t);
+        }
+    };
+
+    /**
+     * Twitch minimize/maximize and stream re-entry can rebuild the composer without
+     * changing the hosting Activity. A global-layout callback lets us react to those
+     * view-tree changes instead of relying only on Activity lifecycle callbacks.
+     */
+    private static void watchLayout(View decor) {
+        View watched = WATCHED_DECOR == null ? null : WATCHED_DECOR.get();
+        if (watched == decor) return;
+
+        WATCHED_DECOR = new java.lang.ref.WeakReference<>(decor);
+        decor.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            MAIN.removeCallbacks(LAYOUT_REFRESH);
+            MAIN.postDelayed(LAYOUT_REFRESH, 120L);
+        });
+    }
+
+    private static void removeStrayWrappers(View root) {
+        if (!(root instanceof ViewGroup)) return;
+
+        ViewGroup group = (ViewGroup) root;
+        for (int i = group.getChildCount() - 1; i >= 0; i--) {
+            View child = group.getChildAt(i);
+
+            if (COMPOSER_WRAPPER_TAG.equals(child.getTag())) {
+                try {
+                    if (child instanceof ViewGroup) {
+                        ((ViewGroup) child).removeAllViews();
+                    }
+                    group.removeViewAt(i);
+                } catch (Throwable ignored) {
+                }
+            } else {
+                removeStrayWrappers(child);
+            }
+        }
     }
 
     private static void removeComposerButton() {
@@ -1045,8 +1103,7 @@ public final class EmotePickerBridge {
                     nativeButton.getParent() == parent &&
                     wrapper.isAttachedToWindow() &&
                     nativeButton.isAttachedToWindow() &&
-                    wrapper.isShown() &&
-                    nativeButton.isShown();
+                    parent.indexOfChild(wrapper) == parent.indexOfChild(nativeButton) - 1;
         }
     }
 

@@ -29,12 +29,11 @@ public final class Utils {
                     currentActivity = activity;
                     try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
                 }
-                @Override public void onActivityPaused(Activity activity) {
-                    if (currentActivity == activity) currentActivity = null;
-                }
-                @Override public void onActivityStopped(Activity activity) {
-                    if (currentActivity == activity) currentActivity = null;
-                }
+                // Twitch can rebuild the composer while its hosting Activity is paused/stopped.
+                // Keep the valid Activity reference until actual destruction so the layout
+                // watcher can repair the view hierarchy during those transitions.
+                @Override public void onActivityPaused(Activity activity) {}
+                @Override public void onActivityStopped(Activity activity) {}
                 @Override public void onActivitySaveInstanceState(Activity activity, Bundle state) {}
                 @Override public void onActivityDestroyed(Activity activity) {
                     if (currentActivity == activity) currentActivity = null;

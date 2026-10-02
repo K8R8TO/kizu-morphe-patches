@@ -1,3 +1,10 @@
+# [1.7.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.2...v1.7.3) (2026-10-03)
+
+### Bug Fixes
+
+* fix third-party emote picker re-entry across Twitch composer layout rebuilds
+* place the third-party picker button immediately left of Twitch's native emote button
+
 # [1.7.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.1...v1.7.2) (2026-10-03)
 
 
