@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-03T00:00:00",
-  "description": "# [1.7.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.6...v1.7.7) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* restore Twitch chat by removing the unsafe channel-connection hook from auto-claim\\n* keep 3-second auto-claim polling using the existing channel-points update hook",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.7/patches-1.7.7.mpp",
+  "description": "# [1.7.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.6...v1.7.8) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* keep Twitch chat-safe auto-claim polling on the existing channel-points model hook\\n* poll the exact live model object to avoid disturbing the displayed points balance",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.8/patches-1.7.8.mpp",
   "signature_download_url": "",
-  "version": "1.7.7"
+  "version": "1.7.8"
 }
