@@ -75,7 +75,8 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                         move-result v2
                         if-eqz v2, :done
                         const/4 v2, 0x0
-                        invoke-virtual { p0, v1, v2 }, ${claimMethod.smaliReference}\n                        invoke-static { p0, v1 }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;Ljava/lang/String;)V
+                        invoke-virtual { p0, v1, v2 }, ${claimMethod.smaliReference}
+                        invoke-static { p0, v1 }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;Ljava/lang/String;)V
                         :done
                         return-void
                     """,
