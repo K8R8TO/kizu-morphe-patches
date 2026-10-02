@@ -1,3 +1,10 @@
+## [1.1.11](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.10...v1.1.11) (2026-10-02)
+
+
+### Bug Fixes
+
+* restore third-party emote picker and animation ([ce5ad89](https://github.com/K8R8TO/kizu-morphe-patches/commit/ce5ad8941a095c98e6c799d9956a65f7f8f398e3))
+
 ## [1.1.10](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.9...v1.1.10) (2026-10-01)
 
 
