@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-02T09:54:57",
-  "description": "## [1.1.16](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.15...v1.1.16) (2026-10-02)\n\n\n### Bug Fixes\n\n* decode 7TV WebP as drawable ([7013b86](https://github.com/K8R8TO/kizu-morphe-patches/commit/7013b86b03c10f9f201251d8a58737a7be8a5313))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.16/patches-1.1.16.mpp",
+  "created_at": "2026-10-02T09:59:50",
+  "description": "## [1.1.17](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.16...v1.1.17) (2026-10-02)\n\n\n### Bug Fixes\n\n* keep animated WebP drawable without ConstantState ([6f1bc4c](https://github.com/K8R8TO/kizu-morphe-patches/commit/6f1bc4c34eaefec81dca7a1deb372d7767bbbc72))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.1.17/patches-1.1.17.mpp",
   "signature_download_url": "",
-  "version": "1.1.16"
+  "version": "1.1.17"
 }
