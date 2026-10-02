@@ -36,35 +36,23 @@ jobs:
           ./gradlew :patches:buildAndroid generatePatchesList clean
 
       - name: Create maintenance release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.7.0.1
+          name: v1.7.0.1
+          target_commitish: ${{ github.sha }}
+          body: |
+            Kizu maintenance release 1.7.0.1.
+
+            Fixes third-party emote picker placement/re-entry and uses Twitch's native Channel Points claim path without modifying the points balance.
+          files: patches/build/libs/patches-1.7.0.1.mpp
+          fail_on_unmatched_files: true
+          make_latest: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          VERSION="$(sed -n 's/^version[[:space:]]*=[[:space:]]*//p' gradle.properties | tr -d '[:space:]' | head -n 1)"
-          TAG="v${VERSION}"
-          ASSET="patches/build/libs/patches-${VERSION}.mpp"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          test -n "${VERSION}"
-          test -f "${ASSET}"
-
-          if gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" >/dev/null 2>&1; then
-            echo "Release ${TAG} already exists; nothing to do."
-            exit 0
-          fi
-
-          RELEASE_JSON="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/releases" \
-            -f tag_name="${TAG}" \
-            -f target_commitish="${GITHUB_SHA}" \
-            -f name="${TAG}" \
-            -f body="Kizu maintenance release ${VERSION}." \
-            -F draft=false \
-            -F prerelease=false)"
-
-          echo "${RELEASE_JSON}" | jq -e '.id' >/dev/null
-          gh release upload "${TAG}" "${ASSET}" --clobber
-
-      - name: Attest
+      - name: Verify release asset
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="v$(sed -n 's/^version[[:space:]]*=[[:space:]]*//p' gradle.properties | tr -d '[:space:]' | head -n 1)"
-          gh release view "${TAG}" >/dev/null 2>&1
+          gh release view v1.7.0.1 --json tagName,assets --jq '.tagName + " " + ([.assets[].name] | join(","))'
