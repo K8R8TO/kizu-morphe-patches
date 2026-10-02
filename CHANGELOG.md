@@ -1,3 +1,10 @@
+## [1.6.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.2...v1.6.3) (2026-10-02)
+
+
+### Bug Fixes
+
+* make third-party picker compact and re-entry safe ([e09fedd](https://github.com/K8R8TO/kizu-morphe-patches/commit/e09fedd275e874af96f85afdd0daf7226c1e27d1))
+
 ## [1.6.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.1...v1.6.2) (2026-10-02)
 
 

@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-02T18:52:10",
-  "description": "## [1.6.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.1...v1.6.2) (2026-10-02)\n\n\n### Bug Fixes\n\n* preserve native emote picker hierarchy and restore third-party picker ([3fc7495](https://github.com/K8R8TO/kizu-morphe-patches/commit/3fc7495666415e7326d432d6958231551e7f78eb))\n* reattach emote picker on activity resume ([0261ce4](https://github.com/K8R8TO/kizu-morphe-patches/commit/0261ce4867438b356847bb181fb47677799f80ef))\n* validate native picker attachment without reparenting it ([fe3261a](https://github.com/K8R8TO/kizu-morphe-patches/commit/fe3261af57b43243fe36c0295ed8efb371f0d95d))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.6.2/patches-1.6.2.mpp",
+  "created_at": "2026-10-02T19:04:55",
+  "description": "## [1.6.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.2...v1.6.3) (2026-10-02)\n\n\n### Bug Fixes\n\n* make third-party picker compact and re-entry safe ([e09fedd](https://github.com/K8R8TO/kizu-morphe-patches/commit/e09fedd275e874af96f85afdd0daf7226c1e27d1))",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.6.3/patches-1.6.3.mpp",
   "signature_download_url": "",
-  "version": "1.6.2"
+  "version": "1.6.3"
 }
