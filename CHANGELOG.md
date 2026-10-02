@@ -1,3 +1,10 @@
+## [1.1.12](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.11...v1.1.12) (2026-10-02)
+
+
+### Bug Fixes
+
+* force third-party emote animations enabled ([10c7c88](https://github.com/K8R8TO/kizu-morphe-patches/commit/10c7c882572bfaf3cd73806b4d233dec4249de79))
+
 ## [1.1.11](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.10...v1.1.11) (2026-10-02)
 
 
