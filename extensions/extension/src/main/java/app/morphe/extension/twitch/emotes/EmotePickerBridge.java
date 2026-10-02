@@ -146,6 +146,18 @@ public final class EmotePickerBridge {
                 installComposerButton(activity);
             }
         }, 750L);
+        MAIN.postDelayed(() -> {
+            Activity activity = Utils.getCurrentActivity();
+            if (activity != null && !activity.isFinishing() && Settings.EMOTES_PICKER.get()) {
+                installComposerButton(activity);
+            }
+        }, 1500L);
+        MAIN.postDelayed(() -> {
+            Activity activity = Utils.getCurrentActivity();
+            if (activity != null && !activity.isFinishing() && Settings.EMOTES_PICKER.get()) {
+                installComposerButton(activity);
+            }
+        }, 3000L);
     }
 
     private static void installComposerButton(Activity activity) {
@@ -303,6 +315,50 @@ public final class EmotePickerBridge {
                 View found = findNativePickerButton(group.getChildAt(i));
                 if (found != null) return found;
             }
+        }
+        return findNativePickerButtonByComposer(root);
+    }
+
+    private static View findNativePickerButtonByComposer(View root) {
+        EditText input = findEditText(root);
+        if (input == null) return null;
+        View current = input;
+        for (int depth = 0; depth < 7 && current != null; depth++) {
+            Object parentObject = current.getParent();
+            if (!(parentObject instanceof ViewGroup)) break;
+            ViewGroup parent = (ViewGroup) parentObject;
+            View best = null;
+            int bestDistance = Integer.MAX_VALUE;
+            int inputCenter = (input.getLeft() + input.getRight()) / 2;
+            for (int i = 0; i < parent.getChildCount(); i++) {
+                View child = parent.getChildAt(i);
+                if (child == input || child.getVisibility() != View.VISIBLE || !child.isShown()) continue;
+                if (isInsideKizuWrapper(child)) continue;
+                Object tag = child.getTag();
+                if (COMPOSER_WRAPPER_TAG.equals(tag) || COMPOSER_BUTTON_TAG.equals(tag)) continue;
+                if (!child.isClickable() && !(child instanceof ImageView)) continue;
+                String desc = child.getContentDescription() == null ? "" :
+                        child.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT);
+                String name = "";
+                try {
+                    if (child.getId() != View.NO_ID) {
+                        name = child.getResources().getResourceEntryName(child.getId())
+                                .toLowerCase(java.util.Locale.ROOT);
+                    }
+                } catch (Throwable ignored) {}
+                String combined = desc + " " + name;
+                if (combined.contains("send") || combined.contains("gift") ||
+                        combined.contains("attach") || combined.contains("camera") ||
+                        combined.contains("voice") || combined.contains("microphone")) continue;
+                int center = (child.getLeft() + child.getRight()) / 2;
+                int distance = Math.abs(center - inputCenter);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = child;
+                }
+            }
+            if (best != null) return best;
+            current = parent;
         }
         return null;
     }
