@@ -1,3 +1,17 @@
+## [1.5.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.5.0...v1.5.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** add separate third-party picker button ([8edfc8e](https://github.com/K8R8TO/kizu-morphe-patches/commit/8edfc8e1e624afc7bec0cd2d7530d9aac0012822))
+* **twitch:** hook third-party composer button ([a385cc4](https://github.com/K8R8TO/kizu-morphe-patches/commit/a385cc4ea52acc4a7deabd25a00efe55fe9759d7))
+* **twitch:** restore picker dimension helper ([02a9956](https://github.com/K8R8TO/kizu-morphe-patches/commit/02a9956580182522bd30e868366b1e3270d1e1be))
+* **twitch:** restore picker state and dimensions ([a1ebd5b](https://github.com/K8R8TO/kizu-morphe-patches/commit/a1ebd5b4e35612f21651c167043701d5a1a42d3d))
+* **twitch:** sync composer button donor hook ([f1743e4](https://github.com/K8R8TO/kizu-morphe-patches/commit/f1743e4ec5754cf871be46900891ba7f28344f39))
+* **twitch:** sync standalone picker implementation ([35bcb49](https://github.com/K8R8TO/kizu-morphe-patches/commit/35bcb4924d0dadca1d64ab825e5651ae2576bbd3))
+* **twitch:** sync third-party picker button donor ([9d8beb0](https://github.com/K8R8TO/kizu-morphe-patches/commit/9d8beb04ed5ce58f9e370ca48862ef04902a8b8b))
+* **twitch:** trigger picker layout release build ([73b8668](https://github.com/K8R8TO/kizu-morphe-patches/commit/73b8668b92051fc97ee3adfd14c4d004bf5706bd))
+
 # [1.5.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.4.0...v1.5.0) (2026-10-02)
 
 
