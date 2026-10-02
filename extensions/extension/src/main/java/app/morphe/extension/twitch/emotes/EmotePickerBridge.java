@@ -91,7 +91,7 @@ public final class EmotePickerBridge {
             if (getHeader != null) {
                 Object header = getHeader.invoke(uiSet);
                 if (header != null) {
-                    Method getSection = findNoArgMethod(header, "getEmotePickerSection");
+                    Method getSection = findNoArgMethod(header.getClass(), "getEmotePickerSection");
                     if (getSection != null) {
                         Object section = getSection.invoke(header);
                         if (section != null && !"ALL".equals(section.toString())) {
