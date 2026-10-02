@@ -73,7 +73,12 @@ final class EmoteImageLoader {
             return null;
         }
         if (data.drawableState != null) {
-            return data.drawableState.newDrawable(resources);
+            Drawable drawable = data.drawableState.newDrawable(resources);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+                    drawable instanceof android.graphics.drawable.AnimatedImageDrawable) {
+                ((android.graphics.drawable.AnimatedImageDrawable) drawable).start();
+            }
+            return drawable;
         }
         return data.bitmap == null ? null : new BitmapDrawable(resources, data.bitmap);
     }
