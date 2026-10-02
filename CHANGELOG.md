@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.19...v1.2.0) (2026-10-02)
+
+
+### Features
+
+* **twitch:** make animated picker emotes use GIF assets ([7c98049](https://github.com/K8R8TO/kizu-morphe-patches/commit/7c9804970adbb0893e079b72a1591826157159be))
+
 ## [1.1.19](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.18...v1.1.19) (2026-10-02)
 
 
