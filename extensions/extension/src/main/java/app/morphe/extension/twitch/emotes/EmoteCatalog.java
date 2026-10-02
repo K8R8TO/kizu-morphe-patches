@@ -259,7 +259,9 @@ final class EmoteCatalog {
             String format = file.optString("format", "");
             String name = file.optString("name", "");
             if (name.isEmpty()) continue;
-            if (animated && "GIF".equalsIgnoreCase(format)) return name;
+            // PurpleTV's working implementation deliberately prefers WebP for 7TV,
+            // including animated emotes. Modern 7TV animated assets are commonly served as
+            // animated WebP, so preferring GIF here can select an inferior/absent legacy asset.
             if ("WEBP".equalsIgnoreCase(format)) {
                 if ("2x.webp".equalsIgnoreCase(name)) return name;
                 if (fallback == null) fallback = name;
