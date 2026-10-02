@@ -75,7 +75,7 @@ public final class Utils {
 
             int activityNight = activity.getResources().getConfiguration().uiMode
                     & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
-            int systemNight = activity.getResources().getConfiguration().uiMode
+            int systemNight = android.content.res.Resources.getSystem().getConfiguration().uiMode
                     & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
 
             String activityClass = activity.getClass().getName();
