@@ -4,7 +4,9 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.ImageDecoder;
+import android.graphics.Canvas;
+import android.graphics.Movie;
+import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -19,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Arrays;
@@ -72,18 +73,12 @@ final class EmoteImageLoader {
         if (data == null) {
             return null;
         }
-        if (data.animatedBytes != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        if (data.animatedBytes != null) {
             try {
-                Drawable drawable = ImageDecoder.decodeDrawable(
-                        ImageDecoder.createSource(ByteBuffer.wrap(data.animatedBytes))
-                );
-                if (drawable instanceof android.graphics.drawable.AnimatedImageDrawable) {
-                    android.graphics.drawable.AnimatedImageDrawable animated =
-                            (android.graphics.drawable.AnimatedImageDrawable) drawable;
-                    animated.setRepeatCount(android.graphics.drawable.AnimatedImageDrawable.REPEAT_INFINITE);
-                    animated.start();
+                Movie movie = Movie.decodeByteArray(data.animatedBytes, 0, data.animatedBytes.length);
+                if (movie != null) {
+                    return new AnimatedGifDrawable(movie);
                 }
-                return drawable;
             } catch (Throwable ignored) {
                 return null;
             }
@@ -370,6 +365,97 @@ final class EmoteImageLoader {
             if (diskCacheBytes <= MAX_DISK_BYTES) {
                 break;
             }
+        }
+    }
+
+    private static final class AnimatedGifDrawable extends Drawable implements Runnable {
+        private final Movie movie;
+        private long startTime = -1L;
+        private boolean running;
+
+        AnimatedGifDrawable(Movie movie) {
+            this.movie = movie;
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            int duration = Math.max(1, movie.duration());
+            long now = android.os.SystemClock.uptimeMillis();
+            if (startTime < 0L) startTime = now;
+            int time = (int) ((now - startTime) % duration);
+            movie.setTime(time);
+
+            Rect bounds = getBounds();
+            float scaleX = bounds.width() > 0 && movie.width() > 0
+                    ? (float) bounds.width() / movie.width() : 1f;
+            float scaleY = bounds.height() > 0 && movie.height() > 0
+                    ? (float) bounds.height() / movie.height() : 1f;
+            float scale = Math.min(scaleX, scaleY);
+            float width = movie.width() * scale;
+            float height = movie.height() * scale;
+            float left = bounds.left + (bounds.width() - width) / 2f;
+            float top = bounds.top + (bounds.height() - height) / 2f;
+
+            canvas.save();
+            canvas.translate(left, top);
+            canvas.scale(scale, scale);
+            movie.draw(canvas, 0f, 0f);
+            canvas.restore();
+
+            if (running) scheduleSelf(this, now + 16L);
+        }
+
+        @Override
+        public void run() {
+            invalidateSelf();
+        }
+
+        @Override
+        protected void onBoundsChange(Rect bounds) {
+            super.onBoundsChange(bounds);
+            invalidateSelf();
+        }
+
+        @Override
+        public void setAlpha(int alpha) {}
+
+        @Override
+        public void setColorFilter(android.graphics.ColorFilter colorFilter) {}
+
+        @Override
+        public int getOpacity() {
+            return android.graphics.PixelFormat.TRANSLUCENT;
+        }
+
+        @Override
+        public int getIntrinsicWidth() {
+            return movie.width();
+        }
+
+        @Override
+        public int getIntrinsicHeight() {
+            return movie.height();
+        }
+
+        @Override
+        public void start() {
+            if (!running) {
+                running = true;
+                startTime = android.os.SystemClock.uptimeMillis();
+                scheduleSelf(this, startTime + 16L);
+                invalidateSelf();
+            }
+        }
+
+        @Override
+        public void stop() {
+            running = false;
+            unscheduleSelf(this);
+        }
+
+        @Override
+        public boolean isRunning() {
+            return running;
         }
     }
 
