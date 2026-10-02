@@ -44,6 +44,7 @@ public final class EmotePickerBridge {
     private static final String COMPOSER_WRAPPER_TAG = "kizu.third-party-picker.wrapper";
     private static final String COMPOSER_BUTTON_TAG = "kizu.third-party-picker.button";
     private static volatile ComposerSlot COMPOSER_SLOT;
+    private static volatile PickerState CURRENT;
     private static volatile boolean COMPOSER_WATCH_STARTED;
     private static final Runnable COMPOSER_WATCHER = new Runnable() {
         @Override
