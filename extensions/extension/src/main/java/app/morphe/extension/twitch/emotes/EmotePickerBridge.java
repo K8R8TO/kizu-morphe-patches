@@ -48,6 +48,7 @@ public final class EmotePickerBridge {
     private static volatile ComposerSlot COMPOSER_SLOT;
     private static volatile PickerState CURRENT;
     private static volatile boolean COMPOSER_WATCH_STARTED;
+    private static final ConcurrentHashMap<String, ImageView> PICKER_IMAGE_VIEWS = new ConcurrentHashMap<>();
     private static final Runnable COMPOSER_WATCHER = new Runnable() {
         @Override
         public void run() {
@@ -119,9 +120,32 @@ public final class EmotePickerBridge {
 
     /** Starts the optional third-party button watcher and keeps the native Twitch picker untouched. */
     public static void ensureComposerButton() {
-        if (COMPOSER_WATCH_STARTED) return;
-        COMPOSER_WATCH_STARTED = true;
-        MAIN.post(COMPOSER_WATCHER);
+        if (!COMPOSER_WATCH_STARTED) {
+            COMPOSER_WATCH_STARTED = true;
+            MAIN.post(COMPOSER_WATCHER);
+        }
+        scheduleComposerRefresh();
+    }
+
+    private static void scheduleComposerRefresh() {
+        MAIN.post(() -> {
+            Activity activity = Utils.getCurrentActivity();
+            if (activity != null && !activity.isFinishing() && Settings.EMOTES_PICKER.get()) {
+                installComposerButton(activity);
+            }
+        });
+        MAIN.postDelayed(() -> {
+            Activity activity = Utils.getCurrentActivity();
+            if (activity != null && !activity.isFinishing() && Settings.EMOTES_PICKER.get()) {
+                installComposerButton(activity);
+            }
+        }, 250L);
+        MAIN.postDelayed(() -> {
+            Activity activity = Utils.getCurrentActivity();
+            if (activity != null && !activity.isFinishing() && Settings.EMOTES_PICKER.get()) {
+                installComposerButton(activity);
+            }
+        }, 750L);
     }
 
     private static void installComposerButton(Activity activity) {
@@ -343,9 +367,7 @@ public final class EmotePickerBridge {
 
         ScrollView scroll = new ScrollView(activity);
         GridLayout grid = new GridLayout(activity);
-        int columns = Math.max(4, Math.min(6,
-                Math.max(1, (activity.getResources().getDisplayMetrics().widthPixels - dp(activity, 24)))
-                        / dp(activity, 56)));
+        final int columns = 4;
         grid.setColumnCount(columns);
         scroll.addView(grid, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -360,8 +382,8 @@ public final class EmotePickerBridge {
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 28)));
 
         int screenWidth = activity.getResources().getDisplayMetrics().widthPixels;
-        int popupWidth = Math.min(dp(activity, 360), Math.max(dp(activity, 280), screenWidth - dp(activity, 24)));
-        int popupHeight = dp(activity, 320);
+        int popupWidth = dp(activity, 4 * 58 + 16);
+        int popupHeight = dp(activity, 40 + (3 * 58) + 28 + 16);
 
         final PopupWindow popup = new PopupWindow(
                 root,
@@ -397,6 +419,7 @@ public final class EmotePickerBridge {
 
         popup.setOnDismissListener(() -> {
             if (CURRENT == state) CURRENT = null;
+            PICKER_IMAGE_VIEWS.clear();
             stopAnimations(grid);
         });
 
@@ -436,6 +459,7 @@ public final class EmotePickerBridge {
     private static void rebuild(PickerState state) {
         if (state == null || state.grid == null) return;
         state.grid.removeAllViews();
+        PICKER_IMAGE_VIEWS.clear();
 
         String query = state.search.getText() == null
                 ? "" : state.search.getText().toString().trim().toLowerCase(java.util.Locale.ROOT);
@@ -447,24 +471,21 @@ public final class EmotePickerBridge {
                     !emote.name.toLowerCase(java.util.Locale.ROOT).contains(query)) continue;
 
             Drawable drawable = IMAGES.createDrawable(state.activity.getResources(), emote);
+            ImageButton button = new ImageButton(state.activity);
+            button.setBackgroundColor(Color.TRANSPARENT);
+            button.setPadding(dp(state.activity, 5), dp(state.activity, 5),
+                    dp(state.activity, 5), dp(state.activity, 5));
+            button.setContentDescription(emote.name);
+            button.setOnClickListener(v -> insertEmote(state, emote.name));
             if (drawable != null) {
-                ImageButton button = new ImageButton(state.activity);
-                button.setBackgroundColor(Color.TRANSPARENT);
-                button.setPadding(dp(state.activity, 5), dp(state.activity, 5),
-                        dp(state.activity, 5), dp(state.activity, 5));
-                button.setContentDescription(emote.name);
                 button.setImageDrawable(drawable);
-                button.setOnClickListener(v -> insertEmote(state, emote.name));
-                state.grid.addView(button, cellParams(state.activity));
             } else {
-                TextView placeholder = new TextView(state.activity);
-                placeholder.setText(emote.name);
-                placeholder.setGravity(Gravity.CENTER);
-                placeholder.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);
-                placeholder.setMaxLines(2);
-                placeholder.setEllipsize(android.text.TextUtils.TruncateAt.END);
-                placeholder.setOnClickListener(v -> insertEmote(state, emote.name));
-                state.grid.addView(placeholder, cellParams(state.activity));
+                button.setImageDrawable(null);
+                button.setContentDescription(emote.name + " (loading)");
+                PICKER_IMAGE_VIEWS.put(emote.url, button);
+            }
+            state.grid.addView(button, cellParams(state.activity));
+            if (count < 12) {
                 IMAGES.request(state.activity, emote, dp(state.activity, 42));
             }
             count++;
@@ -548,7 +569,19 @@ public final class EmotePickerBridge {
         PickerState state = CURRENT;
         if (state == null) return;
         MAIN.post(() -> {
-            if (CURRENT == state && state.popup.isShowing()) rebuild(state);
+            if (CURRENT != state || !state.popup.isShowing()) return;
+            ImageView imageView = PICKER_IMAGE_VIEWS.remove(url);
+            if (imageView == null) return;
+            for (Emote emote : state.entries) {
+                if (emote != null && url.equals(emote.url)) {
+                    Drawable drawable = IMAGES.createDrawable(state.activity.getResources(), emote);
+                    if (drawable != null) {
+                        imageView.setImageDrawable(drawable);
+                        imageView.setContentDescription(emote.name);
+                    }
+                    break;
+                }
+            }
         });
     }
 
