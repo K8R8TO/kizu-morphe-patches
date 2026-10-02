@@ -1,5 +1,12 @@
 ## [1.1.15](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.14...v1.1.15) (2026-10-02)
 
+
+### Bug Fixes
+
+* prefer 7TV WebP assets for animated emotes ([2ed3f30](https://github.com/K8R8TO/kizu-morphe-patches/commit/2ed3f30f5ccce8e2262e4c4531f98ad751301d2e))
+
+## [1.1.15](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.1.14...v1.1.15) (2026-10-02)
+
 ### Bug Fixes
 
 * prefer 7TV WebP assets for animated emotes
