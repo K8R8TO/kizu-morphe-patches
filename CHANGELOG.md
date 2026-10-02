@@ -1,3 +1,10 @@
+# [1.7.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.0...v1.7.1) (2026-10-03)
+
+
+### Bug Fixes
+
+* republish the Twitch Enhancement bundle with the corrected Morphe source metadata for the 1.7.1 maintenance release
+
 # [1.7.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.4...v1.7.0) (2026-10-02)
 
 
