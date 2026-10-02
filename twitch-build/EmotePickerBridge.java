@@ -1,6 +1,26 @@
 package app.morphe.extension.twitch.emotes;
 
 import android.content.Context;
+import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.Editable;
+import android.text.Selection;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.EditText;
+import android.widget.GridLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+
 import android.content.res.Resources;
 import android.util.Log;
 
@@ -341,6 +361,53 @@ public final class EmotePickerBridge {
         if (type == double.class) return Double.class;
         if (type == char.class) return Character.class;
         return type;
+    }
+
+    private static final class PickerState {
+        final Activity activity;
+        final android.app.AlertDialog dialog;
+        final GridLayout grid;
+        final EditText search;
+        final TextView status;
+        final View input;
+        volatile List<Emote> entries = java.util.Collections.emptyList();
+
+        PickerState(Activity activity, android.app.AlertDialog dialog, GridLayout grid,
+                    EditText search, TextView status, View input) {
+            this.activity = activity;
+            this.dialog = dialog;
+            this.grid = grid;
+            this.search = search;
+            this.status = status;
+            this.input = input;
+        }
+    }
+
+    private static final class ComposerSlot {
+        final ViewGroup parent;
+        final LinearLayout wrapper;
+        final View nativeButton;
+        final int originalIndex;
+        final ViewGroup.LayoutParams originalParams;
+        final int originalWidth;
+        final int originalHeight;
+
+        ComposerSlot(ViewGroup parent, LinearLayout wrapper, View nativeButton,
+                     int originalIndex, ViewGroup.LayoutParams originalParams,
+                     int originalWidth, int originalHeight) {
+            this.parent = parent;
+            this.wrapper = wrapper;
+            this.nativeButton = nativeButton;
+            this.originalIndex = originalIndex;
+            this.originalParams = originalParams;
+            this.originalWidth = originalWidth;
+            this.originalHeight = originalHeight;
+        }
+
+        boolean isAttached() {
+            return wrapper != null && wrapper.getParent() == parent &&
+                    nativeButton != null && nativeButton.getParent() == wrapper;
+        }
     }
 
     private static final class Entry {
