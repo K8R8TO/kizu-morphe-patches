@@ -479,14 +479,14 @@ public final class EmotePickerBridge {
                     ? state.input
                     : findEditText(state.activity.getWindow().getDecorView());
             if (!(view instanceof EditText)) {
-                state.dialog.dismiss();
+                state.popup.dismiss();
                 return;
             }
 
             EditText input = (EditText) view;
             Editable editable = input.getText();
             if (editable == null) {
-                state.dialog.dismiss();
+                state.popup.dismiss();
                 return;
             }
 
@@ -510,10 +510,10 @@ public final class EmotePickerBridge {
             int cursor = start + value.length() - suffix.length();
             Selection.setSelection(editable, Math.max(0, Math.min(cursor, editable.length())));
             input.requestFocus();
-            state.dialog.dismiss();
+            state.popup.dismiss();
         } catch (Throwable t) {
             Log.e(TAG, "insert failed", t);
-            state.dialog.dismiss();
+            state.popup.dismiss();
         }
     }
 
@@ -534,7 +534,7 @@ public final class EmotePickerBridge {
         PickerState state = CURRENT;
         if (state == null) return;
         MAIN.post(() -> {
-            if (CURRENT == state && state.dialog.isShowing()) rebuild(state);
+            if (CURRENT == state && state.popup.isShowing()) rebuild(state);
         });
     }
 
