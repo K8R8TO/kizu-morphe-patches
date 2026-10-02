@@ -205,7 +205,8 @@ public final class EmotePickerBridge {
         wrapper.setGravity(Gravity.CENTER_VERTICAL);
         wrapper.setTag(COMPOSER_WRAPPER_TAG);
         wrapper.setBackgroundColor(Color.TRANSPARENT);
-        parent.addView(wrapper, index, new LinearLayout.LayoutParams(
+        int insertIndex = Math.min(parent.getChildCount(), index + 1);
+        parent.addView(wrapper, insertIndex, new LinearLayout.LayoutParams(
                 dp(activity, 41), nativeHeight
         ));
 
@@ -274,93 +275,96 @@ public final class EmotePickerBridge {
 
     private static View findNativePickerButton(View root) {
         if (root == null) return null;
+        View named = findPickerCandidate(root, true);
+        if (named != null) return named;
+        return findPickerCandidate(root, false);
+    }
+
+    private static View findPickerCandidate(View root, boolean requirePickerName) {
+        View best = null;
+        int bestScore = Integer.MIN_VALUE;
 
         if (root.getVisibility() == View.VISIBLE && root.isShown()) {
-            String description = root.getContentDescription() == null
-                    ? "" : root.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT);
-            String resourceName = "";
-            try {
-                int id = root.getId();
-                if (id != View.NO_ID) {
-                    resourceName = root.getResources().getResourceEntryName(id)
-                            .toLowerCase(java.util.Locale.ROOT);
-                }
-            } catch (Throwable ignored) {
-            }
-
-            boolean pickerNamed = description.contains("emote") ||
-                    description.contains("emoji") ||
-                    description.contains("smiley") ||
-                    description.contains("sticker") ||
-                    resourceName.contains("emote") ||
-                    resourceName.contains("emoji") ||
-                    resourceName.contains("smiley") ||
-                    resourceName.contains("sticker");
-
-            // Never mistake Kizu's own controls for Twitch's native picker.
             Object tag = root.getTag();
-            if (COMPOSER_WRAPPER_TAG.equals(tag) || COMPOSER_BUTTON_TAG.equals(tag)) {
-                return null;
-            }
+            boolean ownControl = COMPOSER_WRAPPER_TAG.equals(tag) || COMPOSER_BUTTON_TAG.equals(tag);
+            if (!ownControl) {
+                boolean imageLike = root instanceof ImageView || root instanceof ImageButton;
+                boolean clickable = root.isClickable() || root.isFocusable();
+                if (imageLike && clickable && hasComposerInputNearby(root)) {
+                    String description = root.getContentDescription() == null
+                            ? "" : root.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT);
+                    String resourceName = "";
+                    try {
+                        int id = root.getId();
+                        if (id != View.NO_ID) {
+                            resourceName = root.getResources().getResourceEntryName(id)
+                                    .toLowerCase(java.util.Locale.ROOT);
+                        }
+                    } catch (Throwable ignored) {
+                    }
 
-            if (pickerNamed && hasComposerInputNearby(root)
-                    && (root.isClickable() || root.isFocusable() || root instanceof ImageView)) {
-                return root;
+                    String combined = description + " " + resourceName;
+                    boolean pickerNamed = combined.contains("emote") ||
+                            combined.contains("emoji") ||
+                            combined.contains("smiley") ||
+                            combined.contains("sticker");
+
+                    if (!requirePickerName || pickerNamed) {
+                        // Named picker controls get overwhelming priority. Without an accessible
+                        // name, choose the rightmost image-like composer control after excluding
+                        // obvious send/media/attachments controls.
+                        boolean excluded = combined.contains("send") ||
+                                combined.contains("gift") ||
+                                combined.contains("camera") ||
+                                combined.contains("attach") ||
+                                combined.contains("voice") ||
+                                combined.contains("microphone") ||
+                                combined.contains("bits");
+                        if (!excluded) {
+                            int score = pickerNamed ? 100000 : 0;
+                            try {
+                                int[] location = new int[2];
+                                root.getLocationOnScreen(location);
+                                score += Math.min(50000, Math.max(0, location[0]));
+                            } catch (Throwable ignored) {
+                                Object parent = root.getParent();
+                                if (parent instanceof ViewGroup) {
+                                    score += ((ViewGroup) parent).indexOfChild(root);
+                                }
+                            }
+                            if (root instanceof ImageButton) score += 100;
+                            if (score > bestScore) {
+                                best = root;
+                                bestScore = score;
+                            }
+                        }
+                    }
+                }
             }
         }
 
         if (root instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) root;
             for (int i = 0; i < group.getChildCount(); i++) {
-                View found = findNativePickerButton(group.getChildAt(i));
-                if (found != null) return found;
-            }
-        }
-        return findNativePickerButtonByComposer(root);
-    }
+                View candidate = findPickerCandidate(group.getChildAt(i), requirePickerName);
+                if (candidate == null) continue;
 
-    private static View findNativePickerButtonByComposer(View root) {
-        EditText input = findEditText(root);
-        if (input == null) return null;
-        View current = input;
-        for (int depth = 0; depth < 7 && current != null; depth++) {
-            Object parentObject = current.getParent();
-            if (!(parentObject instanceof ViewGroup)) break;
-            ViewGroup parent = (ViewGroup) parentObject;
-            View best = null;
-            int bestDistance = Integer.MAX_VALUE;
-            int inputCenter = (input.getLeft() + input.getRight()) / 2;
-            for (int i = 0; i < parent.getChildCount(); i++) {
-                View child = parent.getChildAt(i);
-                if (child == input || child.getVisibility() != View.VISIBLE || !child.isShown()) continue;
-                if (isInsideKizuWrapper(child)) continue;
-                Object tag = child.getTag();
-                if (COMPOSER_WRAPPER_TAG.equals(tag) || COMPOSER_BUTTON_TAG.equals(tag)) continue;
-                if (!child.isClickable() && !(child instanceof ImageView)) continue;
-                String desc = child.getContentDescription() == null ? "" :
-                        child.getContentDescription().toString().toLowerCase(java.util.Locale.ROOT);
-                String name = "";
+                int score = requirePickerName ? 100000 : 0;
                 try {
-                    if (child.getId() != View.NO_ID) {
-                        name = child.getResources().getResourceEntryName(child.getId())
-                                .toLowerCase(java.util.Locale.ROOT);
-                    }
-                } catch (Throwable ignored) {}
-                String combined = desc + " " + name;
-                if (combined.contains("send") || combined.contains("gift") ||
-                        combined.contains("attach") || combined.contains("camera") ||
-                        combined.contains("voice") || combined.contains("microphone")) continue;
-                int center = (child.getLeft() + child.getRight()) / 2;
-                int distance = Math.abs(center - inputCenter);
-                if (distance < bestDistance) {
-                    bestDistance = distance;
-                    best = child;
+                    int[] location = new int[2];
+                    candidate.getLocationOnScreen(location);
+                    score += Math.min(50000, Math.max(0, location[0]));
+                } catch (Throwable ignored) {
+                    score += i;
+                }
+                if (candidate instanceof ImageButton) score += 100;
+                if (score > bestScore) {
+                    best = candidate;
+                    bestScore = score;
                 }
             }
-            if (best != null) return best;
-            current = parent;
         }
-        return null;
+        return best;
     }
 
     private static void discardStaleComposerSlot(ComposerSlot slot) {
