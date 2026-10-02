@@ -6,19 +6,146 @@ This repository contains **Twitch patches only**. It does not contain the Boost 
 
 ## Included patches
 
-The current project is being rebuilt incrementally from the known-good `twitch-uyu-settings-shell` implementation. The initial goal is to restore a clean, verifiable Twitch patch bundle before adding or changing features.
+The project is focused on a single user-facing patch:
 
-Planned Twitch functionality includes:
+- **Twitch Enhancement**
 
-- Kizu Twitch Enhancement
-- Third-party emotes
-- Emote picker and autocomplete support
+Its internal dependencies provide the individual Twitch features, including:
+
+- Third-party 7TV / BTTV emotes
+- Third-party emote picker integration
+- Emote animation support
 - Privacy controls
 - UYU/Kizu settings integration
 - Twitch ad and promotion handling
 - Login and notification compatibility fixes
 
-Some implementation components are dependencies of the main Twitch patch and are not necessarily separate user-selectable patches.
+Internal dependencies are deliberately kept hidden from Morphe's user-facing patch list.
+
+## Sources, attribution and reused work
+
+This project is a derivative work assembled from several open-source projects and public technical sources. We want to be explicit about what is being reused or adapted rather than presenting those parts as original Kizu work.
+
+### 1. Kizu / `K8R8TO/boost-randnsfw-patch`
+
+**Repository:** https://github.com/K8R8TO/boost-randnsfw-patch
+
+**Branch used as the Twitch starting point:** `twitch-uyu-settings-shell`
+
+**Used/adapted:**
+
+- The existing Kizu Twitch/UYU settings-shell implementation.
+- The Twitch patch structure and feature-chain organization from that branch.
+- Kizu/UYU settings integration and related runtime support.
+- Existing Twitch login, notification, ads/promotions, privacy and settings patch work that we are rebuilding and repairing for the current Twitch version.
+- Existing patch metadata/build configuration where applicable.
+
+This is the primary upstream source for the Kizu-specific Twitch work.
+
+### 2. Hooman — `arandomhooman/hoomans-morphe-patches`
+
+**Repository:** https://github.com/arandomhooman/hoomans-morphe-patches
+
+**Relevant Twitch implementation:** the **7TV and BTTV emotes** patch.
+
+**Used/adapted:**
+
+- The third-party emote architecture for loading 7TV and BTTV emote sets.
+- The `EmoteCatalog`, `EmoteSupport`, `EmoteImageLoader`, `Emote` and `CenteredImageSpan` implementation concepts/code used for third-party emote retrieval, caching, rendering and chat integration.
+- The Morphe Twitch emote patch/fingerprint approach where applicable.
+- The 7TV and BTTV API endpoints used by that implementation.
+
+**Not claimed as original Kizu work:** the underlying 7TV/BTTV chat-emote implementation is substantially based on/adapted from Hooman's work. We are modifying it for the newer Twitch version and extending it with picker and animation support.
+
+Hooman's repository itself states that its patches are based on prior ReVanced work. Its current Twitch patch supports Twitch 30.7.2, while this project targets newer Twitch builds.
+
+### 3. Morphe
+
+**Project:** https://github.com/MorpheApp
+
+Morphe is the patching framework this repository targets.
+
+**Used:**
+
+- Morphe patch APIs and patch-bundle format.
+- Morphe-compatible extension/patch project structure.
+- Morphe patch-source and build/release conventions.
+
+This repository is **not** the Morphe project and does not claim Morphe authorship.
+
+### 4. ReVanced
+
+**Project:** https://github.com/ReVanced
+
+The Morphe patch template documents that Morphe's template is based on prior ReVanced work.
+
+**Used indirectly:**
+
+- The upstream patching concepts and project conventions inherited through the Morphe template.
+- General patch/fingerprint architecture where inherited from the Morphe/ReVanced ecosystem.
+
+We are not claiming that the current Twitch-specific implementations were written by ReVanced.
+
+### 5. Twitch Android application
+
+**Target:** Twitch Android `31.3.1` / build `3103016`
+
+A genuine Twitch APKM was inspected to identify the current app's obfuscated classes, methods, models and emote-picker structures.
+
+**Used for reverse engineering, not copied as source code:**
+
+- Exact Twitch 31.3.1 class/method signatures.
+- The actual `EmoteUrlUtil.b(String,String)` URL helper.
+- The actual emote-picker model classes and enums.
+- The actual Twitch emote animation-related state/mutation names.
+- Runtime behavior required to make the patches target the current Twitch build.
+
+The Twitch application itself is proprietary. Its code is not presented here as project source.
+
+### 6. 7TV
+
+**Project/API:** https://7tv.app/
+
+**Used:**
+
+- Public 7TV emote-set data/API endpoints.
+- 7TV emote IDs, names and image URLs required to display third-party emotes.
+
+### 7. BetterTTV (BTTV)
+
+**Project/API:** https://betterttv.com/
+
+**Used:**
+
+- Public BTTV emote-set data/API endpoints.
+- BTTV emote IDs, names and image URLs required to display third-party emotes.
+
+### 8. Android / AOSP documentation
+
+**Android documentation:** https://developer.android.com/
+
+**AOSP:** https://android.googlesource.com/platform/frameworks/base/
+
+**Used:**
+
+- Android `ImageDecoder` / `AnimatedImageDrawable` behavior.
+- The requirement to explicitly start animated drawables.
+- Infinite animation/repeat behavior used when fixing third-party animated emotes.
+
+## What is original to this repository
+
+The following work is being developed specifically for this project rather than being represented as copied upstream functionality:
+
+- Porting the Twitch features to the target Twitch version.
+- Reverse-engineering Twitch 31.3.1's obfuscated emote-picker models.
+- The Kizu third-party emote picker bridge.
+- Integration between the adapted Hooman emote system and Twitch's native emote picker.
+- Twitch-version-specific URL hooking.
+- Fixes for animated 7TV/BTTV emote loading and playback.
+- Kizu-specific settings behavior, including forcing third-party emote animations on.
+- Compatibility fixes and repairs made during testing against the target Twitch APK.
+
+Where a component is adapted from another project, this README identifies that source instead of treating the adaptation as wholly original.
 
 ## Add to Morphe
 
@@ -40,13 +167,10 @@ The generated `.mpp` bundle is written to `patches/build/libs/`.
 
 ## License
 
-This project follows the license and additional conditions included in the repository's `LICENSE` and `NOTICE` files.
-
+This project follows the licenses and additional conditions included in the repository's `LICENSE` and `NOTICE` files. Upstream licenses and attribution requirements remain applicable to the respective reused/adapted components.
 
 <!-- Kizu feature-chain build verification -->
 
-
 <!-- settings package fix -->
-
 
 <!-- runtime trigger -->
