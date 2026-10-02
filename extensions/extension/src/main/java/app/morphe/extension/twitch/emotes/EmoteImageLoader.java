@@ -369,7 +369,7 @@ final class EmoteImageLoader {
         }
     }
 
-    private static final class AnimatedGifDrawable extends Drawable implements Runnable {
+    private static final class AnimatedGifDrawable extends Drawable implements Runnable, android.graphics.drawable.Animatable {
         private final Movie movie;
         private long startTime = -1L;
         private boolean running;
