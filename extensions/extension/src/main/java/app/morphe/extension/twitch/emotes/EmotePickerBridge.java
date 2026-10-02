@@ -29,7 +29,7 @@ import android.widget.TextView;
 import java.util.List;
 import java.util.Locale;
 
-import io.github.bakwudo.uyu.extension.Utils;
+import app.morphe.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 /**
