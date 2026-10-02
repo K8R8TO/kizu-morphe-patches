@@ -2,6 +2,7 @@ package io.github.bakwudo.uyu.patches.twitch.enhancement
 
 import app.morphe.patcher.patch.bytecodePatch
 import io.github.bakwudo.uyu.patches.twitch.ads.blockAdsPatch
+import io.github.bakwudo.uyu.patches.twitch.channelpoints.autoClaimChannelPointsPatch
 import io.github.bakwudo.uyu.patches.twitch.appearance.hidePromotionsPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerPatch
@@ -23,6 +24,7 @@ val twitchEnhancementPatch = bytecodePatch(
         fixLoginPatch,
         fixNotificationsPatch,
         blockAdsPatch,
+        autoClaimChannelPointsPatch,
         hidePromotionsPatch,
         thirdPartyEmotesPatch,
         thirdPartyEmotePickerPatch,
