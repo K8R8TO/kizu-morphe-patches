@@ -114,7 +114,7 @@ public final class EmotePickerBridge {
         }
     }
 
-    /** Starts the optional third-party button watcher. */
+    /** Starts the optional third-party button watcher and keeps the native Twitch picker untouched. */
     public static void ensureComposerButton() {
         if (COMPOSER_WATCH_STARTED) return;
         COMPOSER_WATCH_STARTED = true;
