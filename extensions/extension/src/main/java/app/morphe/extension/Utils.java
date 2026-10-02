@@ -17,6 +17,30 @@ public final class Utils {
     private static volatile Context context;
     private static volatile Activity currentActivity;
     private static volatile Application registeredApplication;
+
+    private static final Application.ActivityLifecycleCallbacks ACTIVITY_CALLBACKS =
+            new Application.ActivityLifecycleCallbacks() {
+                @Override public void onActivityCreated(Activity activity, Bundle state) {}
+                @Override public void onActivityStarted(Activity activity) {
+                    currentActivity = activity;
+                    try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
+                }
+                @Override public void onActivityResumed(Activity activity) {
+                    currentActivity = activity;
+                    try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
+                }
+                @Override public void onActivityPaused(Activity activity) {
+                    if (currentActivity == activity) currentActivity = null;
+                }
+                @Override public void onActivityStopped(Activity activity) {
+                    if (currentActivity == activity) currentActivity = null;
+                }
+                @Override public void onActivitySaveInstanceState(Activity activity, Bundle state) {}
+                @Override public void onActivityDestroyed(Activity activity) {
+                    if (currentActivity == activity) currentActivity = null;
+                }
+            };
+
     private Utils() {}
 
     public static void setContext(Context appContext) {
