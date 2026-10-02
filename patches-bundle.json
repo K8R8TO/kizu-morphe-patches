@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-02T19:26:39",
-  "description": "# [1.7.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.6.4...v1.7.0) (2026-10-02)\n\n\n### Bug Fixes\n\n* reattach third-party picker after stream recreation ([e520e0d](https://github.com/K8R8TO/kizu-morphe-patches/commit/e520e0db53061ec412baad9b1f27cef52d828438))\n* restore picker lifecycle and add safe channel points watcher ([163863c](https://github.com/K8R8TO/kizu-morphe-patches/commit/163863c26c52df9fcfd81201c162bb264f4b44f8))\n\n\n### Features\n\n* add safe channel points auto-claim patch ([c439240](https://github.com/K8R8TO/kizu-morphe-patches/commit/c43924090653a5fc21d4a09735ec64ebfa2bab32))",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.0/patches-1.7.0.mpp",
+  "created_at": "2026-10-03T00:00:00",
+  "description": "# [1.7.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.0...v1.7.1) (2026-10-03)\n\n### Bug Fixes\n\n* republish the Twitch Enhancement bundle with the corrected Morphe source metadata for the 1.7.1 maintenance release",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.1/patches-1.7.1.mpp",
   "signature_download_url": "",
-  "version": "1.7.0"
+  "version": "1.7.1"
 }
