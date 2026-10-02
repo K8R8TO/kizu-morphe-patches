@@ -1,3 +1,22 @@
+# [1.6.0](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.5.2...v1.6.0) (2026-10-02)
+
+
+### Bug Fixes
+
+* **twitch:** compare theme against system configuration ([2237594](https://github.com/K8R8TO/kizu-morphe-patches/commit/2237594d6d3e3b2091c300aa60f50f74aa3aeeb8))
+* **twitch:** make injected settings follow active theme mode ([af95031](https://github.com/K8R8TO/kizu-morphe-patches/commit/af950315e3b8d44fe5d27cc797365bced341d906))
+* **twitch:** point auto-claim runtime at Kizu extension ([7e81121](https://github.com/K8R8TO/kizu-morphe-patches/commit/7e81121197ca4118cfdd3de9cc502304ece19125))
+* **twitch:** restore picker discovery imports ([5fb9f80](https://github.com/K8R8TO/kizu-morphe-patches/commit/5fb9f804922f3bb7f533f9446d5f05d30a536d75))
+* **twitch:** stabilize unexpected default theme flips ([cfa059b](https://github.com/K8R8TO/kizu-morphe-patches/commit/cfa059b2f7f655e253b76f55da7d7e5a51faeb05))
+* **twitch:** use native picker presentation and robust composer discovery ([27a94e9](https://github.com/K8R8TO/kizu-morphe-patches/commit/27a94e95cde57653a33bb88f1f034552655d4e37))
+
+
+### Features
+
+* **twitch:** add channel points auto-claim runtime ([304ad7f](https://github.com/K8R8TO/kizu-morphe-patches/commit/304ad7f0ea73e6e1a94ba2c56f4968ef0c8f75e9))
+* **twitch:** add channel points fingerprints ([4550ab9](https://github.com/K8R8TO/kizu-morphe-patches/commit/4550ab93763b3a235de6afc94dc250d08396410b))
+* **twitch:** implement channel points auto-claim ([cdf00df](https://github.com/K8R8TO/kizu-morphe-patches/commit/cdf00df762a23dc7c8d0d70eac4d46c895055eca))
+
 ## [1.5.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.5.1...v1.5.2) (2026-10-02)
 
 

@@ -1,6 +1,21 @@
 {
-  "version": "1.5.2",
+  "version": "1.6.0",
   "patches": [
+    {
+      "name": "Auto claim channel points",
+      "description": "Adds an option to claim the channel points bonus chest automatically on the channel you are watching. It works while chat or the points button is hidden, for example in fullscreen. Streams open in Twitch's native player instead of the new React Native one, which this relies on.",
+      "use": true,
+      "dependencies": [
+        "BytecodePatch",
+        "BytecodePatch"
+      ],
+      "compatiblePackages": {
+        "tv.twitch.android.app": [
+          "31.3.1"
+        ]
+      },
+      "options": []
+    },
     {
       "name": "Twitch Enhancement",
       "description": "Kizu Twitch enhancements: third-party emotes in chat and the native Twitch emote menu, animated emote playback, live ad blocking, appearance controls, privacy controls, and patched-app compatibility.",
