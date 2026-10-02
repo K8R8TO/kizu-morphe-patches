@@ -4,6 +4,7 @@ import android.content.Context;
 import android.app.Activity;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -20,6 +21,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.PopupWindow;
 
 import android.util.Log;
 
@@ -124,7 +126,7 @@ public final class EmotePickerBridge {
 
     private static void installComposerButton(Activity activity) {
         ComposerSlot slot = COMPOSER_SLOT;
-        if (slot != null && slot.isAttached()) return;
+        if (slot != null && slot.isAttached(activity)) return;
         if (slot != null) removeComposerButton();
 
         View nativeButton = findNativePickerButton(activity.getWindow().getDecorView());
@@ -172,8 +174,8 @@ public final class EmotePickerBridge {
 
         TextView thirdParty = new TextView(activity);
         thirdParty.setTag(COMPOSER_BUTTON_TAG);
-        thirdParty.setText("😉");
         thirdParty.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+        thirdParty.setCompoundDrawablesWithIntrinsicBounds(new WinkIconDrawable(dp(activity, 22)), null, null, null);
         thirdParty.setGravity(Gravity.CENTER);
         thirdParty.setContentDescription("Third-party emote picker");
         thirdParty.setClickable(true);
@@ -308,8 +310,8 @@ public final class EmotePickerBridge {
 
     private static void showPicker(Activity activity) {
         PickerState previous = CURRENT;
-        if (previous != null && previous.dialog != null && previous.dialog.isShowing()) {
-            previous.dialog.dismiss();
+        if (previous != null && previous.popup != null && previous.popup.isShowing()) {
+            previous.popup.dismiss();
         }
 
         View input = activity.getCurrentFocus();
@@ -317,7 +319,8 @@ public final class EmotePickerBridge {
 
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(activity, 8), dp(activity, 2), dp(activity, 8), dp(activity, 8));
+        root.setPadding(dp(activity, 8), dp(activity, 8), dp(activity, 8), dp(activity, 8));
+        root.setBackgroundColor(Color.rgb(24, 24, 27));
 
         EditText search = new EditText(activity);
         search.setSingleLine(true);
@@ -344,12 +347,28 @@ public final class EmotePickerBridge {
         root.addView(status, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(activity, 30)));
 
-        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(activity)
-                .setTitle("Kizu Emotes")
-                .setView(root)
-                .create();
+        final PopupWindow popup = new PopupWindow(
+                root,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(activity, 520),
+                true
+        );
+        GradientDrawable background = new GradientDrawable();
+        background.setColor(Color.rgb(24, 24, 27));
+        background.setCornerRadius(dp(activity, 12));
+        popup.setBackgroundDrawable(background);
+        popup.setOutsideTouchable(true);
+        popup.setFocusable(true);
+        popup.setElevation(dp(activity, 10));
+        popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+        popup.setClippingEnabled(true);
 
-        PickerState state = new PickerState(activity, dialog, grid, search, status, input);
+        View anchor = findComposerPickerButton(activity);
+        if (anchor == null) {
+            anchor = activity.getWindow().getDecorView();
+        }
+
+        PickerState state = new PickerState(activity, popup, grid, search, status, input, anchor);
         CURRENT = state;
 
         search.addTextChangedListener(new android.text.TextWatcher() {
@@ -360,14 +379,17 @@ public final class EmotePickerBridge {
             @Override public void afterTextChanged(Editable s) {}
         });
 
-        dialog.setOnDismissListener(d -> {
+        popup.setOnDismissListener(() -> {
             if (CURRENT == state) CURRENT = null;
             stopAnimations(grid);
         });
-        dialog.setOnShowListener(d -> sizeDialog(dialog, activity));
 
-        dialog.show();
-        sizeDialog(dialog, activity);
+        popup.showAsDropDown(
+                anchor,
+                0,
+                -(dp(activity, 520) + anchor.getHeight() + dp(activity, 6)),
+                Gravity.CENTER_HORIZONTAL
+        );
 
         final String channel = EmoteSupport.getCurrentChannelId();
         new Thread(() -> {
@@ -379,7 +401,7 @@ public final class EmotePickerBridge {
             }
             state.entries = entries == null ? java.util.Collections.emptyList() : entries;
             MAIN.post(() -> {
-                if (CURRENT != state || !dialog.isShowing()) return;
+                if (CURRENT != state || !popup.isShowing()) return;
                 status.setText(state.entries.isEmpty()
                         ? "No third-party emotes loaded"
                         : state.entries.size() + " emotes");
@@ -388,11 +410,13 @@ public final class EmotePickerBridge {
         }, "kizu-picker-catalog").start();
     }
 
-    private static void sizeDialog(android.app.AlertDialog dialog, Context context) {
-        Window window = dialog.getWindow();
-        if (window == null) return;
-        window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, dp(context, 520));
-        window.setDimAmount(0.65f);
+    private static View findComposerPickerButton(Activity activity) {
+        ComposerSlot slot = COMPOSER_SLOT;
+        if (slot != null && slot.isAttached(activity)) {
+            View button = slot.wrapper.findViewWithTag(COMPOSER_BUTTON_TAG);
+            if (button != null) return button;
+        }
+        return findNativePickerButton(activity.getWindow().getDecorView());
     }
 
     private static void rebuild(PickerState state) {
@@ -775,23 +799,66 @@ public final class EmotePickerBridge {
                 context.getResources().getDisplayMetrics()));
     }
 
+    private static final class WinkIconDrawable extends Drawable {
+        private final android.graphics.Paint paint = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);
+        private final int size;
+
+        WinkIconDrawable(int size) {
+            this.size = size;
+            paint.setColor(Color.rgb(225, 225, 225));
+            paint.setStyle(android.graphics.Paint.Style.STROKE);
+            paint.setStrokeCap(android.graphics.Paint.Cap.ROUND);
+            paint.setStrokeJoin(android.graphics.Paint.Join.ROUND);
+        }
+
+        @Override public void draw(android.graphics.Canvas canvas) {
+            float s = size;
+            float cx = s / 2f;
+            float cy = s / 2f;
+            float r = s * 0.39f;
+            paint.setStrokeWidth(Math.max(1.6f, s * 0.075f));
+            canvas.drawCircle(cx, cy, r, paint);
+
+            // Open eye.
+            canvas.drawCircle(cx - s * 0.14f, cy - s * 0.08f, s * 0.035f, paint);
+
+            // Wink.
+            canvas.drawLine(cx + s * 0.08f, cy - s * 0.08f,
+                    cx + s * 0.20f, cy - s * 0.08f, paint);
+
+            // Small smile.
+            android.graphics.RectF smile = new android.graphics.RectF(
+                    cx - s * 0.17f, cy + s * 0.02f,
+                    cx + s * 0.17f, cy + s * 0.22f);
+            canvas.drawArc(smile, 20f, 140f, false, paint);
+        }
+
+        @Override public void setAlpha(int alpha) { paint.setAlpha(alpha); }
+        @Override public void setColorFilter(android.graphics.ColorFilter filter) { paint.setColorFilter(filter); }
+        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
+        @Override public int getIntrinsicWidth() { return size; }
+        @Override public int getIntrinsicHeight() { return size; }
+    }
+
     private static final class PickerState {
         final Activity activity;
-        final android.app.AlertDialog dialog;
+        final PopupWindow popup;
         final GridLayout grid;
         final EditText search;
         final TextView status;
         final View input;
+        final View anchor;
         volatile List<Emote> entries = java.util.Collections.emptyList();
 
-        PickerState(Activity activity, android.app.AlertDialog dialog, GridLayout grid,
-                    EditText search, TextView status, View input) {
+        PickerState(Activity activity, PopupWindow popup, GridLayout grid,
+                    EditText search, TextView status, View input, View anchor) {
             this.activity = activity;
-            this.dialog = dialog;
+            this.popup = popup;
             this.grid = grid;
             this.search = search;
             this.status = status;
             this.input = input;
+            this.anchor = anchor;
         }
     }
 
@@ -804,10 +871,10 @@ public final class EmotePickerBridge {
         final int originalWidth;
         final int originalHeight;
 
-        ComposerSlot(ViewGroup parent, LinearLayout wrapper, View nativeButton,
+        ComposerSlot(Activity activity, ViewGroup parent, LinearLayout wrapper, View nativeButton,
                      int originalIndex, ViewGroup.LayoutParams originalParams,
                      int originalWidth, int originalHeight) {
-            this.parent = parent;
+            this.activity = activity;\n            this.parent = parent;
             this.wrapper = wrapper;
             this.nativeButton = nativeButton;
             this.originalIndex = originalIndex;
