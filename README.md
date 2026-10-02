@@ -26,22 +26,6 @@ Internal dependencies are deliberately kept hidden from Morphe's user-facing pat
 
 This project is a derivative work assembled from several open-source projects and public technical sources. We want to be explicit about what is being reused or adapted rather than presenting those parts as original Kizu work.
 
-### 1. Existing Kizu Twitch/UYU implementation
-
-**Repository:** https://github.com/K8R8TO/boost-randnsfw-patch
-
-**Branch used as the Twitch starting point:** `twitch-uyu-settings-shell`
-
-**Used/adapted:**
-
-- The existing Kizu Twitch/UYU settings-shell implementation.
-- The Twitch patch structure and feature-chain organization from that branch.
-- Kizu/UYU settings integration and related runtime support.
-- Existing Twitch login, notification, ads/promotions, privacy and settings patch work that we are rebuilding and repairing for the current Twitch version.
-- Existing patch metadata/build configuration where applicable.
-
-
-
 ### 2. Hooman — `arandomhooman/hoomans-morphe-patches`
 
 **Repository:** https://github.com/arandomhooman/hoomans-morphe-patches
