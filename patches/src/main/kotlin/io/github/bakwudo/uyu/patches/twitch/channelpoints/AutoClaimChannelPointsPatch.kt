@@ -46,9 +46,10 @@ val autoClaimChannelPointsPatch = bytecodePatch(
             it.type == "Ljava/lang/String;" && !AccessFlags.STATIC.isSet(it.accessFlags)
         } ?: throw PatchException("Claim id field not found in $claimType.")
 
-        // Helper added to the provider: report each points update to the extension and claim its
-        // bonus if the extension says so. Keeping the logic in its own method needs no free
-        // registers at the hook.
+        // Keep the Twitch-side hook to one call: it is also our safe lifecycle trigger for
+        // the extension poller. The poller stores the live model object and reuses this helper
+        // every 3 seconds, instead of introducing another provider method or re-entering
+        // getClaim from the update hook itself.
         provider.methods.add(
             ImmutableMethod(
                 provider.type,
@@ -67,6 +68,7 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                     0,
                     """
                         if-eqz p1, :done
+                        invoke-static { p0, p1 }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;Ljava/lang/Object;)V
                         invoke-virtual { p1 }, $COMMUNITY_POINTS_MODEL->getClaim()$claimType
                         move-result-object v0
                         if-eqz v0, :done
@@ -77,7 +79,6 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                         if-eqz v2, :done
                         const/4 v2, 0x0
                         invoke-virtual { p0, v1, v2 }, ${claimMethod.smaliReference}
-                        invoke-static { p0, v1 }, $EXTENSION_CLASS->startPolling(Ljava/lang/Object;Ljava/lang/String;)V
                         :done
                         return-void
                     """,
@@ -113,37 +114,6 @@ val autoClaimChannelPointsPatch = bytecodePatch(
             },
         )
 
-        provider.methods.add(
-            ImmutableMethod(
-                provider.type,
-                "kizuPollClaim",
-                listOf(ImmutableMethodParameter(provider.type, null, null)),
-                "V",
-                AccessFlags.PUBLIC.value or AccessFlags.STATIC.value,
-                null,
-                null,
-                MutableMethodImplementation(4),
-            ).toMutable().apply {
-                addInstructionsWithLabels(
-                    0,
-                    """
-                        invoke-virtual { p0 }, $COMMUNITY_POINTS_MODEL->getClaim()$claimType
-                        move-result-object v0
-                        if-eqz v0, :done
-                        iget-object v1, v0, $claimType->${claimIdField.name}:Ljava/lang/String;
-                        if-eqz v1, :done
-                        invoke-static { v1 }, $EXTENSION_CLASS->retryAllowed(Ljava/lang/String;)Z
-                        move-result v2
-                        if-eqz v2, :done
-                        const/4 v2, 0x0
-                        invoke-virtual { p0, v1, v2 }, ${claimMethod.smaliReference}
-                        :done
-                        return-void
-                    """,
-                )
-            },
-        )
-
         val updateFingerprint = communityPointsModelUpdateFingerprint(provider.type)
         updateFingerprint.method.apply {
             val match = updateFingerprint.instructionMatches.singleOrNull()
@@ -162,11 +132,6 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                 match.index + 1,
                 "invoke-static { v$providerRegister, v$modelRegister }, " +
                     "${provider.type}->$HELPER_METHOD_NAME(${provider.type}$COMMUNITY_POINTS_MODEL)V",
-            )
-            addInstruction(
-                match.index + 2,
-                "invoke-static { v$providerRegister }, " +
-                    "$EXTENSION_CLASS->startPolling(Ljava/lang/Object;)V",
             )
         }
     }
