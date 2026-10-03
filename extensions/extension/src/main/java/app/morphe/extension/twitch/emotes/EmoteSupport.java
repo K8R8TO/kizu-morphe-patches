@@ -250,7 +250,7 @@ public final class EmoteSupport {
                 try {
                     java.time.Instant instant = java.time.Instant.parse(raw);
                     millis = instant.toEpochMilli();
-                } catch (Throwable ignored) {}
+                } catch (Throwable parseIgnored) {}
             }
         }
         if (millis <= 0L) return null;
