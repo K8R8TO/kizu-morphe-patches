@@ -1,3 +1,9 @@
+# [1.8.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.0...v1.8.1) (2026-10-03)
+
+### Features
+
+* consolidate 7TV, BTTV and FFZ controls into one `3rd party emotes` setting, enabled by default
+
 # [1.7.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.5...v1.7.6) (2026-10-03)
 
 ### Features
