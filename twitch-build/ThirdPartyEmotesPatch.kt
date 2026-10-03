@@ -1,6 +1,5 @@
 package io.github.bakwudo.uyu.patches.twitch.emotes
 
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
@@ -44,12 +43,41 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
             throw PatchException("Kizu emotes: channel connection constructor has no return-void.")
         }
 
-        channelConstructor.addInstructions(
+        channelConstructor.addInstruction(
             returnIndex,
-            """
-                invoke-static {p1, p2}, $EXTENSION->onChannelChanged(Ljava/lang/String;Ljava/lang/String;)V
-                invoke-static {}, $PICKER_BRIDGE->ensureComposerButton()V
-            """.trimIndent(),
+            BuilderInstruction35c(
+                Opcodes.INVOKE_STATIC,
+                2,
+                1,
+                2,
+                0,
+                0,
+                0,
+                ImmutableMethodReference(
+                    EXTENSION,
+                    "onChannelChanged",
+                    listOf("Ljava/lang/String;", "Ljava/lang/String;"),
+                    "V",
+                ),
+            ),
+        )
+        channelConstructor.addInstruction(
+            returnIndex + 1,
+            BuilderInstruction35c(
+                Opcodes.INVOKE_STATIC,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                ImmutableMethodReference(
+                    PICKER_BRIDGE,
+                    "ensureComposerButton",
+                    emptyList(),
+                    "V",
+                ),
+            ),
         )
 
         // Locate Twitch's chat-row binder structurally. R8 class/method names are
@@ -114,20 +142,23 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         }
 
         val textViewRegister = registers.registerC
+        // Pass Twitch's actual chat message model so the extension can render timestamps.
+        // Build the invoke directly instead of using addInstructions/InlineSmaliCompiler;
+        // Morphe Patcher 1.15.0 can fail compiling otherwise-valid inline smali here.
         bindMethod.addInstruction(
             textCall.index + 1,
             BuilderInstruction35c(
                 Opcodes.INVOKE_STATIC,
+                2,
                 1,
                 textViewRegister,
-                0,
                 0,
                 0,
                 0,
                 ImmutableMethodReference(
                     EXTENSION,
                     "bind",
-                    listOf(TEXT_VIEW),
+                    listOf("Ljava/lang/Object;", TEXT_VIEW),
                     "V",
                 ),
             ),
