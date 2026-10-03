@@ -332,7 +332,7 @@ public final class EmoteSupport {
                 builder = new SpannableStringBuilder(original);
             }
             builder.setSpan(
-                    new CenteredImageSpan(textView, drawable),
+                    new CenteredImageSpan(textView, drawable, emote.zeroWidth),
                     start,
                     end,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE

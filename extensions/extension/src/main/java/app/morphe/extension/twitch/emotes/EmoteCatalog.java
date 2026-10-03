@@ -226,7 +226,7 @@ final class EmoteCatalog {
         }
         for (int index = 0; index < emotes.length(); index++) {
             JSONObject item = emotes.optJSONObject(index);
-            if (item == null || (item.optInt("flags", 0) & 1) != 0) {
+            if (item == null) {
                 continue;
             }
             String name = item.optString("name", "");
@@ -235,6 +235,8 @@ final class EmoteCatalog {
             String hostUrl = host == null ? "" : host.optString("url", "");
             JSONArray files = host == null ? null : host.optJSONArray("files");
             String fileName = chooseSevenTvFile(files, data != null && data.optBoolean("animated", false));
+            boolean zeroWidth = (item.optInt("flags", 0) & 1) != 0
+                    || (data != null && (data.optInt("flags", 0) & 256) != 0);
             if (name.isEmpty() || hostUrl.isEmpty() || fileName == null) {
                 continue;
             }
@@ -244,7 +246,13 @@ final class EmoteCatalog {
                 hostUrl = "https://" + hostUrl;
             }
             String url = hostUrl.endsWith("/") ? hostUrl + fileName : hostUrl + "/" + fileName;
-            target.put(name, new Emote(name, url, (data != null && data.optBoolean("animated", false)) || fileName.toLowerCase().endsWith(".gif")));
+            target.put(name, new Emote(
+                    name,
+                    url,
+                    (data != null && data.optBoolean("animated", false))
+                            || fileName.toLowerCase().endsWith(".gif"),
+                    zeroWidth
+            ));
         }
     }
 

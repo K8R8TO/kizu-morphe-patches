@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-03T18:00:00",
-  "description": "# [1.8.2] Landscape chat size, width and opacity controls",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.2/patches-1.8.2.mpp",
+  "created_at": "2026-10-03T18:08:00",
+  "description": "# [1.8.3] Zero-width 7TV emotes",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.3/patches-1.8.3.mpp",
   "signature_download_url": "",
-  "version": "1.8.2"
+  "version": "1.8.3"
 }
