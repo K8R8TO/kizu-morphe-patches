@@ -1,3 +1,10 @@
+# [1.8.1.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.3...v1.8.1.4) (2026-10-03)
+
+### Fixes
+
+* remove the remaining InlineSmaliCompiler dependency from Twitch chat/emote injection
+* preserve chat timestamp message-model binding while using direct dexlib instructions
+
 # [1.8.1.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.2...v1.8.1.3) (2026-10-03)
 
 ### Fixes
