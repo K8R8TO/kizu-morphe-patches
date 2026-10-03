@@ -47,7 +47,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         channelConstructor.instructions.add(
             returnIndex,
             BuilderInstruction35c(
-                Opcodes.INVOKE_STATIC,
+                Opcode.INVOKE_STATIC,
                 2, 1, 2, 0, 0, 0,
                 ImmutableMethodReference(
                     EXTENSION,
@@ -60,7 +60,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         channelConstructor.instructions.add(
             returnIndex + 1,
             BuilderInstruction35c(
-                Opcodes.INVOKE_STATIC,
+                Opcode.INVOKE_STATIC,
                 2, 1, 2, 0, 0, 0,
                 ImmutableMethodReference(
                     CHANNEL_POINTS,
@@ -73,7 +73,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         channelConstructor.instructions.add(
             returnIndex + 2,
             BuilderInstruction35c(
-                Opcodes.INVOKE_STATIC,
+                Opcode.INVOKE_STATIC,
                 0, 0, 0, 0, 0, 0,
                 ImmutableMethodReference(
                     PICKER_BRIDGE,
@@ -149,7 +149,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         bindMethod.instructions.add(
             textCall.index + 1,
             BuilderInstruction35c(
-                Opcodes.INVOKE_STATIC,
+                Opcode.INVOKE_STATIC,
                 2, 1, textViewRegister, 0, 0, 0,
                 ImmutableMethodReference(
                     EXTENSION,

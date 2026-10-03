@@ -1,3 +1,9 @@
+# [1.8.1.9](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.8...v1.8.1.9) (2026-10-03)
+
+### Fixes
+
+* correct the Opcode enum references in the direct Twitch bytecode injection
+
 # [1.8.1.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.7...v1.8.1.8) (2026-10-03)
 
 ### Fixes
