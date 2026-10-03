@@ -15,13 +15,25 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.WeakHashMap;
 
 import io.github.bakwudo.uyu.extension.Utils;
+import io.github.bakwudo.uyu.extension.settings.Settings;
 
 @SuppressWarnings("unused")
 public final class EmoteSupport {
     private static final Object LOCK = new Object();
+    private static final Pattern TIMESTAMP_TEXT = Pattern.compile(
+            "(?:timestamp|createdAt|sentAt|time)\\s*=\\s*([^,}\\)]+)",
+            Pattern.CASE_INSENSITIVE
+    );
     private static final WeakHashMap<TextView, BoundMessage> BOUND_MESSAGES = new WeakHashMap<>();
     private static final EmoteCatalog CATALOG = new EmoteCatalog(EmoteSupport::refreshCatalog);
     private static final EmoteImageLoader IMAGES = new EmoteImageLoader(EmoteSupport::refreshImage);
@@ -121,15 +133,23 @@ public final class EmoteSupport {
     // through the adapter and takes out the whole chat list and message input. This hook must never
     // throw. (#196)
     public static void bind(TextView textView) {
-        bind(textView, null);
+        bind(null, textView, null);
+    }
+
+    public static void bind(Object messageModel, TextView textView) {
+        bind(messageModel, textView, null);
     }
 
     public static void bind(TextView textView, String sourceChannelId) {
+        bind(null, textView, sourceChannelId);
+    }
+
+    public static void bind(Object messageModel, TextView textView, String sourceChannelId) {
         if (textView == null) {
             return;
         }
         try {
-            bindInternal(textView, sourceChannelId);
+            bindInternal(messageModel, textView, sourceChannelId);
         } catch (Throwable ignored) {
             forget(textView);
         }
@@ -145,7 +165,7 @@ public final class EmoteSupport {
         }
     }
 
-    private static void bindInternal(TextView textView, String sourceChannelId) {
+    private static void bindInternal(Object messageModel, TextView textView, String sourceChannelId) {
         CharSequence current = textView.getText();
         synchronized (LOCK) {
             BOUND_MESSAGES.remove(textView);
@@ -163,13 +183,84 @@ public final class EmoteSupport {
             channelId = lastRoomId;
         }
 
-        BoundMessage message = new BoundMessage(SpannedString.valueOf(current), channelId);
+        CharSequence timestamped = applyTimestamp(current, messageModel);
+        BoundMessage message = new BoundMessage(SpannedString.valueOf(timestamped), channelId);
         synchronized (LOCK) {
             BOUND_MESSAGES.put(textView, message);
         }
         textView.addOnAttachStateChangeListener(VIEW_LIFECYCLE);
         CATALOG.ensureLoaded(textView.getContext(), channelId);
         render(textView, message);
+    }
+
+    private static CharSequence applyTimestamp(CharSequence original, Object messageModel) {
+        if (!Settings.CHAT_TIMESTAMPS.get() || original == null || original.length() == 0) {
+            return original;
+        }
+        try {
+            String timestamp = extractTimestamp(messageModel);
+            if (timestamp == null || timestamp.isEmpty()) return original;
+            String plain = original.toString();
+            if (plain.matches("^\\s*\\[?\\d{1,2}:\\d{2}(?:[:.]\\d{2})?(?:\\s?[APap][Mm])?\\]?\\s+.*$")) {
+                return original;
+            }
+            return timestamp + "  " + original;
+        } catch (Throwable ignored) {
+            return original;
+        }
+    }
+
+    private static String extractTimestamp(Object model) {
+        if (model == null) return null;
+        String[] names = {"getTimestamp", "timestamp", "getCreatedAt", "createdAt", "getSentAt", "sentAt", "getTime", "time"};
+        for (String name : names) {
+            try {
+                Method method = model.getClass().getMethod(name);
+                String value = formatTimestampValue(method.invoke(model));
+                if (value != null) return value;
+            } catch (Throwable ignored) {}
+        }
+        for (String name : names) {
+            try {
+                Field field = model.getClass().getDeclaredField(name);
+                field.setAccessible(true);
+                String value = formatTimestampValue(field.get(model));
+                if (value != null) return value;
+            } catch (Throwable ignored) {}
+        }
+        try {
+            Matcher matcher = TIMESTAMP_TEXT.matcher(String.valueOf(model));
+            if (matcher.find()) return formatTimestampValue(matcher.group(1).trim());
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
+    private static String formatTimestampValue(Object value) {
+        if (value == null) return null;
+        long millis = -1L;
+        if (value instanceof Number) {
+            long raw = ((Number) value).longValue();
+            millis = raw < 100000000000L ? raw * 1000L : raw;
+        } else {
+            String raw = String.valueOf(value).trim();
+            try {
+                long number = Long.parseLong(raw);
+                millis = number < 100000000000L ? number * 1000L : number;
+            } catch (NumberFormatException ignored) {
+                try {
+                    java.time.Instant instant = java.time.Instant.parse(raw);
+                    millis = instant.toEpochMilli();
+                } catch (Throwable ignored) {}
+            }
+        }
+        if (millis <= 0L) return null;
+        try {
+            String format = Settings.CHAT_TIMESTAMP_FORMAT.get();
+            String pattern = "h12".equalsIgnoreCase(format) ? "h:mm a" : "HH:mm";
+            return "[" + new SimpleDateFormat(pattern, Locale.getDefault()).format(new Date(millis)) + "]";
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private static void render(TextView textView, BoundMessage message) {
