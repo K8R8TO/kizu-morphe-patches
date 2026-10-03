@@ -24,6 +24,7 @@ import app.morphe.extension.twitch.emotes.EmoteSupport;
 import app.morphe.extension.channelpoints.ChannelPoints;
 import app.morphe.extension.twitch.emotes.EmotePickerBridge;
 import io.github.bakwudo.uyu.extension.settings.Settings;
+import io.github.bakwudo.uyu.extension.danmaku.LandscapeChatPatch;
 
 public final class Utils {
     private static final String TAG = "kizu";
@@ -67,6 +68,7 @@ public final class Utils {
                 @Override public void onActivityStarted(Activity activity) {
                     currentActivity = activity;
                     try { DefaultFollowing.onActivityStarted(activity); } catch (Throwable ignored) {}
+                    try { LandscapeChatPatch.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
                 }
 
