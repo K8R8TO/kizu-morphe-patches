@@ -10,7 +10,7 @@ package app.morphe.extension.settings;
 public final class Settings {
     // Original uyu compatibility settings.
     public static final BooleanSetting AUTO_CLAIM_CHANNEL_POINTS =
-            new BooleanSetting("auto_claim_channel_points", false);
+            new BooleanSetting("auto_claim_channel_points", true);
 
     public static final BooleanSetting HIDE_SUBSCRIBE_BUTTONS =
             new BooleanSetting("hide_subscribe_buttons", false);
