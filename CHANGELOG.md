@@ -1,3 +1,10 @@
+# [1.8.1.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1...v1.8.1.2) (2026-10-03)
+
+### Features
+
+* default Twitch navigation to Following on app open
+* render chat timestamps from the bound Twitch chat message model
+
 # [1.8.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.0...v1.8.1) (2026-10-03)
 
 ### Features
