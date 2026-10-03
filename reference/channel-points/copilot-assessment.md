@@ -52,3 +52,15 @@ The PurpleTV GraphQL design is the preferred reference:
 10. Keep all network work off the main/UI thread.
 
 This design also naturally ignores normal +10 watch-time earnings because it only acts when Twitch reports an `availableClaim`.
+
+
+## Follow-up after the GraphQL rewrite
+
+The repository now follows the GraphQL direction recommended by the PurpleTV evidence:
+- The previous UI scanner is no longer started.
+- The new claimant lives in `app.morphe.extension.channelpoints.ChannelPoints`.
+- Current channel ID/login still come from the stable `ChannelChatConnectionKey(String,String)` constructor.
+- Twitch 31.3.1's exact inline GraphQL query/mutation text is used first.
+- PurpleTV's persisted-query hashes remain as fallbacks.
+- The claimant is enabled by default.
+- No provider/model lifecycle hook is required to start polling.
