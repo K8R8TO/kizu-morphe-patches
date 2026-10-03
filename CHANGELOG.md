@@ -1,3 +1,9 @@
+# [1.8.1.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.5...v1.8.1.6) (2026-10-03)
+
+### Fixes
+
+* rebuild Twitch 31.3.1 chat binder injection from the direct dexlib implementation
+
 # [1.8.1.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.4...v1.8.1.5) (2026-10-03)
 
 ### Fixes
