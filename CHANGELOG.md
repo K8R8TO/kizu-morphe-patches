@@ -1,4 +1,11 @@
-# [1.8.1.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1...v1.8.1.2) (2026-10-03)
+# [1.8.1.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.2...v1.8.1.3) (2026-10-03)
+
+### Fixes
+
+* fix Twitch 31.3.1 chat binder injection with Morphe Patcher 1.15.0
+* align the patch build dependency with Morphe Patcher 1.15.0
+
+\n# [1.8.1.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1...v1.8.1.2) (2026-10-03)
 
 ### Features
 
