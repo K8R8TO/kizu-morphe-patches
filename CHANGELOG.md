@@ -1,3 +1,9 @@
+# [1.8.1.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.7...v1.8.1.8) (2026-10-03)
+
+### Fixes
+
+* use the actual Morphe/dexlib instruction list API and Opcode enum
+
 # [1.8.1.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.6...v1.8.1.7) (2026-10-03)
 
 ### Fixes

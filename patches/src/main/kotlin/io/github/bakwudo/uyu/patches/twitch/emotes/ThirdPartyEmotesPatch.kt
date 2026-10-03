@@ -3,7 +3,7 @@ package io.github.bakwudo.uyu.patches.twitch.emotes
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
-import com.android.tools.smali.dexlib2.Opcodes
+import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction35c
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import com.android.tools.smali.dexlib2.iface.Method
@@ -44,7 +44,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
             throw PatchException("Kizu emotes: channel connection constructor has no return-void.")
         }
 
-        channelConstructor.addInstruction(
+        channelConstructor.instructions.add(
             returnIndex,
             BuilderInstruction35c(
                 Opcodes.INVOKE_STATIC,
@@ -57,7 +57,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
                 ),
             ),
         )
-        channelConstructor.addInstruction(
+        channelConstructor.instructions.add(
             returnIndex + 1,
             BuilderInstruction35c(
                 Opcodes.INVOKE_STATIC,
@@ -70,7 +70,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
                 ),
             ),
         )
-        channelConstructor.addInstruction(
+        channelConstructor.instructions.add(
             returnIndex + 2,
             BuilderInstruction35c(
                 Opcodes.INVOKE_STATIC,
@@ -146,7 +146,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         }
 
         val textViewRegister = registers.registerC
-        bindMethod.addInstruction(
+        bindMethod.instructions.add(
             textCall.index + 1,
             BuilderInstruction35c(
                 Opcodes.INVOKE_STATIC,
