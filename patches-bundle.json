@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-03T14:25:00",
-  "description": "# [1.7.17](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.16...v1.7.17) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* capture the Channel Points balance before the +50 claim, use a stable balance view for verification, show a guaranteed in-app status message, and dismiss the actual clickable claim control after verification",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.17/patches-1.7.17.mpp",
+  "created_at": "2026-10-03T15:20:00",
+  "description": "# [1.7.18](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.17...v1.7.18) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* restore the proven 3-second Channel Points watcher and make status/bonus-control handling non-blocking",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.18/patches-1.7.18.mpp",
   "signature_download_url": "",
-  "version": "1.7.17"
+  "version": "1.7.18"
 }
