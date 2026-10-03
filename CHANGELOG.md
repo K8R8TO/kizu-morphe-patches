@@ -1,3 +1,9 @@
+# [1.8.1.10](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.9...v1.8.1.10) (2026-10-03)
+
+### Fixes
+
+* use Morphe's supported MutableMethod.addInstruction API instead of mutating the exposed list
+
 # [1.8.1.9](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.8...v1.8.1.9) (2026-10-03)
 
 ### Fixes
