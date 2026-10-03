@@ -19,6 +19,7 @@ import io.github.bakwudo.uyu.patches.util.smaliReference
 
 private const val EXTENSION_CLASS = "$EXTENSION_PACKAGE/twitch/channelpoints/AutoClaimChannelPointsPatch;"
 private const val HELPER_METHOD_NAME = "kizuAutoClaim"
+private const val RETRY_METHOD_NAME = "kizuRetryClaim"
 
 @Suppress("unused")
 val autoClaimChannelPointsPatch = bytecodePatch(
@@ -83,6 +84,35 @@ val autoClaimChannelPointsPatch = bytecodePatch(
                 )
             },
         )
+        provider.methods.add(
+            ImmutableMethod(
+                provider.type,
+                RETRY_METHOD_NAME,
+                listOf(
+                    ImmutableMethodParameter(provider.type, null, null),
+                    ImmutableMethodParameter("Ljava/lang/String;", null, null),
+                ),
+                "V",
+                AccessFlags.PUBLIC.value or AccessFlags.STATIC.value,
+                null,
+                null,
+                MutableMethodImplementation(2),
+            ).toMutable().apply {
+                addInstructionsWithLabels(
+                    0,
+                    """
+                        invoke-static { p1 }, $EXTENSION_CLASS->retryAllowed(Ljava/lang/String;)Z
+                        move-result v0
+                        if-eqz v0, :done
+                        const/4 v0, 0x0
+                        invoke-virtual { p0, p1, v0 }, ${claimMethod.smaliReference}
+                        :done
+                        return-void
+                    """,
+                )
+            },
+        )
+
         val updateFingerprint = communityPointsModelUpdateFingerprint(provider.type)
         updateFingerprint.method.apply {
             val match = updateFingerprint.instructionMatches.singleOrNull()
