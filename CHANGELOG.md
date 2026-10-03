@@ -1,3 +1,9 @@
+# [1.8.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.4...v1.8.5) (2026-10-04)
+
+### Fixes
+
+* anchor zero-width emote images to the preceding emote's trailing edge
+
 # [1.8.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.3...v1.8.4) (2026-10-03)
 
 ### Fixes

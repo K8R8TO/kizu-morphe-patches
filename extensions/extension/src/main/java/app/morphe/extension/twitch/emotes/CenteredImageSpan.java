@@ -76,8 +76,9 @@ final class CenteredImageSpan extends DynamicDrawableSpan {
         paint.getFontMetricsInt(paintMetrics);
         int textCenter = baseline + (paintMetrics.ascent + paintMetrics.descent) / 2;
         int drawableTop = textCenter - drawable.getBounds().height() / 2;
+        float drawX = zeroWidth ? x - drawable.getBounds().width() : x;
         canvas.save();
-        canvas.translate(x, drawableTop);
+        canvas.translate(drawX, drawableTop);
         drawable.draw(canvas);
         canvas.restore();
     }
