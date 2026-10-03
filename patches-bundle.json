@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-03T13:00:00",
-  "description": "# [1.7.12](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.11...v1.7.12) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* keep Twitch chat-safe auto-claim polling on the existing channel-points model hook\\n* poll the exact live model object to avoid disturbing the displayed points balance",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.12/patches-1.7.12.mpp",
+  "description": "# [1.7.13](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.12...v1.7.13) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* keep the Twitch chat path identical to 1.7.11 while moving auto-claim retries to a delayed 3-second poll\\n* reuse the proven kizuAutoClaim helper for pending bonus detection",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.13/patches-1.7.13.mpp",
   "signature_download_url": "",
-  "version": "1.7.12"
+  "version": "1.7.13"
 }
