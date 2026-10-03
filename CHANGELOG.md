@@ -1,3 +1,9 @@
+# [1.8.1.12](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.11...v1.8.1.12) (2026-10-03)
+
+### Fixes
+
+* target Twitch's native Home tab strip for a reliable Following default
+
 # [1.8.1.10](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.9...v1.8.1.10) (2026-10-03)
 
 ### Fixes

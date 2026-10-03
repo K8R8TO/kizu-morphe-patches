@@ -10,97 +10,169 @@ import android.widget.TextView;
 import java.util.WeakHashMap;
 
 /**
- * Selects Twitch's existing Following destination once when an Activity first opens.
- * This deliberately uses only the native view hierarchy and never changes Twitch navigation state.
+ * Selects Twitch's native Home -> Following tab once when a Home activity first opens.
+ *
+ * The Home tab strip is identified by Twitch resource entry names rather than screen coordinates.
+ * This is substantially more reliable than looking for any TextView whose text happens to be
+ * "Following": the actual tab view owns the click behavior and Twitch's tab controller updates
+ * its selection state.
  */
 public final class DefaultFollowing {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final WeakHashMap<Activity, Boolean> SCHEDULED = new WeakHashMap<>();
-    private static final int MAX_ATTEMPTS = 20;
-    private static final long RETRY_MS = 500L;
 
-    private DefaultFollowing() {}
+    private static final String[] TAB_STRIP_IDS = {
+            "tab_layout",
+            "tab_layout_no_tab_width"
+    };
+
+    private DefaultFollowing() {
+    }
 
     public static void onActivityStarted(Activity activity) {
+        schedule(activity);
+    }
+
+    private static void schedule(final Activity activity) {
         if (activity == null) return;
         synchronized (SCHEDULED) {
             if (SCHEDULED.containsKey(activity)) return;
             SCHEDULED.put(activity, Boolean.TRUE);
         }
-        attempt(activity, 0);
-    }
 
-    private static void attempt(final Activity activity, final int attempt) {
-        MAIN.postDelayed(new Runnable() {
-            @Override public void run() {
-                try {
-                    if (activity.isFinishing() || activity.isDestroyed()) return;
-                    View root = activity.getWindow().getDecorView();
-                    if (selectFollowing(root)) return;
-                    if (attempt + 1 < MAX_ATTEMPTS) {
-                        attempt(activity, attempt + 1);
-                    }
-                } catch (Throwable ignored) {
-                    if (attempt + 1 < MAX_ATTEMPTS) {
-                        attempt(activity, attempt + 1);
-                    }
-                }
-            }
-        }, attempt == 0 ? 900L : RETRY_MS);
-    }
-
-    private static boolean selectFollowing(View root) {
-        if (!(root instanceof ViewGroup)) return false;
-        int height = root.getHeight();
-        if (height <= 0) return false;
-        int[] rootLocation = new int[2];
-        root.getLocationOnScreen(rootLocation);
-        return findFollowing((ViewGroup) root, height, rootLocation[1]);
-    }
-
-    private static boolean findFollowing(ViewGroup group, int rootHeight, int rootTopOnScreen) {
-        for (int i = 0; i < group.getChildCount(); i++) {
-            View child = group.getChildAt(i);
-            if (child == null || child.getVisibility() != View.VISIBLE || !child.isShown()) continue;
-
-            if (child instanceof TextView) {
-                TextView textView = (TextView) child;
-                CharSequence text = textView.getText();
-                CharSequence description = child.getContentDescription();
-                boolean isFollowing = (text != null && "following".equalsIgnoreCase(text.toString().trim()))
-                        || (description != null && "following".equalsIgnoreCase(description.toString().trim()));
-
-                if (isFollowing && isInLowerNavigation(child, rootHeight, rootTopOnScreen)) {
-                    if (isSelected(child)) return true;
-                    View target = nearestClickable(child);
+        // The Home page is populated asynchronously. Try through the whole startup window rather
+        // than assuming the tab strip exists at a fixed delay.
+        long[] delays = {500L, 1000L, 1800L, 3000L, 5000L, 8000L};
+        for (final long delay : delays) {
+            MAIN.postDelayed(new Runnable() {
+                @Override
+                public void run() {
                     try {
-                        if (target != null && target.isEnabled() && target.performClick()) return true;
-                        if (child.isEnabled() && child.performClick()) return true;
-                    } catch (Throwable ignored) {}
+                        if (activity.isFinishing() || activity.isDestroyed()) return;
+                        if (selectFollowing(activity)) {
+                            return;
+                        }
+                    } catch (Throwable ignored) {
+                    }
                 }
-            }
+            }, delay);
+        }
+    }
 
-            if (child instanceof ViewGroup && findFollowing((ViewGroup) child, rootHeight, rootTopOnScreen)) {
+    private static boolean selectFollowing(Activity activity) {
+        View root = activity.getWindow().getDecorView();
+        View strip = findTabStrip(root);
+        if (strip == null) return false;
+
+        if (!(strip instanceof ViewGroup)) return false;
+        ViewGroup stripGroup = (ViewGroup) strip;
+        if (stripGroup.getChildCount() == 0) return false;
+
+        View rowView = stripGroup.getChildAt(0);
+        if (!(rowView instanceof ViewGroup)) return false;
+        ViewGroup row = (ViewGroup) rowView;
+
+        String followingLabel = getStringByEntryName(activity, "following");
+        if (followingLabel == null) followingLabel = "following";
+
+        View followingTab = null;
+        for (int i = 0; i < row.getChildCount(); i++) {
+            View tab = row.getChildAt(i);
+            String caption = firstCaption(tab);
+            if (caption != null && followingLabel.equalsIgnoreCase(caption.trim())) {
+                followingTab = tab;
+                break;
+            }
+        }
+
+        if (followingTab == null) return false;
+        if (isSelected(followingTab)) return true;
+
+        // This is Twitch's actual tab container. Clicking it lets Twitch's own navigation
+        // controller perform the transition and update the selected state.
+        try {
+            View target = nearestClickable(followingTab);
+            if (target != null && target.isEnabled() && target.performClick()) {
                 return true;
             }
+            if (followingTab.isEnabled() && followingTab.performClick()) {
+                return true;
+            }
+        } catch (Throwable ignored) {
         }
-        return false;
+        return isSelected(followingTab);
     }
 
-    private static boolean isInLowerNavigation(View view, int rootHeight, int rootTopOnScreen) {
+    private static View findTabStrip(View root) {
+        if (root == null) return null;
+        View[] found = new View[1];
+        walk(root, new ViewVisitor() {
+            @Override
+            public void visit(View view) {
+                if (found[0] != null) return;
+                if (view.getVisibility() != View.VISIBLE || !view.isShown()) return;
+
+                String entry = resourceEntryName(view);
+                if (entry != null) {
+                    for (String candidate : TAB_STRIP_IDS) {
+                        if (candidate.equals(entry)) {
+                            found[0] = view;
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+        return found[0];
+    }
+
+    private static String resourceEntryName(View view) {
         try {
-            int[] location = new int[2];
-            view.getLocationOnScreen(location);
-            int centerY = location[1] - rootTopOnScreen + (view.getHeight() / 2);
-            return centerY >= (rootHeight * 55) / 100;
+            if (view.getId() == View.NO_ID) return null;
+            return view.getResources().getResourceEntryName(view.getId());
         } catch (Throwable ignored) {
-            return false;
+            return null;
         }
+    }
+
+    private interface ViewVisitor {
+        void visit(View view);
+    }
+
+    private static void walk(View root, ViewVisitor visitor) {
+        visitor.visit(root);
+        if (!(root instanceof ViewGroup)) return;
+
+        ViewGroup group = (ViewGroup) root;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            walk(group.getChildAt(i), visitor);
+        }
+    }
+
+    private static String firstCaption(View view) {
+        if (view instanceof TextView) {
+            CharSequence text = ((TextView) view).getText();
+            if (text != null && text.length() > 0) return text.toString();
+        }
+
+        CharSequence contentDescription = view.getContentDescription();
+        if (contentDescription != null && contentDescription.length() > 0) {
+            return contentDescription.toString();
+        }
+
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                String nested = firstCaption(group.getChildAt(i));
+                if (nested != null && !nested.trim().isEmpty()) return nested;
+            }
+        }
+        return null;
     }
 
     private static boolean isSelected(View view) {
         View current = view;
-        for (int i = 0; i < 5 && current != null; i++) {
+        for (int i = 0; i < 8 && current != null; i++) {
             if (current.isSelected()) return true;
             if (!(current.getParent() instanceof View)) break;
             current = (View) current.getParent();
@@ -110,10 +182,23 @@ public final class DefaultFollowing {
 
     private static View nearestClickable(View view) {
         View current = view;
-        for (int i = 0; i < 6 && current != null; i++) {
+        for (int i = 0; i < 8 && current != null; i++) {
             if (current.isClickable()) return current;
             if (!(current.getParent() instanceof View)) break;
             current = (View) current.getParent();
+        }
+        return null;
+    }
+
+    private static String getStringByEntryName(Activity activity, String entryName) {
+        try {
+            int id = activity.getResources().getIdentifier(
+                    entryName,
+                    "string",
+                    activity.getPackageName()
+            );
+            if (id != 0) return activity.getResources().getString(id).trim();
+        } catch (Throwable ignored) {
         }
         return null;
     }
