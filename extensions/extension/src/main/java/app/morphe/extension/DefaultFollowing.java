@@ -23,7 +23,7 @@ public final class DefaultFollowing {
 
     public static void onActivityStarted(Activity activity) {
         if (activity == null) return;
-        synchronized (ATTEMPTED) {
+        synchronized (SCHEDULED) {
             if (SCHEDULED.containsKey(activity)) return;
             SCHEDULED.put(activity, Boolean.TRUE);
         }
