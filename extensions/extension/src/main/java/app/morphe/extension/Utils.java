@@ -151,6 +151,38 @@ public final class Utils {
         }
     }
 
+    /**
+     * Re-requests a normal Android redraw/layout after Twitch processes the claim.
+     * This is deliberately view-only: it does not hide/remove the control or touch Twitch
+     * models, so a failed claim cannot leave the UI in a fabricated state.
+     */
+    private static void scheduleClaimUiRefresh(final View claimedView) {
+        Runnable refresh = new Runnable() {
+            @Override public void run() {
+                refreshClaimUi(claimedView);
+            }
+        };
+        claimedView.postDelayed(refresh, 350L);
+        claimedView.postDelayed(refresh, 900L);
+    }
+
+    private static void refreshClaimUi(View view) {
+        if (view == null || view.getVisibility() != View.VISIBLE) return;
+
+        View current = view;
+        while (current != null) {
+            try {
+                current.refreshDrawableState();
+                current.invalidate();
+                current.requestLayout();
+            } catch (Throwable ignored) {
+            }
+
+            if (!(current.getParent() instanceof View)) break;
+            current = (View) current.getParent();
+        }
+    }
+
     private static boolean isClaimControl(View view) {
         CharSequence text = null;
         CharSequence description = view.getContentDescription();
