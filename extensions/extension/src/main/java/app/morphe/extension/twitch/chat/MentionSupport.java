@@ -2,6 +2,9 @@ package app.morphe.extension.twitch.chat;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
+import android.os.SystemClock;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -30,8 +33,12 @@ public final class MentionSupport {
     private static final Object LOCK = new Object();
     private static final Map<TextView, Object> MODELS =
             Collections.synchronizedMap(new java.util.WeakHashMap<TextView, Object>());
+    private static final Map<TextView, Object> SOUND_MODELS =
+            Collections.synchronizedMap(new java.util.WeakHashMap<TextView, Object>());
+    private static volatile long lastSoundAtMs = Long.MIN_VALUE;
+    private static ToneGenerator toneGenerator;
 
-    /** Semi-transparent default; feature 2 will make this user-configurable. */
+    /** Default highlight kept for backwards compatibility with the first mention build. */
     public static final int DEFAULT_HIGHLIGHT_COLOR = 0x4D9146FF;
 
     private static final String LIVE_MESSAGE_PREFIX = "LiveChatMessage(";
@@ -79,6 +86,7 @@ public final class MentionSupport {
     public static void bind(Object messageModel, TextView textView) {
         if (textView == null) return;
         synchronized (LOCK) {
+            SOUND_MODELS.remove(textView);
             if (messageModel == null) {
                 MODELS.remove(textView);
             } else {
@@ -91,6 +99,7 @@ public final class MentionSupport {
         if (textView == null) return;
         synchronized (LOCK) {
             MODELS.remove(textView);
+            SOUND_MODELS.remove(textView);
         }
     }
 
@@ -109,8 +118,9 @@ public final class MentionSupport {
             CharSequence current = textView.getText();
             if (current == null || current.length() == 0) return;
 
-            boolean enabled = Settings.CHAT_MENTION_HIGHLIGHT.get();
-            boolean mention = enabled && mentionsLocalUser(model);
+            boolean highlightEnabled = Settings.CHAT_MENTION_HIGHLIGHT.get();
+            boolean soundEnabled = Settings.CHAT_MENTION_SOUND.get();
+            boolean mention = (highlightEnabled || soundEnabled) && mentionsLocalUser(model);
 
             Spanned spanned = current instanceof Spanned ? (Spanned) current : null;
             MentionBar[] oldBars = spanned == null
@@ -130,9 +140,9 @@ public final class MentionSupport {
                 out.removeSpan(span);
             }
 
-            if (mention && out.length() > 0) {
+            if (mention && highlightEnabled && out.length() > 0) {
                 out.setSpan(
-                        new MentionBar(DEFAULT_HIGHLIGHT_COLOR),
+                        new MentionBar(Settings.CHAT_MENTION_HIGHLIGHT_COLOR.get()),
                         0,
                         out.length(),
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -146,6 +156,10 @@ public final class MentionSupport {
             }
 
             textView.setText(new SpannedString(out), TextView.BufferType.SPANNABLE);
+
+            if (mention && soundEnabled) {
+                maybePlayMentionSound(textView, model);
+            }
         } catch (Throwable ignored) {
             // A malformed message model must never take down Twitch chat.
         }

@@ -261,6 +261,13 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private void addChatSettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.CHAT_DELETED_MESSAGES, "Deleted messages", "Control whether deleted chat messages remain visible locally.");
         addSwitch(screen, Settings.CHAT_TIMESTAMPS, "Chat timestamps", "Show timestamps on chat messages.");
+        addSwitch(screen, Settings.CHAT_MENTION_HIGHLIGHT, "Highlight on mention",
+                "Highlight chat messages that directly mention your account.");
+        addColor(screen, Settings.CHAT_MENTION_HIGHLIGHT_COLOR, "Highlight color");
+        addSwitch(screen, Settings.CHAT_MENTION_SOUND, "Play sound on mention",
+                "Play a short notification sound when a new chat message directly mentions your account.");
+        addSlider(screen, Settings.CHAT_MENTION_SOUND_COOLDOWN_MS, 1000, "Sound cooldown",
+                value -> value == 0 ? "No cooldown" : (value / 1000) + " seconds between sounds.");
         addSwitch(screen, Settings.LANDSCAPE_CHAT_SIZE_ENABLED, "Landscape chat size", "Use the custom landscape chat width.");
         addSlider(screen, Settings.LANDSCAPE_CHAT_SIZE, 5, "Landscape chat width", value -> value + "% of the screen");
         addSwitch(screen, Settings.LANDSCAPE_CHAT_OPACITY_ENABLED, "Landscape chat opacity", "Use the custom landscape chat opacity.");
