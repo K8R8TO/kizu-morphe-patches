@@ -4,6 +4,9 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.Opcodes
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction35c
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
@@ -111,9 +114,23 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         }
 
         val textViewRegister = registers.registerC
-        bindMethod.addInstructions(
+        bindMethod.addInstruction(
             textCall.index + 1,
-            "invoke-static {v$textViewRegister}, $EXTENSION->bind(Landroid/widget/TextView;)V",
+            BuilderInstruction35c(
+                Opcodes.INVOKE_STATIC,
+                1,
+                textViewRegister,
+                0,
+                0,
+                0,
+                0,
+                ImmutableMethodReference(
+                    EXTENSION,
+                    "bind",
+                    listOf(TEXT_VIEW),
+                    "V",
+                ),
+            ),
         )
     }
 }
