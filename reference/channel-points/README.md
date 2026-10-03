@@ -38,7 +38,9 @@ The PurpleTV ReVive project is Apache-2.0 licensed. The copied reference file is
 The uploaded Twitch APKM is about 110 MiB and the uploaded PurpleTV APK is about 188 MiB. GitHub's normal Git object/file limits make committing the raw APK/APKM inappropriate, and the Twitch application is proprietary. The repository therefore stores identifying hashes and a detailed technical inventory instead. The hashes allow a future uploaded artifact to be verified as the same artifact without depending on filename alone.
 
 
-## Kizu GraphQL implementation (branch: fix/channel-points-graphql-1.8.0)
+## Kizu GraphQL implementation — 1.8.0 baseline
+
+The 1.8.0 GraphQL implementation is now the project's known-good baseline. Future work should branch from the current `main` revision rather than from the older 1.7.x Channel Points implementations.
 
 The new implementation adds:
 - `extensions/extension/src/main/java/app/morphe/extension/channelpoints/ChannelPoints.java`
