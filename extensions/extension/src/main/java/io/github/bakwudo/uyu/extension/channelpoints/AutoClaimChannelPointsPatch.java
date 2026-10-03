@@ -3,6 +3,8 @@ package io.github.bakwudo.uyu.extension.channelpoints;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Objects;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
@@ -13,19 +15,27 @@ public final class AutoClaimChannelPointsPatch {
     private static String lastClaimId;
     private static long lastClaimTime;
     private static volatile Object activeProvider;
-    private static volatile String pendingClaimId;
+    private static volatile Object activeModel;
     private static boolean polling;
 
     private static final Runnable POLL = new Runnable() {
         @Override public void run() {
             Object provider = activeProvider;
-            if (provider == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
-                synchronized (AutoClaimChannelPointsPatch.class) { polling = false; }
+            Object model = activeModel;
+            if (provider == null || model == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
+                synchronized (AutoClaimChannelPointsPatch.class) {
+                    polling = false;
+                }
                 return;
             }
-            try { invokeGeneratedPoll(provider); } catch (Throwable ignored) {}
+
+            try {
+                invokeGeneratedAutoClaim(provider, model);
+            } catch (Throwable ignored) {
+            }
+
             synchronized (AutoClaimChannelPointsPatch.class) {
-                if (polling && activeProvider == provider) {
+                if (polling && activeProvider == provider && activeModel == model) {
                     MAIN.postDelayed(this, POLL_INTERVAL_MS);
                 }
             }
@@ -35,9 +45,13 @@ public final class AutoClaimChannelPointsPatch {
     private AutoClaimChannelPointsPatch() {}
 
     public static synchronized boolean shouldClaim(String claimId) {
-        if (!Settings.AUTO_CLAIM_CHANNEL_POINTS.get() || claimId == null || claimId.isEmpty()) return false;
+        if (!Settings.AUTO_CLAIM_CHANNEL_POINTS.get() || claimId == null || claimId.isEmpty()) {
+            return false;
+        }
         long now = SystemClock.elapsedRealtime();
-        if (Objects.equals(claimId, lastClaimId) && now - lastClaimTime < RETRY_DELAY_MS) return false;
+        if (Objects.equals(claimId, lastClaimId) && now - lastClaimTime < RETRY_DELAY_MS) {
+            return false;
+        }
         lastClaimId = claimId;
         lastClaimTime = now;
         return true;
@@ -47,36 +61,68 @@ public final class AutoClaimChannelPointsPatch {
         return Settings.AUTO_CLAIM_CHANNEL_POINTS.get() && claimId != null && !claimId.isEmpty();
     }
 
-    public static synchronized void startPolling(Object provider) {
-        if (provider == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) return;
+    public static synchronized void startPolling(Object provider, Object model) {
+        if (provider == null || model == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
+            return;
+        }
+
         activeProvider = provider;
-        pendingClaimId = null;
-        if (polling) return;
+        activeModel = model;
+
+        if (polling) {
+            return;
+        }
+
         polling = true;
         MAIN.removeCallbacks(POLL);
-        MAIN.post(POLL);
+        MAIN.postDelayed(POLL, POLL_INTERVAL_MS);
     }
 
+    // Kept for binary compatibility with older generated patch code.
     public static synchronized void startPolling(Object provider, String claimId) {
-        startPolling(provider);
+        if (provider == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
+            return;
+        }
+        activeProvider = provider;
+        if (polling) {
+            return;
+        }
+        polling = true;
+        MAIN.removeCallbacks(POLL);
+        MAIN.postDelayed(POLL, POLL_INTERVAL_MS);
     }
 
     public static synchronized void stopPolling() {
         activeProvider = null;
-        pendingClaimId = null;
+        activeModel = null;
         polling = false;
         MAIN.removeCallbacks(POLL);
     }
 
-    private static void invokeGeneratedPoll(Object provider) throws Exception {
+    private static void invokeGeneratedAutoClaim(Object provider, Object model) throws Exception {
         Class<?> providerClass = provider.getClass();
-        java.lang.reflect.Method method = providerClass.getMethod("kizuPollClaim", providerClass);
-        method.invoke(null, provider);
-    }
+        Class<?> modelClass = model.getClass();
 
-    private static void invokeGeneratedRetry(Object provider, String claimId) throws Exception {
-        Class<?> providerClass = provider.getClass();
-        java.lang.reflect.Method method = providerClass.getMethod("kizuRetryClaim", providerClass, String.class);
-        method.invoke(null, provider, claimId);
+        Method target = null;
+        for (Method method : providerClass.getMethods()) {
+            if (!method.getName().equals("kizuAutoClaim")
+                    || !Modifier.isStatic(method.getModifiers())
+                    || method.getParameterTypes().length != 2) {
+                continue;
+            }
+
+            Class<?>[] params = method.getParameterTypes();
+            if (params[0].isAssignableFrom(providerClass)
+                    && params[1].isAssignableFrom(modelClass)) {
+                target = method;
+                break;
+            }
+        }
+
+        if (target == null) {
+            throw new NoSuchMethodException("kizuAutoClaim");
+        }
+
+        target.invoke(null, provider, model);
     }
 }
