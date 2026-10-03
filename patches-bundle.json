@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-10-03T13:25:00",
+  "created_at": "2026-10-03T13:40:00",
   "description": "# [1.7.15](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.7.14...v1.7.15) (2026-10-03)\\n\\n### Bug Fixes\\n\\n* refresh the native Twitch Channel Points UI after a successful auto-claim without touching the CommunityPointsModel/provider lifecycle",
   "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.7.15/patches-1.7.15.mpp",
   "signature_download_url": "",
