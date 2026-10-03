@@ -204,7 +204,11 @@ public final class EmoteSupport {
             if (plain.matches("^\\s*\\[?\\d{1,2}:\\d{2}(?:[:.]\\d{2})?(?:\\s?[APap][Mm])?\\]?\\s+.*$")) {
                 return original;
             }
-            return timestamp + "  " + original;
+            SpannableStringBuilder result = new SpannableStringBuilder();
+            result.append(timestamp);
+            result.append("  ");
+            result.append(original);
+            return result;
         } catch (Throwable ignored) {
             return original;
         }

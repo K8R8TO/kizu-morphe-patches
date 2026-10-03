@@ -15,8 +15,8 @@ import java.util.WeakHashMap;
  */
 public final class DefaultFollowing {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
-    private static final WeakHashMap<Activity, Boolean> ATTEMPTED = new WeakHashMap<>();
-    private static final int MAX_ATTEMPTS = 8;
+    private static final WeakHashMap<Activity, Boolean> SCHEDULED = new WeakHashMap<>();
+    private static final int MAX_ATTEMPTS = 20;
     private static final long RETRY_MS = 500L;
 
     private DefaultFollowing() {}
@@ -24,8 +24,8 @@ public final class DefaultFollowing {
     public static void onActivityStarted(Activity activity) {
         if (activity == null) return;
         synchronized (ATTEMPTED) {
-            if (ATTEMPTED.containsKey(activity)) return;
-            ATTEMPTED.put(activity, Boolean.TRUE);
+            if (SCHEDULED.containsKey(activity)) return;
+            SCHEDULED.put(activity, Boolean.TRUE);
         }
         attempt(activity, 0);
     }
@@ -53,18 +53,24 @@ public final class DefaultFollowing {
         if (!(root instanceof ViewGroup)) return false;
         int height = root.getHeight();
         if (height <= 0) return false;
-        return findFollowing((ViewGroup) root, height);
+        int[] rootLocation = new int[2];
+        root.getLocationOnScreen(rootLocation);
+        return findFollowing((ViewGroup) root, height, rootLocation[1]);
     }
 
-    private static boolean findFollowing(ViewGroup group, int rootHeight) {
+    private static boolean findFollowing(ViewGroup group, int rootHeight, int rootTopOnScreen) {
         for (int i = 0; i < group.getChildCount(); i++) {
             View child = group.getChildAt(i);
             if (child == null || child.getVisibility() != View.VISIBLE || !child.isShown()) continue;
 
             if (child instanceof TextView) {
-                CharSequence text = ((TextView) child).getText();
-                if (text != null && "following".equalsIgnoreCase(text.toString().trim())
-                        && child.getTop() > rootHeight / 2) {
+                TextView textView = (TextView) child;
+                CharSequence text = textView.getText();
+                CharSequence description = child.getContentDescription();
+                boolean isFollowing = (text != null && "following".equalsIgnoreCase(text.toString().trim()))
+                        || (description != null && "following".equalsIgnoreCase(description.toString().trim()));
+
+                if (isFollowing && isInLowerNavigation(child, rootHeight, rootTopOnScreen)) {
                     if (isSelected(child)) return true;
                     View target = nearestClickable(child);
                     try {
@@ -73,11 +79,23 @@ public final class DefaultFollowing {
                     } catch (Throwable ignored) {}
                 }
             }
-            if (child instanceof ViewGroup && findFollowing((ViewGroup) child, rootHeight)) {
+
+            if (child instanceof ViewGroup && findFollowing((ViewGroup) child, rootHeight, rootTopOnScreen)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean isInLowerNavigation(View view, int rootHeight, int rootTopOnScreen) {
+        try {
+            int[] location = new int[2];
+            view.getLocationOnScreen(location);
+            int centerY = location[1] - rootTopOnScreen + (view.getHeight() / 2);
+            return centerY >= (rootHeight * 55) / 100;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 
     private static boolean isSelected(View view) {
