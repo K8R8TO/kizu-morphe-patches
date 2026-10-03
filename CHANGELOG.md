@@ -1,3 +1,9 @@
+# [1.8.1.7](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.6...v1.8.1.7) (2026-10-03)
+
+### Fixes
+
+* remove all inline smali compilation from the actual Twitch patch source used by the build
+
 # [1.8.1.6](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.5...v1.8.1.6) (2026-10-03)
 
 ### Fixes
