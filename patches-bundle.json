@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-03T18:25:00",
-  "description": "# [1.8.5] Fix zero-width emote positioning",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.5/patches-1.8.5.mpp",
+  "created_at": "2026-10-04T00:00:00Z",
+  "description": "# [1.8.6] Add mention highlighting",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.6/patches-1.8.6.mpp",
   "signature_download_url": "",
-  "version": "1.8.5"
+  "version": "1.8.6"
 }

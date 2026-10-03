@@ -86,6 +86,8 @@ public final class Settings {
             new StringSetting("chat_deleted_messages_style", "strikethrough");
     public static final BooleanSetting CHAT_TIMESTAMPS =
             new BooleanSetting("chat_timestamps", true);
+    public static final BooleanSetting CHAT_MENTION_HIGHLIGHT =
+            new BooleanSetting("chat_mention_highlight", true);
     public static final StringSetting CHAT_TIMESTAMP_FORMAT =
             new StringSetting("chat_timestamp_format", "h24");
     public static final BooleanSetting LANDSCAPE_CHAT_SIZE_ENABLED =

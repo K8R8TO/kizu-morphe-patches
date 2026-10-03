@@ -223,6 +223,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 "Control whether deleted chat messages remain visible locally.");
         addSwitch(screen, Settings.CHAT_TIMESTAMPS, "Chat timestamps",
                 "Show timestamps on chat messages.");
+        addSwitch(screen, Settings.CHAT_MENTION_HIGHLIGHT, "Highlight mentions",
+                "Highlight chat messages that directly mention your account.");
         addSwitch(screen, Settings.LANDSCAPE_CHAT_SIZE_ENABLED, "Landscape chat size",
                 "Use the custom landscape chat width.");
         addSlider(screen, Settings.LANDSCAPE_CHAT_SIZE, 5, "Landscape chat width",

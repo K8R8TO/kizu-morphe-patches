@@ -8,6 +8,8 @@ import android.text.style.ReplacementSpan;
 import android.view.View;
 import android.widget.TextView;
 
+import app.morphe.extension.twitch.chat.MentionSupport;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -160,6 +162,7 @@ public final class EmoteSupport {
             synchronized (LOCK) {
                 BOUND_MESSAGES.remove(textView);
             }
+            MentionSupport.forget(textView);
             textView.removeOnAttachStateChangeListener(VIEW_LIFECYCLE);
         } catch (Throwable ignored) {
         }
@@ -170,6 +173,7 @@ public final class EmoteSupport {
         synchronized (LOCK) {
             BOUND_MESSAGES.remove(textView);
         }
+        MentionSupport.bind(messageModel, textView);
         stopAnimations(current);
         textView.removeOnAttachStateChangeListener(VIEW_LIFECYCLE);
 
@@ -379,6 +383,7 @@ public final class EmoteSupport {
         } else if (textView.getText() != message.original) {
             textView.setText(message.original, TextView.BufferType.SPANNABLE);
         }
+        MentionSupport.apply(textView);
     }
 
     private static boolean hasReplacementSpan(
