@@ -115,7 +115,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
         val textViewRegister = registers.registerC
         bindMethod.addInstructions(
             textCall.index + 1,
-            "invoke-static {v$textViewRegister}, $EXTENSION->bind(Landroid/widget/TextView;)V",
+            "invoke-static {p1, v$textViewRegister}, $EXTENSION->bind(Ljava/lang/Object;Landroid/widget/TextView;)V",
         )
     }
 }
