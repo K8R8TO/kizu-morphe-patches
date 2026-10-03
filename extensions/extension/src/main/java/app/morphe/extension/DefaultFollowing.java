@@ -9,6 +9,8 @@ import android.widget.TextView;
 
 import java.util.WeakHashMap;
 
+import app.morphe.extension.settings.Settings;
+
 /**
  * Selects Twitch's native Home -> Following tab once when a Home activity first opens.
  *
@@ -72,37 +74,41 @@ public final class DefaultFollowing {
         if (!(rowView instanceof ViewGroup)) return false;
         ViewGroup row = (ViewGroup) rowView;
 
-        String followingLabel = getStringByEntryName(activity, "following");
-        if (followingLabel == null) followingLabel = "following";
+        String tabEntryName = Settings.DEFAULT_HOME_TAB.get();
+        if (!"live".equalsIgnoreCase(tabEntryName) && !"clips".equalsIgnoreCase(tabEntryName)) {
+            tabEntryName = "following";
+        }
 
-        View followingTab = null;
+        String desiredLabel = getStringByEntryName(activity, tabEntryName);
+        if (desiredLabel == null) desiredLabel = tabEntryName;
+
+        View desiredTab = null;
         for (int i = 0; i < row.getChildCount(); i++) {
             View tab = row.getChildAt(i);
             String caption = firstCaption(tab);
-            if (caption != null && followingLabel.equalsIgnoreCase(caption.trim())) {
-                followingTab = tab;
+            if (caption != null && desiredLabel.equalsIgnoreCase(caption.trim())) {
+                desiredTab = tab;
                 break;
             }
         }
 
-        if (followingTab == null) return false;
-        if (isSelected(followingTab)) return true;
+        if (desiredTab == null) return false;
+        if (isSelected(desiredTab)) return true;
 
         // This is Twitch's actual tab container. Clicking it lets Twitch's own navigation
         // controller perform the transition and update the selected state.
         try {
-            View target = nearestClickable(followingTab);
+            View target = nearestClickable(desiredTab);
             if (target != null && target.isEnabled() && target.performClick()) {
                 return true;
             }
-            if (followingTab.isEnabled() && followingTab.performClick()) {
+            if (desiredTab.isEnabled() && desiredTab.performClick()) {
                 return true;
             }
         } catch (Throwable ignored) {
         }
-        return isSelected(followingTab);
+        return isSelected(desiredTab);
     }
-
     private static View findTabStrip(View root) {
         if (root == null) return null;
         View[] found = new View[1];

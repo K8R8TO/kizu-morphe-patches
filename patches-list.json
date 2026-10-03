@@ -1,5 +1,5 @@
 {
-  "version": "1.8.1.12",
+  "version": "1.8.1.13",
   "patches": [
     {
       "name": "Twitch Enhancement",

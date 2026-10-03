@@ -8,6 +8,11 @@ package app.morphe.extension.settings;
  * off so the visible settings surface only reflects the selected feature set.
  */
 public final class Settings {
+    // Home / navigation.
+    /** Default Twitch Home tab: "following", "live" or "clips". */
+    public static final StringSetting DEFAULT_HOME_TAB =
+            new StringSetting("default_home_tab", "following");
+
     // Original uyu compatibility settings.
     public static final BooleanSetting AUTO_CLAIM_CHANNEL_POINTS =
             new BooleanSetting("auto_claim_channel_points", true);

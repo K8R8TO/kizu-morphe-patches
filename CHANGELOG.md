@@ -1,3 +1,9 @@
+# [1.8.1.13](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.12...v1.8.1.13) (2026-10-03)
+
+### Features
+
+* add a General setting for Following, Live or Clips as the default Home tab
+
 # [1.8.1.12](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.11...v1.8.1.12) (2026-10-03)
 
 ### Fixes

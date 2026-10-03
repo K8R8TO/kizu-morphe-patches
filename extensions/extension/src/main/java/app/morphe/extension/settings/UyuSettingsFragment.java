@@ -121,8 +121,43 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addGeneralSettings(PreferenceScreen screen) {
+        Preference homeTab = new Preference(screen.getContext());
+        homeTab.setTitle("Default Home Tab");
+        homeTab.setSummary(homeTabName(Settings.DEFAULT_HOME_TAB.get()));
+        homeTab.setOnPreferenceClickListener(clicked -> {
+            Activity activity = getActivity();
+            if (activity == null) return true;
+            String[] names = {"Following", "Live", "Clips"};
+            String[] values = {"following", "live", "clips"};
+            String current = Settings.DEFAULT_HOME_TAB.get();
+            int selected = homeTabIndex(current);
+            new AlertDialog.Builder(activity)
+                    .setTitle("Default Home Tab")
+                    .setSingleChoiceItems(names, selected, (dialog, which) -> {
+                        Settings.DEFAULT_HOME_TAB.save(values[which]);
+                        homeTab.setSummary(names[which]);
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return true;
+        });
+        screen.addPreference(homeTab);
+
         if (PatchStatus.autoClaimChannelPoints()) addSwitch(screen, Settings.AUTO_CLAIM_CHANNEL_POINTS,
                 "Auto claim channel points", "Claims the bonus chest on the channel you are watching.");
+    }
+
+    private static int homeTabIndex(String value) {
+        if ("live".equalsIgnoreCase(value)) return 1;
+        if ("clips".equalsIgnoreCase(value)) return 2;
+        return 0;
+    }
+
+    private static String homeTabName(String value) {
+        if ("live".equalsIgnoreCase(value)) return "Live";
+        if ("clips".equalsIgnoreCase(value)) return "Clips";
+        return "Following";
     }
 
     private void addAppearanceSettings(PreferenceScreen screen) {
