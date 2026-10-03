@@ -19,14 +19,13 @@ public final class AutoClaimChannelPointsPatch {
     private static final Runnable POLL = new Runnable() {
         @Override public void run() {
             Object provider = activeProvider;
-            String claimId = pendingClaimId;
-            if (provider == null || claimId == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
+            if (provider == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
                 synchronized (AutoClaimChannelPointsPatch.class) { polling = false; }
                 return;
             }
-            try { invokeGeneratedRetry(provider, claimId); } catch (Throwable ignored) {}
+            try { invokeGeneratedPoll(provider); } catch (Throwable ignored) {}
             synchronized (AutoClaimChannelPointsPatch.class) {
-                if (polling && activeProvider == provider && Objects.equals(pendingClaimId, claimId)) {
+                if (polling && activeProvider == provider) {
                     MAIN.postDelayed(this, POLL_INTERVAL_MS);
                 }
             }
@@ -48,14 +47,18 @@ public final class AutoClaimChannelPointsPatch {
         return Settings.AUTO_CLAIM_CHANNEL_POINTS.get() && claimId != null && !claimId.isEmpty();
     }
 
-    public static synchronized void startPolling(Object provider, String claimId) {
-        if (provider == null || claimId == null || claimId.isEmpty()) return;
+    public static synchronized void startPolling(Object provider) {
+        if (provider == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) return;
         activeProvider = provider;
-        pendingClaimId = claimId;
+        pendingClaimId = null;
         if (polling) return;
         polling = true;
         MAIN.removeCallbacks(POLL);
-        MAIN.postDelayed(POLL, POLL_INTERVAL_MS);
+        MAIN.post(POLL);
+    }
+
+    public static synchronized void startPolling(Object provider, String claimId) {
+        startPolling(provider);
     }
 
     public static synchronized void stopPolling() {
@@ -63,6 +66,12 @@ public final class AutoClaimChannelPointsPatch {
         pendingClaimId = null;
         polling = false;
         MAIN.removeCallbacks(POLL);
+    }
+
+    private static void invokeGeneratedPoll(Object provider) throws Exception {
+        Class<?> providerClass = provider.getClass();
+        java.lang.reflect.Method method = providerClass.getMethod("kizuPollClaim", providerClass);
+        method.invoke(null, provider);
     }
 
     private static void invokeGeneratedRetry(Object provider, String claimId) throws Exception {
