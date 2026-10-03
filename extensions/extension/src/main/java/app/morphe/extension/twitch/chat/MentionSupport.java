@@ -165,6 +165,36 @@ public final class MentionSupport {
         }
     }
 
+    private static void maybePlayMentionSound(TextView textView, Object model) {
+        if (textView == null || model == null) return;
+
+        long now = SystemClock.uptimeMillis();
+        int cooldown = Settings.CHAT_MENTION_SOUND_COOLDOWN_MS.get();
+        synchronized (LOCK) {
+            if (SOUND_MODELS.get(textView) == model) return;
+
+            // Mark this message as processed even when the global cooldown suppresses its sound.
+            SOUND_MODELS.put(textView, model);
+            if (lastSoundAtMs != Long.MIN_VALUE && now - lastSoundAtMs < cooldown) {
+                return;
+            }
+            lastSoundAtMs = now;
+        }
+
+        try {
+            ToneGenerator generator;
+            synchronized (LOCK) {
+                if (toneGenerator == null) {
+                    toneGenerator = new ToneGenerator(AudioManager.STREAM_NOTIFICATION, 75);
+                }
+                generator = toneGenerator;
+            }
+            generator.startTone(ToneGenerator.TONE_PROP_BEEP2, 140);
+        } catch (Throwable ignored) {
+            // Audio failure must never affect chat rendering.
+        }
+    }
+
     private static boolean mentionsLocalUser(Object model) {
         if (model == null) return false;
 
