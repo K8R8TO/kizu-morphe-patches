@@ -7,7 +7,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.style.LineBackgroundSpan;
-import android.view.TextView;
+import android.widget.TextView;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
