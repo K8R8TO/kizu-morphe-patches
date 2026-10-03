@@ -331,12 +331,31 @@ public final class EmoteSupport {
             if (builder == null) {
                 builder = new SpannableStringBuilder(original);
             }
+
+            boolean useZeroWidth = emote.zeroWidth && Settings.EMOTES_ZERO_WIDTH.get();
             builder.setSpan(
-                    new CenteredImageSpan(textView, drawable, emote.zeroWidth),
+                    new CenteredImageSpan(textView, drawable, useZeroWidth),
                     start,
                     end,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             );
+
+            // Chat text normally has a whitespace separator before each token. A zero-width
+            // emote must also consume that separator, otherwise it is shifted to the right
+            // instead of overlaying the previous emote. Make the immediately preceding
+            // separator zero-width as well, including for consecutive zero-width emotes.
+            if (useZeroWidth && start > 0 && isSeparator(original.charAt(start - 1))) {
+                int separatorStart = start - 1;
+                while (separatorStart > 0 && isSeparator(original.charAt(separatorStart - 1))) {
+                    separatorStart--;
+                }
+                builder.setSpan(
+                        new ZeroWidthSeparatorSpan(),
+                        separatorStart,
+                        start,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+            }
         }
 
         message.pendingImages = pendingImages == null
@@ -455,6 +474,35 @@ public final class EmoteSupport {
             synchronized (LOCK) {
                 message.refreshPosted = false;
             }
+        }
+    }
+
+    private static final class ZeroWidthSeparatorSpan extends ReplacementSpan {
+        @Override
+        public int getSize(
+                android.graphics.Paint paint,
+                CharSequence text,
+                int start,
+                int end,
+                android.graphics.Paint.FontMetricsInt metrics
+        ) {
+            return 0;
+        }
+
+        @Override
+        public void draw(
+                android.graphics.Canvas canvas,
+                CharSequence text,
+                int start,
+                int end,
+                float x,
+                int top,
+                int baseline,
+                int bottom,
+                android.graphics.Paint paint
+        ) {
+            // Intentionally empty: the separator is removed from layout while the following
+            // zero-width emote is drawn at the previous content's exact endpoint.
         }
     }
 

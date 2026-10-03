@@ -1,3 +1,12 @@
+# [1.8.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.3...v1.8.4) (2026-10-03)
+
+### Fixes
+
+* correct 7TV zero-width flag handling
+* remove separator spacing before zero-width overlay emotes
+* restore FFZ global and channel emote loading
+* support FFZ animated and zero-width emotes
+
 # [1.8.1.13](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.1.12...v1.8.1.13) (2026-10-03)
 
 ### Features
