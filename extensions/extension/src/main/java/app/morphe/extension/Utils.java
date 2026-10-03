@@ -5,20 +5,24 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.Locale;
 import java.util.WeakHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import android.util.Log;
 
 import app.morphe.extension.twitch.emotes.EmoteSupport;
 import app.morphe.extension.twitch.emotes.EmotePickerBridge;
@@ -27,9 +31,11 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 public final class Utils {
     private static final String TAG = "kizu";
     private static final long CLAIM_POLL_INTERVAL_MS = 3_000L;
-    private static final long CLAIM_VERIFY_WINDOW_MS = 2_200L;
-    private static final long CLAIM_VERIFY_STEP_MS = 250L;
+    private static final long CLAIM_VERIFY_WINDOW_MS = 2_500L;
+    private static final long CLAIM_VERIFY_STEP_MS = 200L;
+    private static final long CLAIM_SUCCESS_COOLDOWN_MS = 60_000L;
     private static final int CLAIM_REWARD_POINTS = 50;
+    private static final int STATUS_DURATION_MS = 2_000;
 
     private static final Pattern POINT_NUMBER_PATTERN = Pattern.compile(
             "(?<!\\d)(\\d{1,3}(?:[\\s,]\\d{3})+|\\d+(?:\\.\\d+)?\\s*[kKmM]?)(?!\\d)"
@@ -43,8 +49,12 @@ public final class Utils {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final WeakHashMap<View, Long> CLAIM_LAST_CLICK = new WeakHashMap<>();
     private static final WeakHashMap<View, Integer> CLAIM_BASELINE_POINTS = new WeakHashMap<>();
+    private static final WeakHashMap<View, View> CLAIM_BALANCE_VIEWS = new WeakHashMap<>();
     private static final WeakHashMap<View, Long> CLAIM_VERIFY_DEADLINE = new WeakHashMap<>();
     private static final WeakHashMap<View, Boolean> CLAIM_VERIFYING = new WeakHashMap<>();
+    private static final WeakHashMap<Activity, TextView> STATUS_MESSAGES = new WeakHashMap<>();
+
+    private static volatile long lastVerifiedClaimAt;
     private static volatile boolean claimWatcherStarted;
 
     private static final Runnable CLAIM_WATCHER = new Runnable() {
@@ -53,7 +63,9 @@ public final class Utils {
                 if (Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
                     Activity activity = currentActivity;
                     if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
-                        scanForClaimButton(activity.getWindow().getDecorView());
+                        if (SystemClock.elapsedRealtime() - lastVerifiedClaimAt >= CLAIM_SUCCESS_COOLDOWN_MS) {
+                            scanForClaimButton(activity.getWindow().getDecorView());
+                        }
                     }
                 } else {
                     synchronized (CLAIM_LAST_CLICK) {
@@ -61,9 +73,11 @@ public final class Utils {
                     }
                     synchronized (CLAIM_VERIFYING) {
                         CLAIM_BASELINE_POINTS.clear();
+                        CLAIM_BALANCE_VIEWS.clear();
                         CLAIM_VERIFY_DEADLINE.clear();
                         CLAIM_VERIFYING.clear();
                     }
+                    lastVerifiedClaimAt = 0L;
                 }
             } catch (Throwable ignored) {
             }
@@ -93,6 +107,9 @@ public final class Utils {
                 @Override public void onActivitySaveInstanceState(Activity activity, Bundle state) {}
 
                 @Override public void onActivityDestroyed(Activity activity) {
+                    synchronized (STATUS_MESSAGES) {
+                        STATUS_MESSAGES.remove(activity);
+                    }
                     if (currentActivity == activity) currentActivity = null;
                 }
             };
@@ -128,15 +145,19 @@ public final class Utils {
 
     /**
      * Scans only the currently visible Twitch Activity and presses Twitch's own visible
-     * channel-points bonus control. The verifier below uses the displayed points balance,
-     * not the click return value, to decide whether the +50 reward was actually received.
+     * channel-points bonus control. The +50 verification baseline is captured BEFORE the click.
      */
     private static void scanForClaimButton(View root) {
         if (root == null || root.getVisibility() != View.VISIBLE || !root.isShown()) return;
 
         if (isClaimControl(root)) {
             boolean eligible = root.isEnabled() && root.isClickable();
-            if (eligible) {
+            boolean verifying;
+            synchronized (CLAIM_VERIFYING) {
+                verifying = Boolean.TRUE.equals(CLAIM_VERIFYING.get(root));
+            }
+
+            if (eligible && !verifying) {
                 long now = SystemClock.elapsedRealtime();
                 boolean shouldClick;
                 synchronized (CLAIM_LAST_CLICK) {
@@ -148,17 +169,12 @@ public final class Utils {
                 }
 
                 if (shouldClick) {
+                    PointBalanceCandidate baselineCandidate = findPointBalanceCandidate(root);
+
                     try {
                         if (root.performClick()) {
-                            Integer baseline = findPointBalance(root);
-                            if (baseline == null) {
-                                Activity activity = currentActivity;
-                                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
-                                    baseline = findPointBalance(activity.getWindow().getDecorView());
-                                }
-                            }
-                            startClaimVerification(root, baseline);
-                            Log.d(TAG, "auto-claimed visible channel-points bonus; verifying +50 balance change");
+                            startClaimVerification(root, baselineCandidate);
+                            Log.d(TAG, "auto-clicked visible +50 channel-points bonus; verifying balance");
                         } else {
                             synchronized (CLAIM_LAST_CLICK) {
                                 CLAIM_LAST_CLICK.remove(root);
@@ -166,11 +182,11 @@ public final class Utils {
                             showClaimStatus("Channel Points +50 claim failed");
                         }
                     } catch (Throwable ignored) {
+                        synchronized (CLAIM_LAST_CLICK) {
+                            CLAIM_LAST_CLICK.remove(root);
+                        }
+                        showClaimStatus("Channel Points +50 claim failed");
                     }
-                }
-            } else {
-                synchronized (CLAIM_LAST_CLICK) {
-                    CLAIM_LAST_CLICK.remove(root);
                 }
             }
         }
@@ -183,11 +199,15 @@ public final class Utils {
         }
     }
 
-    private static void startClaimVerification(final View claimedView, Integer baseline) {
+    private static void startClaimVerification(final View claimedView, PointBalanceCandidate baselineCandidate) {
         final long deadline = SystemClock.elapsedRealtime() + CLAIM_VERIFY_WINDOW_MS;
+
+        Integer baseline = baselineCandidate == null ? null : baselineCandidate.value;
+        View balanceView = baselineCandidate == null ? null : baselineCandidate.sourceView;
 
         synchronized (CLAIM_VERIFYING) {
             CLAIM_BASELINE_POINTS.put(claimedView, baseline);
+            CLAIM_BALANCE_VIEWS.put(claimedView, balanceView);
             CLAIM_VERIFY_DEADLINE.put(claimedView, deadline);
             CLAIM_VERIFYING.put(claimedView, true);
         }
@@ -201,24 +221,33 @@ public final class Utils {
 
     private static void verifyClaim(final View claimedView) {
         Integer baseline;
+        View balanceView;
         Long deadline;
+
         synchronized (CLAIM_VERIFYING) {
             if (!Boolean.TRUE.equals(CLAIM_VERIFYING.get(claimedView))) return;
             baseline = CLAIM_BASELINE_POINTS.get(claimedView);
+            balanceView = CLAIM_BALANCE_VIEWS.get(claimedView);
             deadline = CLAIM_VERIFY_DEADLINE.get(claimedView);
         }
 
         if (baseline != null) {
-            Integer current = findPointBalance(claimedView);
+            Integer current = readPointBalanceView(balanceView);
+
             if (current == null) {
-                Activity activity = currentActivity;
-                if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
-                    current = findPointBalance(activity.getWindow().getDecorView());
+                PointBalanceCandidate candidate = findPointBalanceCandidate(claimedView);
+                if (candidate == null) {
+                    Activity activity = currentActivity;
+                    if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                        candidate = findPointBalanceCandidate(activity.getWindow().getDecorView());
+                    }
                 }
+                if (candidate != null) current = candidate.value;
             }
 
             if (current != null) {
                 int delta = current - baseline;
+                // Allow a simultaneous +10 watch-time award while still requiring the +50 bonus.
                 if (delta >= CLAIM_REWARD_POINTS && delta <= CLAIM_REWARD_POINTS + 20) {
                     finishClaimVerification(claimedView, true, delta);
                     return;
@@ -242,13 +271,15 @@ public final class Utils {
         synchronized (CLAIM_VERIFYING) {
             CLAIM_VERIFYING.remove(claimedView);
             CLAIM_BASELINE_POINTS.remove(claimedView);
+            CLAIM_BALANCE_VIEWS.remove(claimedView);
             CLAIM_VERIFY_DEADLINE.remove(claimedView);
         }
 
         if (success) {
+            lastVerifiedClaimAt = SystemClock.elapsedRealtime();
             showClaimStatus("Channel Points +50 claimed");
             dismissClaimControl(claimedView);
-            Log.d(TAG, "verified channel-points claim; observed balance delta +" + delta);
+            Log.d(TAG, "verified +50 channel-points claim; observed balance delta +" + delta);
         } else {
             showClaimStatus("Channel Points +50 claim failed");
             Log.d(TAG, "could not verify the expected +50 balance change");
@@ -256,84 +287,153 @@ public final class Utils {
     }
 
     /**
-     * The bonus control is hidden only after the displayed Channel Points balance confirms
-     * the reward. This avoids fabricating a successful claim by blindly hiding the control.
+     * After the balance confirms +50, hide both the matched claim view and its nearest
+     * clickable ancestor so a child-only indicator cannot remain visible.
      */
     private static void dismissClaimControl(View claimedView) {
         if (claimedView == null) return;
 
         try {
+            View target = findNearestClickableAncestor(claimedView);
+
             claimedView.setVisibility(View.GONE);
-            refreshClaimUi(claimedView);
-        } catch (Throwable ignored) {
-        }
-    }
+            if (target != null && target != claimedView) {
+                target.setVisibility(View.GONE);
+            }
 
-    private static void showClaimStatus(String message) {
-        try {
-            Context appContext = context;
-            if (appContext != null) {
-                Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show();
+            View parent = target == null ? claimedView : target;
+            while (parent.getParent() instanceof View) {
+                parent = (View) parent.getParent();
+                parent.refreshDrawableState();
+                parent.invalidate();
+                parent.requestLayout();
             }
         } catch (Throwable ignored) {
         }
     }
 
-    private static void refreshClaimUi(View view) {
-        if (view == null) return;
-
+    private static View findNearestClickableAncestor(View view) {
         View current = view;
-        while (current != null) {
-            try {
-                current.refreshDrawableState();
-                current.invalidate();
-                current.requestLayout();
-            } catch (Throwable ignored) {
-            }
-
+        for (int i = 0; i < 6 && current != null; i++) {
+            if (current.isClickable() && current.isEnabled()) return current;
             if (!(current.getParent() instanceof View)) break;
             current = (View) current.getParent();
         }
+        return null;
     }
 
-    private static boolean isClaimControl(View view) {
-        CharSequence text = null;
-        CharSequence description = view.getContentDescription();
+    /**
+     * Uses an in-app overlay instead of Toast so the status is visible even when Twitch's
+     * activity/notification handling suppresses ordinary Toast rendering.
+     */
+    private static void showClaimStatus(final String message) {
+        Activity activity = currentActivity;
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
+
+        Runnable show = new Runnable() {
+            @Override public void run() {
+                try {
+                    View decorView = activity.getWindow().getDecorView();
+                    if (!(decorView instanceof FrameLayout)) return;
+
+                    FrameLayout decor = (FrameLayout) decorView;
+                    TextView previous;
+                    synchronized (STATUS_MESSAGES) {
+                        previous = STATUS_MESSAGES.get(activity);
+                    }
+                    if (previous != null) {
+                        try { decor.removeView(previous); } catch (Throwable ignored) {}
+                    }
+
+                    TextView status = new TextView(activity);
+                    status.setText(message);
+                    status.setTextColor(Color.WHITE);
+                    status.setTextSize(14f);
+                    status.setGravity(Gravity.CENTER);
+                    status.setPadding(dp(activity, 14), dp(activity, 8), dp(activity, 14), dp(activity, 8));
+
+                    GradientDrawable background = new GradientDrawable();
+                    background.setColor(0xEE222222);
+                    background.setCornerRadius(dp(activity, 10));
+                    status.setBackground(background);
+                    status.setElevation(dp(activity, 8));
+
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.WRAP_CONTENT,
+                            ViewGroup.LayoutParams.WRAP_CONTENT
+                    );
+                    lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+                    lp.bottomMargin = dp(activity, 72);
+                    lp.leftMargin = dp(activity, 16);
+                    lp.rightMargin = dp(activity, 16);
+
+                    decor.addView(status, lp);
+                    synchronized (STATUS_MESSAGES) {
+                        STATUS_MESSAGES.put(activity, status);
+                    }
+
+                    MAIN.postDelayed(new Runnable() {
+                        @Override public void run() {
+                            try {
+                                synchronized (STATUS_MESSAGES) {
+                                    if (STATUS_MESSAGES.get(activity) == status) {
+                                        STATUS_MESSAGES.remove(activity);
+                                    }
+                                }
+                                decor.removeView(status);
+                            } catch (Throwable ignored) {
+                            }
+                        }
+                    }, STATUS_DURATION_MS);
+                } catch (Throwable ignored) {
+                }
+            }
+        };
+
+        if (Looper.myLooper() == Looper.getMainLooper()) show.run();
+        else MAIN.post(show);
+    }
+
+    private static int dp(Context context, int value) {
+        return Math.round(value * context.getResources().getDisplayMetrics().density);
+    }
+
+    private static Integer readPointBalanceView(View view) {
+        if (view == null || view.getVisibility() != View.VISIBLE) return null;
 
         if (view instanceof TextView) {
-            text = ((TextView) view).getText();
+            PointBalanceCandidate[] best = new PointBalanceCandidate[1];
+            considerPointText(((TextView) view).getText(), best, view);
+            return best[0] == null ? null : best[0].value;
         }
 
-        String value = ((text == null ? "" : text.toString()) + " " +
-                (description == null ? "" : description.toString()))
-                .toLowerCase(Locale.ROOT);
-
-        return value.contains("claim") &&
-                (value.contains("bonus") || value.contains("channel point"));
+        PointBalanceCandidate[] best = new PointBalanceCandidate[1];
+        considerPointText(view.getContentDescription(), best, view);
+        return best[0] == null ? null : best[0].value;
     }
 
-    private static Integer findPointBalance(View claimView) {
+    private static PointBalanceCandidate findPointBalanceCandidate(View claimView) {
         if (claimView == null) return null;
 
         PointBalanceCandidate best = null;
         View ancestor = claimView;
 
-        for (int depth = 0; depth <= 5 && ancestor != null; depth++) {
-            PointBalanceCandidate candidate = findBestPointBalanceCandidate(ancestor, 220);
+        for (int depth = 0; depth <= 6 && ancestor != null; depth++) {
+            PointBalanceCandidate candidate = findBestPointBalanceCandidate(ancestor, 260);
             if (candidate != null && (best == null || candidate.score > best.score ||
                     (candidate.score == best.score && candidate.value > best.value))) {
                 best = candidate;
             }
 
-            if (candidate != null && candidate.score >= 80) {
-                return candidate.value;
+            if (candidate != null && candidate.score >= 100) {
+                return candidate;
             }
 
             if (!(ancestor.getParent() instanceof View)) break;
             ancestor = (View) ancestor.getParent();
         }
 
-        return best == null ? null : best.value;
+        return best;
     }
 
     private static PointBalanceCandidate findBestPointBalanceCandidate(View root, int maxNodes) {
@@ -355,9 +455,9 @@ public final class Utils {
         visited[0]++;
 
         if (view instanceof TextView) {
-            considerPointText(((TextView) view).getText(), best);
+            considerPointText(((TextView) view).getText(), best, view);
         }
-        considerPointText(view.getContentDescription(), best);
+        considerPointText(view.getContentDescription(), best, view);
 
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
@@ -367,7 +467,21 @@ public final class Utils {
         }
     }
 
-    private static void considerPointText(CharSequence sequence, PointBalanceCandidate[] best) {
+    @SuppressLint("DiscouragedApi")
+    private static String resourceName(View view) {
+        if (view == null || view.getId() == View.NO_ID || context == null) return "";
+        try {
+            return context.getResources().getResourceEntryName(view.getId()).toLowerCase(Locale.ROOT);
+        } catch (Throwable ignored) {
+            return "";
+        }
+    }
+
+    private static void considerPointText(
+            CharSequence sequence,
+            PointBalanceCandidate[] best,
+            View sourceView
+    ) {
         if (sequence == null) return;
 
         String text = sequence.toString().trim();
@@ -389,10 +503,15 @@ public final class Utils {
             if (value > CLAIM_REWARD_POINTS) score += 5;
             if (isClaimContext) score -= 100;
 
+            String resource = resourceName(sourceView);
+            if (resource.contains("channel") || resource.contains("point")) score += 60;
+            if (resource.contains("community")) score += 30;
+
             if (!hasPointContext && value <= CLAIM_REWARD_POINTS) continue;
+
             if (best[0] == null || score > best[0].score ||
                     (score == best[0].score && value > best[0].value)) {
-                best[0] = new PointBalanceCandidate(value, score);
+                best[0] = new PointBalanceCandidate(value, score, sourceView);
             }
         }
     }
@@ -427,18 +546,35 @@ public final class Utils {
     private static final class PointBalanceCandidate {
         final int value;
         final int score;
+        final View sourceView;
 
-        PointBalanceCandidate(int value, int score) {
+        PointBalanceCandidate(int value, int score, View sourceView) {
             this.value = value;
             this.score = score;
+            this.sourceView = sourceView;
         }
+    }
+
+    private static boolean isClaimControl(View view) {
+        CharSequence text = null;
+        CharSequence description = view.getContentDescription();
+
+        if (view instanceof TextView) {
+            text = ((TextView) view).getText();
+        }
+
+        String value = ((text == null ? "" : text.toString()) + " " +
+                (description == null ? "" : description.toString()))
+                .toLowerCase(Locale.ROOT);
+
+        return value.contains("claim") &&
+                (value.contains("bonus") || value.contains("channel point"));
     }
 
     public static Context getContext() {
         return context;
     }
 
-    /** Returns the currently active Twitch Activity, even when the extension only has an application context. */
     public static Activity getCurrentActivity() {
         Activity activity = currentActivity;
         if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) return activity;
