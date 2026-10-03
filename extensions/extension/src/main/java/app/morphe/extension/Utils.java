@@ -131,6 +131,7 @@ public final class Utils {
                     try {
                         if (root.performClick()) {
                             Log.d(TAG, "auto-claimed visible channel-points bonus");
+                            scheduleClaimUiRefresh(root);
                         }
                     } catch (Throwable ignored) {
                     }
