@@ -13,6 +13,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
 private const val EXTENSION = "Lapp/morphe/extension/twitch/emotes/EmoteSupport;"
 private const val PICKER_BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmotePickerBridge;"
+private const val CHANNEL_POINTS = "Lapp/morphe/extension/channelpoints/ChannelPoints;"
 private const val CHANNEL_CLASS = "Ltv/twitch/android/shared/chat/pub/messages/data/ChannelChatConnectionKey;"
 private const val TEXT_VIEW = "Landroid/widget/TextView;"
 private const val CHAR_SEQUENCE = "Ljava/lang/CharSequence;"
@@ -45,6 +46,7 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
             returnIndex,
             """
                 invoke-static {p1, p2}, $EXTENSION->onChannelChanged(Ljava/lang/String;Ljava/lang/String;)V
+                invoke-static {p1, p2}, $CHANNEL_POINTS->onChannelChanged(Ljava/lang/String;Ljava/lang/String;)V
                 invoke-static {}, $PICKER_BRIDGE->ensureComposerButton()V
             """.trimIndent(),
         )
