@@ -253,3 +253,9 @@ This project follows the licenses and additional conditions included in the repo
 <!-- runtime trigger -->
 
 <!-- release retrigger -->
+\n### Channel Points reverse-engineering archive
+
+The exact Twitch 31.3.1 APKM used for current development, plus the exact PurpleTV 2.4_r2 APK used as a working auto-claim reference, are documented permanently under `reference/channel-points/`. The archive records artifact hashes, split/DEX inventories, relevant Twitch 31.3.1 Channel Points classes and GraphQL operations, PurpleTV's GraphQL claim architecture, and the assessment of historical/Copilot diagnoses.
+
+See: `reference/channel-points/README.md`
+
