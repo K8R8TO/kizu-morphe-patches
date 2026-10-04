@@ -18,11 +18,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 
 private const val SUPPORT = "Lapp/morphe/extension/twitch/chat/DeletedMessagesSupport;"
 
-internal val showDeletedMessagesPatch = bytecodePatch(
-    name = "Show deleted messages",
-    description = "Keeps deleted or moderated chat messages readable, with selectable Default, Mod, " +
-        "Strikethrough or Grey presentation.",
-) {
+internal val showDeletedMessagesPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
 
     execute {
