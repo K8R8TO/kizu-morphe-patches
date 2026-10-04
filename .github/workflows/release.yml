@@ -52,8 +52,9 @@ jobs:
               raise SystemExit(f"Version mismatch: gradle={v}, bundle={bundle.get('version')}, list={plist.get('version')}")
           expected_release = f"https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v{v}/patches-{v}.mpp"
           expected_mirror = f"https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/mirror/patches-{v}.mpp"
-          if bundle.get("download_url") not in (expected_release, expected_mirror):
-              raise SystemExit("patches-bundle.json download_url does not match release or mirror URL")
+          expected_cdn = f"https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/mirror/patches-{v}.mpp"
+          if bundle.get("download_url") not in (expected_release, expected_mirror, expected_cdn):
+              raise SystemExit("patches-bundle.json download_url does not match a supported release URL")
           PY
 
       - name: Pin local release tag for metadata generation
@@ -92,7 +93,8 @@ jobs:
           assert plist.get("version") == v, f"patch list version changed during build: {plist.get('version')}"
           expected_release = f"https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v{v}/patches-{v}.mpp"
           expected_mirror = f"https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/mirror/patches-{v}.mpp"
-          assert bundle.get("download_url") in (expected_release, expected_mirror), "bundle download URL changed unexpectedly during build"
+          expected_cdn = f"https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/mirror/patches-{v}.mpp"
+          assert bundle.get("download_url") in (expected_release, expected_mirror, expected_cdn), "bundle download URL changed unexpectedly during build"
           PY
 
       - name: Verify embedded MPP manifest
@@ -157,6 +159,7 @@ jobs:
           BUNDLE="patches/build/release/patches-${VERSION}.mpp"
           MIRROR="mirror/patches-${VERSION}.mpp"
           RAW_URL="https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/${MIRROR}"
+          CDN_URL="https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/${MIRROR}"
           mkdir -p mirror
           cp "${BUNDLE}" "${MIRROR}"
 
@@ -170,7 +173,7 @@ jobs:
           data = json.loads(path.read_text())
           data["version"] = version
           data["created_at"] = published_at
-          data["download_url"] = f"https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/mirror/patches-{version}.mpp"
+          data["download_url"] = f"https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/mirror/patches-{version}.mpp"
           path.write_text(json.dumps(data, indent=2) + "\n")
           PY
 
@@ -186,10 +189,47 @@ jobs:
               ACTUAL_SHA="$(sha256sum /tmp/kizu-mirror.mpp | cut -d' ' -f1)"
               if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-mirror.mpp >/dev/null; then
                 echo "Verified raw MPP mirror: ${RAW_URL}"
+                break
+              fi
+            fi
+            sleep 2
+          done
+
+          for attempt in $(seq 1 30); do
+            if curl -fsSL --retry 2 --retry-delay 1 "${CDN_URL}" -o /tmp/kizu-cdn.mpp; then
+              ACTUAL_SHA="$(sha256sum /tmp/kizu-cdn.mpp | cut -d' ' -f1)"
+              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-cdn.mpp >/dev/null; then
+                echo "Verified jsDelivr MPP mirror: ${CDN_URL}"
                 exit 0
               fi
             fi
             sleep 2
           done
           echo "Raw MPP mirror did not become readable with the expected SHA-256: ${RAW_URL}"
-          exit 1
+          EXPECTED_SHA="$(sha256sum "${BUNDLE}" | cut -d' ' -f1)"
+          RAW_OK=false
+          for attempt in $(seq 1 30); do
+            if curl -fsSL --retry 2 --retry-delay 1 "${RAW_URL}" -o /tmp/kizu-raw.mpp; then
+              ACTUAL_SHA="$(sha256sum /tmp/kizu-raw.mpp | cut -d' ' -f1)"
+              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-raw.mpp >/dev/null; then
+                echo "Verified raw MPP mirror: ${RAW_URL}"
+                RAW_OK=true
+                break
+              fi
+            fi
+            sleep 2
+          done
+          test "${RAW_OK}" = true
+
+          for attempt in $(seq 1 30); do
+            if curl -fsSL --retry 2 --retry-delay 1 "${CDN_URL}" -o /tmp/kizu-cdn.mpp; then
+              ACTUAL_SHA="$(sha256sum /tmp/kizu-cdn.mpp | cut -d' ' -f1)"
+              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-cdn.mpp >/dev/null; then
+                echo "Verified jsDelivr MPP mirror: ${CDN_URL}"
+                exit 0
+              fi
+            fi
+            sleep 2
+          done
+          echo "jsDelivr MPP mirror did not become readable with the expected SHA-256: ${CDN_URL}"
+
