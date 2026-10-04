@@ -19,6 +19,7 @@ stream_proxy.write_text(proxy_text.replace(old, new, 1))
 (settings_dst / "Settings.java").write_text(Path("twitch-build/Settings.java").read_text())
 (settings_dst / "UyuSettingsFragment.java").write_text(Path("twitch-build/UyuSettingsFragment.java").read_text())
 (settings_dst / "PrivacySupport.java").write_text(Path("twitch-build/PrivacySupport.java").read_text())
+(settings_dst / "ThemeSupport.java").write_text(Path("twitch-build/ThemeSupport.java").read_text())
 
 chat_patch_dst = ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/chat"
 chat_patch_dst.mkdir(parents=True, exist_ok=True)

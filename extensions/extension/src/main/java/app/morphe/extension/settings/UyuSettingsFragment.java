@@ -18,6 +18,8 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
+import io.github.bakwudo.uyu.extension.settings.ThemeSupport;
+
 import io.github.bakwudo.uyu.extension.danmaku.DanmakuPreview;
 
 @SuppressWarnings("deprecation")
@@ -163,6 +165,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addAppearanceSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.AMOLED_THEME, "True AMOLED black theme",
+                "Use pure black neutral backgrounds across Twitch and Kizu UI while keeping controls and accents intact.");
         addSwitch(screen, Settings.HIDE_SUBSCRIBE_BUTTONS, "Hide the subscribe and Bits buttons",
                 "Hides the row above chat with the Bits, gift a sub and subscribe buttons.");
         addSwitch(screen, Settings.HIDE_CHAT_BITS_BUTTON, "Hide the Bits button in the chat box",
@@ -331,7 +335,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     @Override public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.setBackgroundColor(SettingsUi.backgroundColor(view.getContext()));
+        ThemeSupport.applySettingsView(view);
         view.setClickable(true);
     }
 
@@ -379,6 +383,20 @@ public class UyuSettingsFragment extends PreferenceFragment {
         preference.setDefaultValue(setting.defaultValue);
         preference.setTitle(title);
         preference.setSummary(summary);
+        if (setting == Settings.AMOLED_THEME) {
+            preference.setOnPreferenceChangeListener((changed, value) -> {
+                Activity activity = getActivity();
+                if (activity != null) {
+                    View decor = activity.getWindow().getDecorView();
+                    decor.postDelayed(() -> {
+                        ThemeSupport.apply(activity);
+                        View settingsView = getView();
+                        if (settingsView != null) ThemeSupport.applySettingsView(settingsView);
+                    }, 80L);
+                }
+                return true;
+            });
+        }
         group.addPreference(preference);
     }
 
