@@ -800,10 +800,13 @@ for path, symbol in [
      "separateAppPatch"),
 ]:
     text = path.read_text()
-    needle = f'val {symbol} ='
-    if needle not in text:
-        raise RuntimeError(f"Could not locate public patch {symbol}")
-    text = text.replace(needle, f'internal val {symbol} =', 1)
+    internal_needle = f'internal val {symbol} ='
+    public_needle = f'val {symbol} ='
+    if internal_needle in text:
+        continue
+    if public_needle not in text:
+        raise RuntimeError(f"Could not locate patch {symbol}")
+    text = text.replace(public_needle, internal_needle, 1)
     path.write_text(text)
 
 # --- Emote picker (global third-party emotes in the native picker) -----------
