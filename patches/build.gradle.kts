@@ -25,6 +25,28 @@ dependencies {
     patchListGeneratorClasspath(libs.gson)
 }
 
+val releaseBundleName = "patches-${project.version}.mpp"
+val releaseBundleFile = layout.buildDirectory.file("libs/$releaseBundleName")
+val releaseBundleDirectory = layout.buildDirectory.dir("release")
+
+val copyFinishedReleaseBundle = tasks.register("copyFinishedReleaseBundle") {
+    description = "Copies the finished Morphe bundle to an immutable release location."
+    doLast {
+        val source = releaseBundleFile.get().asFile
+        val destinationDirectory = releaseBundleDirectory.get().asFile
+        check(source.isFile) { "Finished Morphe bundle was not produced: $source" }
+        destinationDirectory.mkdirs()
+        destinationDirectory.listFiles()?.forEach { existing ->
+            if (existing.isFile && existing.extension == "mpp") existing.delete()
+        }
+        source.copyTo(destinationDirectory.resolve(releaseBundleName), overwrite = true)
+    }
+}
+
+tasks.named("buildAndroid") {
+    finalizedBy(copyFinishedReleaseBundle)
+}
+
 tasks {
     register<JavaExec>("generatePatchesList") {
         description = "Build patch with patch list"
