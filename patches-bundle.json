@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-04T13:32:00",
-  "description": "# [1.8.9.11] Show original text in strikethrough and grey deleted-message styles",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.11/patches-1.8.9.11.mpp",
+  "description": "# [1.8.9.12] Show original text in strikethrough and grey deleted-message styles",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.12/patches-1.8.9.12.mpp",
   "signature_download_url": "",
-  "version": "1.8.9.11"
+  "version": "1.8.9.12"
 }

@@ -137,6 +137,12 @@ public final class DeletedMessagesSupport {
                 SpannedString original = (SpannedString) value;
                 if (original.length() == 0) continue;
 
+                // The stored original can already contain the chatter prefix.
+                // The formatter result also keeps that prefix before the deleted
+                // span, so inserting it verbatim would produce "kz: kz: message".
+                original = stripDuplicatePrefix(builder, start, original);
+                if (original.length() == 0) continue;
+
                 candidates.add(new DeletedSpanData(span, start, end, original));
             } catch (Throwable ignored) {
             }
@@ -160,6 +166,46 @@ public final class DeletedMessagesSupport {
 
         ranges.sort((left, right) -> Integer.compare(left[0], right[0]));
         return ranges;
+    }
+
+    private static SpannedString stripDuplicatePrefix(
+            SpannableStringBuilder builder,
+            int spanStart,
+            SpannedString original
+    ) {
+        try {
+            int lineStart = 0;
+            for (int i = spanStart - 1; i >= 0; i--) {
+                if (builder.charAt(i) == '\n') {
+                    lineStart = i + 1;
+                    break;
+                }
+            }
+
+            if (spanStart <= lineStart) return original;
+
+            String before = builder.subSequence(lineStart, spanStart).toString();
+            String originalText = original.toString();
+
+            // Find the last "name: " style prefix immediately before the
+            // deleted span. Only strip it when the stored original starts
+            // with the exact same text.
+            int searchEnd = before.length();
+            while (searchEnd > 0) {
+                int delimiter = before.lastIndexOf(": ", searchEnd - 1);
+                if (delimiter < 0) break;
+
+                String prefix = before.substring(delimiter + 2);
+                if (!prefix.isEmpty() && originalText.startsWith(prefix)) {
+                    SpannableStringBuilder cleaned = new SpannableStringBuilder(original);
+                    cleaned.delete(0, prefix.length());
+                    return SpannedString.valueOf(cleaned);
+                }
+                searchEnd = delimiter;
+            }
+        } catch (Throwable ignored) {
+        }
+        return original;
     }
 
     private static Field findOriginalMessageField(Object span) {
