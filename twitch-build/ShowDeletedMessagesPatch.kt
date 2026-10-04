@@ -1,6 +1,7 @@
 package io.github.bakwudo.uyu.patches.twitch.chat
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
@@ -9,6 +10,7 @@ import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction11x
 import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction3rc
 import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
+import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
@@ -90,20 +92,22 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         // Recover the original message from the deleted span before Twitch replaces it with the placeholder.
         // This is the same proven structure used by the original Hooman patch for Twitch.
-        formatter.addInstructions(
+        formatter.addInstructionsWithLabels(
             arrayLengthIndex,
             """
                 array-length v$scratchRegister, v$arrayRegister
-                if-eqz v$scratchRegister, :unused_deleted_message_fallback
+                if-eqz v$scratchRegister, :use_stock_array
                 const/4 v$scratchRegister, 0x0
                 aget-object v$scratchRegister, v$arrayRegister, v$scratchRegister
                 iget-object p1, v$scratchRegister, $originalMessageField
                 const/4 p4, 0x1
                 const/4 v$scratchRegister, 0x0
                 new-array v$arrayRegister, v$scratchRegister, [$spanType
-            """
+            """,
+            ExternalLabel("use_stock_array", formatter.getInstruction(arrayLengthIndex)),
         )
-                val accessReads = spanClass.methods.flatMap { method ->
+
+        val accessReads = spanClass.methods.flatMap { method ->
             method.instructions.withIndex().mapNotNull { (index, instruction) ->
                 val reference = (instruction as? ReferenceInstruction)?.reference as? FieldReference
                 if (instruction.opcode == Opcode.IGET_BOOLEAN && reference == accessField) {
@@ -168,6 +172,5 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 ),
             )
         }
-
     }
 }
