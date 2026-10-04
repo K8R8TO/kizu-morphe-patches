@@ -20,6 +20,11 @@ stream_proxy.write_text(proxy_text.replace(old, new, 1))
 (settings_dst / "UyuSettingsFragment.java").write_text(Path("twitch-build/UyuSettingsFragment.java").read_text())
 (settings_dst / "PrivacySupport.java").write_text(Path("twitch-build/PrivacySupport.java").read_text())
 
+chat_patch_dst = ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/chat"
+chat_patch_dst.mkdir(parents=True, exist_ok=True)
+(chat_patch_dst / "Fingerprints.kt").write_text(Path("twitch-build/ChatFingerprints.kt").read_text())
+(chat_patch_dst / "ShowDeletedMessagesPatch.kt").write_text(Path("twitch-build/ShowDeletedMessagesPatch.kt").read_text())
+
 enhancement_dst = ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/enhancement"
 enhancement_dst.mkdir(parents=True, exist_ok=True)
 (enhancement_dst / "EnhancementPatch.kt").write_text(Path("twitch-build/EnhancementPatch.kt").read_text())
