@@ -160,7 +160,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             formatter.addInstruction(
                 index,
                 BuilderInstruction3rc(
-                    Opcode.INVOKE_STATIC,
+                    Opcode.INVOKE_STATIC_RANGE,
                     register,
                     1,
                     ImmutableMethodReference(
