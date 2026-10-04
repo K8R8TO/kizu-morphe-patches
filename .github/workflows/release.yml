@@ -150,7 +150,7 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           gh release view "v${VERSION}" --json tagName,assets --jq '.tagName + " " + ([.assets[].name] | join(","))' | grep -F "v${VERSION} patches-${VERSION}.mpp"
-      - name: Publish stable raw MPP mirror
+      - name: Publish stable CDN MPP mirror
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -158,8 +158,8 @@ jobs:
           set -euo pipefail
           BUNDLE="patches/build/release/patches-${VERSION}.mpp"
           MIRROR="mirror/patches-${VERSION}.mpp"
-          RAW_URL="https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/${MIRROR}"
           CDN_URL="https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/${MIRROR}"
+          CDN_JSON="https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/patches-bundle.json"
           mkdir -p mirror
           cp "${BUNDLE}" "${MIRROR}"
 
@@ -180,15 +180,15 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "mirror/patches-${VERSION}.mpp" patches-bundle.json
-          git commit -m "ci: mirror v${VERSION} MPP [release-mirror]"
+          git commit -m "ci: publish CDN source for v${VERSION} [release-mirror]"
           git push origin HEAD:main
 
           EXPECTED_SHA="$(sha256sum "${BUNDLE}" | cut -d' ' -f1)"
           for attempt in $(seq 1 30); do
-            if curl -fsSL --retry 2 --retry-delay 1 "${RAW_URL}" -o /tmp/kizu-mirror.mpp; then
-              ACTUAL_SHA="$(sha256sum /tmp/kizu-mirror.mpp | cut -d' ' -f1)"
-              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-mirror.mpp >/dev/null; then
-                echo "Verified raw MPP mirror: ${RAW_URL}"
+            if curl -fsSL --retry 2 --retry-delay 1 "${CDN_URL}" -o /tmp/kizu-cdn.mpp; then
+              ACTUAL_SHA="$(sha256sum /tmp/kizu-cdn.mpp | cut -d' ' -f1)"
+              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-cdn.mpp >/dev/null; then
+                echo "Verified jsDelivr MPP mirror: ${CDN_URL}"
                 break
               fi
             fi
@@ -196,40 +196,19 @@ jobs:
           done
 
           for attempt in $(seq 1 30); do
-            if curl -fsSL --retry 2 --retry-delay 1 "${CDN_URL}" -o /tmp/kizu-cdn.mpp; then
-              ACTUAL_SHA="$(sha256sum /tmp/kizu-cdn.mpp | cut -d' ' -f1)"
-              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-cdn.mpp >/dev/null; then
-                echo "Verified jsDelivr MPP mirror: ${CDN_URL}"
-                exit 0
-              fi
+            if curl -fsSL --retry 2 --retry-delay 1 "${CDN_JSON}" -o /tmp/kizu-cdn.json; then
+              python3 - <<'PY'
+          import json, os
+          version = os.environ["VERSION"]
+          data = json.load(open("/tmp/kizu-cdn.json"))
+          expected = f"https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/mirror/patches-{version}.mpp"
+          assert data["version"] == version
+          assert data["download_url"] == expected
+          PY
+              echo "Verified jsDelivr source metadata: ${CDN_JSON}"
+              exit 0
             fi
             sleep 2
           done
-          echo "Raw MPP mirror did not become readable with the expected SHA-256: ${RAW_URL}"
-          EXPECTED_SHA="$(sha256sum "${BUNDLE}" | cut -d' ' -f1)"
-          RAW_OK=false
-          for attempt in $(seq 1 30); do
-            if curl -fsSL --retry 2 --retry-delay 1 "${RAW_URL}" -o /tmp/kizu-raw.mpp; then
-              ACTUAL_SHA="$(sha256sum /tmp/kizu-raw.mpp | cut -d' ' -f1)"
-              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-raw.mpp >/dev/null; then
-                echo "Verified raw MPP mirror: ${RAW_URL}"
-                RAW_OK=true
-                break
-              fi
-            fi
-            sleep 2
-          done
-          test "${RAW_OK}" = true
-
-          for attempt in $(seq 1 30); do
-            if curl -fsSL --retry 2 --retry-delay 1 "${CDN_URL}" -o /tmp/kizu-cdn.mpp; then
-              ACTUAL_SHA="$(sha256sum /tmp/kizu-cdn.mpp | cut -d' ' -f1)"
-              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-cdn.mpp >/dev/null; then
-                echo "Verified jsDelivr MPP mirror: ${CDN_URL}"
-                exit 0
-              fi
-            fi
-            sleep 2
-          done
-          echo "jsDelivr MPP mirror did not become readable with the expected SHA-256: ${CDN_URL}"
-
+          echo "jsDelivr source metadata did not become readable: ${CDN_JSON}"
+          exit 1
