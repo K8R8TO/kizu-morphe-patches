@@ -18,6 +18,8 @@ import android.widget.TextView;
 
 import java.util.Locale;
 
+import io.github.bakwudo.uyu.extension.settings.ThemeSupport;
+
 import io.github.bakwudo.uyu.extension.danmaku.DanmakuPreview;
 
 @SuppressWarnings("deprecation")
