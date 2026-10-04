@@ -92,6 +92,19 @@ jobs:
           assert bundle.get("download_url") == expected, "bundle download URL changed during build"
           PY
 
+      - name: Verify embedded MPP manifest
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          BUNDLE="patches/build/release/patches-${VERSION}.mpp"
+          unzip -p "${BUNDLE}" META-INF/MANIFEST.MF | tee /tmp/kizu-mpp-manifest.txt
+          grep -Fq "Name: Kizu Twitch Patches" /tmp/kizu-mpp-manifest.txt
+          grep -Fq "Version: ${VERSION}" /tmp/kizu-mpp-manifest.txt
+          grep -Fq "Author: Kizu" /tmp/kizu-mpp-manifest.txt
+          grep -Fq "Source: https://github.com/K8R8TO/kizu-morphe-patches.git" /tmp/kizu-mpp-manifest.txt
+          grep -Fq "Website: https://github.com/K8R8TO/kizu-morphe-patches" /tmp/kizu-mpp-manifest.txt
+          grep -Fq "License: GPLv3" /tmp/kizu-mpp-manifest.txt
+          grep -Fq "Patcher-Version:" /tmp/kizu-mpp-manifest.txt
       - name: Verify release artifact
         env:
           VERSION: ${{ steps.version.outputs.version }}
