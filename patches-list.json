@@ -1,45 +1,21 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.8.9.26",
-  "patches": [
-    {
-      "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements: third-party emotes in chat and the native Twitch emote menu, animated emote playback, live ad blocking, appearance controls, selectable deleted-message display styles, privacy controls, Hide Stories, and patched-app compatibility.",
-      "default": true,
-      "category": null,
-      "dependencies": [
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "tv.twitch.android.app",
-          "name": "Twitch",
-          "description": null,
-          "appIconColor": "#9147FF",
-          "apkFileType": "APKM",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "31.3.1",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
-        }
-      ],
-      "options": []
-    }
-  ]
+  "version": "1.9.0",
+  "patches": [{
+    "name": "Twitch Enhancement",
+    "description": "Kizu Twitch enhancements for Twitch 31.3.1, including third-party emotes, animated emotes, privacy and appearance controls, deleted-message controls, Hide Stories, ad handling, automatic Channel Points claiming, and stable default-home navigation.",
+    "default": true,
+    "category": null,
+    "dependencies": ["BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch"],
+    "compatiblePackages": [{
+      "packageName": "tv.twitch.android.app",
+      "name": "Twitch",
+      "description": null,
+      "appIconColor": "#9147FF",
+      "apkFileType": "APKM",
+      "signatures": null,
+      "targets": [{"version":"31.3.1","versionCodes":null,"isExperimental":false,"minSdk":null,"description":null}]
+    }],
+    "options": []
+  }]
 }
