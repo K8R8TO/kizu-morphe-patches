@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-04T13:32:00",
-  "description": "# [1.8.9.8] Restore original deleted chat message before Twitch placeholder formatting",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.8/patches-1.8.9.8.mpp",
+  "description": "# [1.8.9.9] Fix deleted-message recovery with proven branch injection",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.9/patches-1.8.9.9.mpp",
   "signature_download_url": "",
-  "version": "1.8.9.8"
+  "version": "1.8.9.9"
 }
