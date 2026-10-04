@@ -261,7 +261,29 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addChatSettings(PreferenceScreen screen) {
-        addSwitch(screen, Settings.CHAT_DELETED_MESSAGES, "Deleted messages", "Control whether deleted chat messages remain visible locally.");
+        addSwitch(screen, Settings.CHAT_DELETED_MESSAGES, "Deleted messages", "Control whether deleted chat messages remain visible locally.");        
+        Preference deletedMessageStyle = new Preference(screen.getContext());
+        deletedMessageStyle.setTitle("Deleted message style");
+        deletedMessageStyle.setSummary(deletedMessageStyleName(Settings.CHAT_DELETED_MESSAGES_STYLE.get()));
+        deletedMessageStyle.setOnPreferenceClickListener(clicked -> {
+            Activity activity = getActivity();
+            if (activity == null) return true;
+            String[] names = {"Default", "Mod", "Strikethrough", "Grey"};
+            String[] values = {"default", "mod", "strikethrough", "grey"};
+            int selected = deletedMessageStyleIndex(Settings.CHAT_DELETED_MESSAGES_STYLE.get());
+            new AlertDialog.Builder(activity)
+                    .setTitle("Deleted message style")
+                    .setSingleChoiceItems(names, selected, (dialog, which) -> {
+                        Settings.CHAT_DELETED_MESSAGES_STYLE.save(values[which]);
+                        deletedMessageStyle.setSummary(names[which]);
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show();
+            return true;
+        });
+        screen.addPreference(deletedMessageStyle);
+
         addSwitch(screen, Settings.CHAT_TIMESTAMPS, "Chat timestamps", "Show timestamps on chat messages.");
         addSwitch(screen, Settings.CHAT_MENTION_HIGHLIGHT, "Highlight on mention",
                 "Highlight chat messages that directly mention your account.");
@@ -274,6 +296,20 @@ public class UyuSettingsFragment extends PreferenceFragment {
         addSlider(screen, Settings.LANDSCAPE_CHAT_SIZE, 5, "Landscape chat width", value -> value + "% of the screen");
         addSwitch(screen, Settings.LANDSCAPE_CHAT_OPACITY_ENABLED, "Landscape chat opacity", "Use the custom landscape chat opacity.");
         addSlider(screen, Settings.LANDSCAPE_CHAT_OPACITY, 5, "Landscape chat opacity", value -> value + "%");
+    }
+
+    private static int deletedMessageStyleIndex(String value) {
+        if ("mod".equalsIgnoreCase(value)) return 1;
+        if ("strikethrough".equalsIgnoreCase(value)) return 2;
+        if ("grey".equalsIgnoreCase(value)) return 3;
+        return 0;
+    }
+
+    private static String deletedMessageStyleName(String value) {
+        if ("mod".equalsIgnoreCase(value)) return "Mod";
+        if ("strikethrough".equalsIgnoreCase(value)) return "Strikethrough";
+        if ("grey".equalsIgnoreCase(value)) return "Grey";
+        return "Default";
     }
 
     private void addPrivacySettings(PreferenceScreen screen) {
