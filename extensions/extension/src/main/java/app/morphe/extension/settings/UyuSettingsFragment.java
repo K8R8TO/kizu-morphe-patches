@@ -164,6 +164,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addAppearanceSettings(PreferenceScreen screen) {
+        addThemeDiagnostics(screen);
         addSwitch(screen, Settings.HIDE_SUBSCRIBE_BUTTONS, "Hide the subscribe and Bits buttons",
                 "Hides the row above chat with the Bits, gift a sub and subscribe buttons.");
         addSwitch(screen, Settings.HIDE_CHAT_BITS_BUTTON, "Hide the Bits button in the chat box",
@@ -311,6 +312,17 @@ public class UyuSettingsFragment extends PreferenceFragment {
         if ("grey".equalsIgnoreCase(value)) return "Grey";
         // "default" is a legacy value and is equivalent to Mod.
         return "Mod";
+    }
+
+    private void addThemeDiagnostics(PreferenceScreen screen) {
+        Preference diagnostic = new Preference(screen.getContext());
+        diagnostic.setTitle("Theme Diagnostics");
+        diagnostic.setSummary("Show Twitch and Kizu Light/Dark theme state.");
+        diagnostic.setOnPreferenceClickListener(clicked -> {
+            ThemeProbe.show(getActivity());
+            return true;
+        });
+        screen.addPreference(diagnostic);
     }
 
     private void addPrivacySettings(PreferenceScreen screen) {
