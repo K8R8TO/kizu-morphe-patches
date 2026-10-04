@@ -377,7 +377,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         }
     }
 
-    private static void addSwitch(PreferenceGroup group, BooleanSetting setting, String title, String summary) {
+    private void addSwitch(PreferenceGroup group, BooleanSetting setting, String title, String summary) {
         SwitchPreference preference = new SwitchPreference(group.getContext());
         preference.setKey(setting.key);
         preference.setDefaultValue(setting.defaultValue);
