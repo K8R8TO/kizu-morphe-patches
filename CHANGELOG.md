@@ -1,4 +1,4 @@
-# [1.8.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.7...v1.8.8) (2026-10-04)\n\n### Features\n\n* add a toggleable Hide Stories setting for Twitch's Following/Home feed\n* remove the Stories shelf using view-only runtime hiding with delayed retries for asynchronous feed loading\n\n# [1.8.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.4...v1.8.5) (2026-10-04)
+# [1.8.8.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.8...v1.8.8.1) (2026-10-04)\n\n### Fixes\n\n* prevent Hide Stories from recursively rescanning the Twitch view hierarchy and blocking the UI on startup\n\n# [1.8.8](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.7...v1.8.8) (2026-10-04)\n\n### Features\n\n* add a toggleable Hide Stories setting for Twitch's Following/Home feed\n* remove the Stories shelf using view-only runtime hiding with delayed retries for asynchronous feed loading\n\n# [1.8.5](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.4...v1.8.5) (2026-10-04)
 
 ### Fixes
 
