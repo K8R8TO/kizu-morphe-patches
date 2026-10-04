@@ -37,7 +37,19 @@ public final class DefaultFollowing {
      * preserving Kizu's three-way setting while we use the native hook where it maps cleanly.
      */
     public static boolean useNativeFollowing() {
-        return "following".equalsIgnoreCase(Settings.DEFAULT_HOME_TAB.get());
+        try {
+            android.content.Context context = io.github.bakwudo.uyu.extension.Utils.getContext();
+            if (context == null) return true;
+            android.content.SharedPreferences preferences =
+                    context.getSharedPreferences(
+                            app.morphe.extension.settings.Setting.PREFERENCES_NAME,
+                            android.content.Context.MODE_PRIVATE
+                    );
+            String value = preferences.getString("default_home_tab", "following");
+            return !"live".equalsIgnoreCase(value) && !"clips".equalsIgnoreCase(value);
+        } catch (Throwable ignored) {
+            return true;
+        }
     }
 
     public static void onActivityStarted(Activity activity) {
