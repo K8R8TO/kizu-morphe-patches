@@ -76,6 +76,7 @@ public final class Utils {
                 @Override public void onActivityResumed(Activity activity) {
                     currentActivity = activity;
                     try { DefaultFollowing.onActivityStarted(activity); } catch (Throwable ignored) {}
+                    try { HideStories.onActivityResumed(activity); } catch (Throwable ignored) {}
                     try { LandscapeChatPatch.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
                 }

@@ -185,23 +185,56 @@ public final class DeletedMessagesSupport {
             if (spanStart <= lineStart) return original;
 
             String before = builder.subSequence(lineStart, spanStart).toString();
-            String originalText = original.toString();
+            String originalText = original.toString().trim();
+            if (before.isEmpty() || originalText.isEmpty()) return original;
 
-            // Find the last "name: " style prefix immediately before the
-            // deleted span. Only strip it when the stored original starts
-            // with the exact same text.
-            int searchEnd = before.length();
-            while (searchEnd > 0) {
-                int delimiter = before.lastIndexOf(": ", searchEnd - 1);
-                if (delimiter < 0) break;
+            // Twitch can include accessibility/badge text in the stored original,
+            // e.g. "predictions rvxuf: message", while the visible formatter already
+            // renders the badge and "rvxuf: " before the deleted span.
+            //
+            // Recover the visible username from the text immediately before the span:
+            // "... rvxuf: ". Then remove everything through that exact username and
+            // delimiter from the stored original. This prevents badge/role text and
+            // the username from being duplicated in visual styles.
+            int delimiter = before.lastIndexOf(": ");
+            if (delimiter < 0) return original;
 
-                String prefix = before.substring(delimiter + 2);
-                if (!prefix.isEmpty() && originalText.startsWith(prefix)) {
-                    SpannableStringBuilder cleaned = new SpannableStringBuilder(original);
-                    cleaned.delete(0, prefix.length());
-                    return SpannedString.valueOf(cleaned);
+            String visiblePrefix = before.substring(0, delimiter).trim();
+            if (visiblePrefix.isEmpty()) return original;
+
+            int usernameStart = visiblePrefix.lastIndexOf(' ');
+            String username = usernameStart >= 0
+                    ? visiblePrefix.substring(usernameStart + 1)
+                    : visiblePrefix;
+
+            if (username.isEmpty()) return original;
+
+            String lowerOriginal = originalText.toLowerCase(Locale.ROOT);
+            String lowerUsername = username.toLowerCase(Locale.ROOT);
+
+            int usernameIndex = lowerOriginal.indexOf(lowerUsername);
+            while (usernameIndex >= 0) {
+                int afterUsername = usernameIndex + username.length();
+                if (afterUsername < originalText.length()) {
+                    int colon = afterUsername;
+                    while (colon < originalText.length()
+                            && Character.isWhitespace(originalText.charAt(colon))) {
+                        colon++;
+                    }
+                    if (colon < originalText.length() && originalText.charAt(colon) == ':') {
+                        colon++;
+                        while (colon < originalText.length()
+                                && Character.isWhitespace(originalText.charAt(colon))) {
+                            colon++;
+                        }
+
+                        SpannableStringBuilder cleaned = new SpannableStringBuilder(original);
+                        cleaned.delete(0, colon);
+                        return SpannedString.valueOf(cleaned);
+                    }
                 }
-                searchEnd = delimiter;
+
+                usernameIndex = lowerOriginal.indexOf(lowerUsername, usernameIndex + 1);
             }
         } catch (Throwable ignored) {
         }

@@ -22,7 +22,9 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
  */
 public final class HideStories {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
-    private static final long[] RETRY_DELAYS_MS = {250L, 750L, 1500L, 3000L, 6000L};
+    private static final long[] RETRY_DELAYS_MS = {
+            100L, 300L, 750L, 1500L, 3000L, 5000L, 8000L, 12000L, 16000L, 20000L
+    };
     private static final WeakHashMap<View, Boolean> HIDDEN = new WeakHashMap<>();
 
     private HideStories() {}
@@ -37,6 +39,10 @@ public final class HideStories {
 
     private static void schedule(final Activity activity) {
         if (activity == null) return;
+
+        // Twitch builds the Home feed lazily. A one-shot scan can run before the
+        // Stories shelf exists, so retry for the first few seconds after every
+        // activity start/resume.
         for (long delay : RETRY_DELAYS_MS) {
             MAIN.postDelayed(() -> {
                 try {
