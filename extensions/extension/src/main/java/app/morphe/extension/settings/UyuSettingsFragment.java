@@ -333,6 +333,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     @Override public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         SettingsUi.applySettingsView(view);
+        ThemeProbe.report("KizuSettings", view);
         view.setClickable(true);
     }
 
