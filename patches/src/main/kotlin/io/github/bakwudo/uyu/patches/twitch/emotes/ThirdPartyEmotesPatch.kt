@@ -59,19 +59,6 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
             ),
         )
         channelConstructor.addInstruction(
-            returnIndex + 1,
-            BuilderInstruction35c(
-                Opcode.INVOKE_STATIC,
-                2, 1, 2, 0, 0, 0,
-                ImmutableMethodReference(
-                    CHANNEL_POINTS,
-                    "onChannelChanged",
-                    listOf("Ljava/lang/String;", "Ljava/lang/String;"),
-                    "V",
-                ),
-            ),
-        )
-        channelConstructor.addInstruction(
             returnIndex + 2,
             BuilderInstruction35c(
                 Opcode.INVOKE_STATIC,
