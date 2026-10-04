@@ -1,9 +1,9 @@
 {
-  "version": "1.8.9",
+  "version": "1.8.9.1",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements: third-party emotes in chat and the native Twitch emote menu, animated emote playback, live ad blocking, appearance controls, deleted-message display, privacy controls, Hide Stories, and patched-app compatibility.",
+      "description": "Kizu Twitch enhancements: third-party emotes in chat and the native Twitch emote menu, animated emote playback, live ad blocking, appearance controls, selectable deleted-message display styles, privacy controls, Hide Stories, and patched-app compatibility.",
       "use": true,
       "dependencies": [
         "BytecodePatch",
