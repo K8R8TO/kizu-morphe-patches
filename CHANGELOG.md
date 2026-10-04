@@ -1,3 +1,10 @@
+# [1.8.9.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.9.1...v1.8.9.2) (2026-10-04)
+
+### Fixes
+
+* fix deleted-message style patcher smali generation
+* keep deleted-message implementation as an internal Twitch Enhancement dependency so only one Twitch patch is shown
+
 # [1.8.9.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.9...v1.8.9.1) (2026-10-04)
 
 ### Features
