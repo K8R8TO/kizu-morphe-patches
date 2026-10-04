@@ -34,7 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import app.morphe.extension.Utils;
-import io.github.bakwudo.uyu.extension.settings.ThemeSupport;
+import app.morphe.extension.settings.SettingsUi;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 public final class EmotePickerBridge {
@@ -235,7 +235,7 @@ public final class EmotePickerBridge {
         thirdParty.setTag(COMPOSER_BUTTON_TAG);
         thirdParty.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         thirdParty.setCompoundDrawablesWithIntrinsicBounds(
-                new WinkIconDrawable(dp(activity, 22), ThemeSupport.primaryTextColor(activity)),
+                new WinkIconDrawable(dp(activity, 22), SettingsUi.primaryTextColor(activity)),
                 null, null, null);
         thirdParty.setGravity(Gravity.CENTER);
         thirdParty.setContentDescription("Third-party emote picker");
@@ -256,7 +256,7 @@ public final class EmotePickerBridge {
         });
 
         View divider = new View(activity);
-        divider.setBackgroundColor(ThemeSupport.dividerColor(activity));
+        divider.setBackgroundColor(SettingsUi.dividerColor(activity));
 
         LinearLayout.LayoutParams thirdPartyParams =
                 new LinearLayout.LayoutParams(dp(activity, 40), nativeHeight);
@@ -517,10 +517,10 @@ public final class EmotePickerBridge {
         LinearLayout root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(activity, 8), dp(activity, 8), dp(activity, 8), dp(activity, 8));
-        int surfaceColor = ThemeSupport.surfaceColor(activity);
-        int alternateColor = ThemeSupport.alternateBackgroundColor(activity);
-        int textColor = ThemeSupport.primaryTextColor(activity);
-        int secondaryTextColor = ThemeSupport.secondaryTextColor(activity);
+        int surfaceColor = SettingsUi.surfaceColor(activity);
+        int alternateColor = SettingsUi.alternateBackgroundColor(activity);
+        int textColor = SettingsUi.primaryTextColor(activity);
+        int secondaryTextColor = SettingsUi.secondaryTextColor(activity);
         root.setBackgroundColor(surfaceColor);
 
         EditText search = new EditText(activity);
