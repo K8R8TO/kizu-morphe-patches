@@ -17,7 +17,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 @Suppress("unused")
 val twitchEnhancementPatch = bytecodePatch(
     name = "Twitch Enhancement",
-    description = "Kizu Twitch enhancements: third-party emotes in chat and the native Twitch emote menu, animated emote playback, live ad blocking, appearance controls, deleted-message display, privacy controls, and patched-app compatibility.",
+    description = "Kizu Twitch enhancements: third-party emotes in chat and the native Twitch emote menu, animated emote playback, live ad blocking, appearance controls, selectable deleted-message display styles, privacy controls, Hide Stories, and patched-app compatibility.",
 ) {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(
