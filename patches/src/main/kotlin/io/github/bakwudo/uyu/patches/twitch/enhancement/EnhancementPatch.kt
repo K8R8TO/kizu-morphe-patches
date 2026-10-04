@@ -11,7 +11,6 @@ import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerUrlPatch
 import io.github.bakwudo.uyu.patches.twitch.login.fixLoginPatch
 import io.github.bakwudo.uyu.patches.twitch.notifications.fixNotificationsPatch
 import io.github.bakwudo.uyu.patches.twitch.privacy.privacyPatch
-import io.github.bakwudo.uyu.patches.twitch.navigation.defaultHomeTabPatch
 import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 
@@ -23,7 +22,6 @@ val twitchEnhancementPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(
         settingsPatch,
-        defaultHomeTabPatch,
         fixLoginPatch,
         fixNotificationsPatch,
         blockAdsPatch,
