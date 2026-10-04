@@ -1,6 +1,7 @@
 package io.github.bakwudo.uyu.extension.settings;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.Preference;
