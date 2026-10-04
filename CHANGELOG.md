@@ -1,3 +1,9 @@
+# [1.8.9.4](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.9.3...v1.8.9.4) (2026-10-04)
+
+### Fixes
+
+* remove the failing inline-smali formatter hook and inject the deleted-message formatter call directly with dexlib instructions
+
 # [1.8.9.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.9.2...v1.8.9.3) (2026-10-04)
 
 ### Fixes
