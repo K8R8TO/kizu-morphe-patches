@@ -346,6 +346,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     @Override public void onResume() {
         super.onResume();
+        View settingsView = getView();
+        if (settingsView != null) SettingsUi.applySettingsView(settingsView);
         Activity activity = getActivity();
         TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
         if (title == null) return;
