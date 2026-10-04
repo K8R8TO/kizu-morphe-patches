@@ -131,11 +131,6 @@ public final class Settings {
     public static final BooleanSetting SHOW_SLEEP_TIMER =
             new BooleanSetting("show_sleep_timer", true);
 
-    // Theme.
-    /** Makes neutral Twitch background surfaces pure AMOLED black. */
-    public static final BooleanSetting AMOLED_THEME =
-            new BooleanSetting("amoled_theme", false);
-
     // Interface / Feed.
     public static final BooleanSetting HIDE_STORIES =
             new BooleanSetting("hide_stories", true);
