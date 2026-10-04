@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-04T18:54:00",
-  "description": "# [1.8.9.14] Fix Hide Stories detection and shelf selection",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.14/patches-1.8.9.14.mpp",
+  "created_at": "2026-10-04T19:00:00",
+  "description": "# [1.8.9.15] Fix Hide Stories safely without affecting Home navigation",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.15/patches-1.8.9.15.mpp",
   "signature_download_url": "",
-  "version": "1.8.9.14"
+  "version": "1.8.9.15"
 }

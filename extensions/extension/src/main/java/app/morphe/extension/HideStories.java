@@ -15,12 +15,11 @@ import java.util.WeakHashMap;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 /**
- * Hides only the Stories shelf/item, never the page-level feed container.
+ * Hides Twitch's Stories shelf without touching Home navigation.
  *
- * Twitch's Home/Following hierarchy can vary between native and Compose-backed
- * layouts, so detection uses the visible Stories label first and a constrained
- * size/resource fallback second. A candidate must look like a real shelf before
- * it is hidden; full-screen/root/list containers are never hidden.
+ * The important safety rule is that we only hide a view that looks like the
+ * short, wide Stories shelf itself. Navigation, scrolling, paging and
+ * full-screen containers are explicitly rejected.
  */
 public final class HideStories {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
@@ -61,7 +60,7 @@ public final class HideStories {
         }
 
         View root = activity.getWindow().getDecorView();
-        if (root == null || root.getWidth() <= 0) return;
+        if (root == null || root.getWidth() <= 0 || root.getHeight() <= 0) return;
 
         List<View> views = new ArrayList<>();
         collectVisibleViews(root, views);
@@ -106,34 +105,40 @@ public final class HideStories {
     }
 
     private static View findStoriesShelf(List<View> views, View root) {
-        // Prefer a real visible Stories label. The shelf may not itself be a
-        // RecyclerView/LazyRow on newer Twitch builds, so choose the nearest
-        // ancestor that looks like a horizontal shelf instead.
+        // 1. Exact visible "Stories" label. This remains the primary detector.
         for (View view : views) {
             if (!isStoriesLabel(view)) continue;
 
             View current = view;
-            for (int depth = 0; depth < 8 && current.getParent() instanceof View; depth++) {
+            for (int depth = 0; depth < 7 && current.getParent() instanceof View; depth++) {
                 current = (View) current.getParent();
-                if (current == root) break;
 
-                if (looksLikeShelf(current, root) && !isUnsafeContainer(current, root)) {
+                if (current == root) break;
+                if (isUnsafeContainer(current, root)) continue;
+
+                // Only accept a real shelf, not a navigation/header/content wrapper.
+                if (looksLikeShelf(current, root) && !containsNavigationLabels(current, 5)) {
                     return current;
                 }
             }
         }
 
-        // Fallback for builds that expose a story-specific Android resource id
-        // but do not expose the visible label as a TextView.
+        // 2. Twitch/PurpleTV-style class/resource fallback for Compose/custom views.
+        // The iOS implementation uses StoryViewerListCollapsibleView; Android builds
+        // may expose equivalent StoryViewer/Stories class names or story-specific ids.
         for (View view : views) {
-            String resource = resourceName(view);
-            if (resource == null) continue;
+            if (!isStoryTargetView(view)) continue;
 
-            String normalized = resource.toLowerCase(Locale.ROOT);
-            if (!normalized.contains("stor")) continue;
+            View current = view;
+            for (int depth = 0; depth < 7 && current.getParent() instanceof View; depth++) {
+                current = (View) current.getParent();
 
-            if (looksLikeShelf(view, root) && !isUnsafeContainer(view, root)) {
-                return view;
+                if (current == root) break;
+                if (isUnsafeContainer(current, root)) continue;
+
+                if (looksLikeShelf(current, root) && !containsNavigationLabels(current, 5)) {
+                    return current;
+                }
             }
         }
 
@@ -155,6 +160,20 @@ public final class HideStories {
                 || "twitch stories".equalsIgnoreCase(text);
     }
 
+    private static boolean isStoryTargetView(View view) {
+        String cls = view.getClass().getName().toLowerCase(Locale.ROOT);
+        String resource = resourceName(view);
+        if (resource == null) resource = "";
+
+        return cls.contains("storyviewerlistcollapsible")
+                || cls.contains("storyviewer")
+                || (cls.contains("stories") && !cls.contains("avatar"))
+                || resource.contains("story_viewer")
+                || resource.contains("storyviewer")
+                || resource.contains("stories_shelf")
+                || resource.equals("stories");
+    }
+
     private static boolean looksLikeShelf(View view, View root) {
         if (!(view instanceof ViewGroup)) return false;
 
@@ -165,11 +184,14 @@ public final class HideStories {
 
         if (width <= 0 || height <= 0) return false;
 
-        // Stories is a wide, relatively short horizontal shelf.
-        if (width < 180 || height < 40) return false;
-        if (rootWidth > 0 && width < rootWidth / 3) return false;
-        if (rootHeight > 0 && height >= (rootHeight * 3) / 4) return false;
-        if (rootWidth > 0 && height >= Math.max(300, rootWidth / 2)) return false;
+        // Wide and short: characteristic of the Stories shelf.
+        if (rootWidth > 0 && width < (rootWidth * 3) / 5) return false;
+
+        int minHeight = dp(view, 80);
+        if (height < minHeight) return false;
+
+        if (rootHeight > 0 && height >= (rootHeight * 3) / 5) return false;
+        if (rootWidth > 0 && height >= Math.max(dp(view, 360), rootWidth / 2)) return false;
 
         ViewGroup group = (ViewGroup) view;
         return group.getChildCount() >= 2;
@@ -183,23 +205,70 @@ public final class HideStories {
                 || name.contains("lazycolumn")
                 || name.contains("lazyrow")
                 || name.contains("scrollview")
-                || name.contains("viewpager")) {
+                || name.contains("nestedscroll")
+                || name.contains("viewpager")
+                || name.contains("bottomnavigation")
+                || name.contains("tablayout")
+                || name.contains("toolbar")
+                || name.contains("appbar")
+                || name.contains("navigation")) {
             return true;
         }
 
         int rootHeight = root == null ? 0 : root.getHeight();
-        if (rootHeight > 0 && view.getHeight() >= (rootHeight * 3) / 4) return true;
+        if (rootHeight > 0 && view.getHeight() >= (rootHeight * 3) / 5) return true;
 
         return false;
+    }
+
+    private static boolean containsNavigationLabels(View root, int maxDepth) {
+        return containsNavigationLabels(root, 0, maxDepth);
+    }
+
+    private static boolean containsNavigationLabels(View view, int depth, int maxDepth) {
+        if (view == null || depth > maxDepth) return false;
+
+        if (view instanceof TextView) {
+            CharSequence text = ((TextView) view).getText();
+            if (isNavigationLabel(text)) return true;
+        }
+
+        CharSequence description = view.getContentDescription();
+        if (isNavigationLabel(description)) return true;
+
+        if (!(view instanceof ViewGroup)) return false;
+
+        ViewGroup group = (ViewGroup) view;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            if (containsNavigationLabels(group.getChildAt(i), depth + 1, maxDepth)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isNavigationLabel(CharSequence value) {
+        if (value == null) return false;
+        String text = value.toString().trim();
+        return "following".equalsIgnoreCase(text)
+                || "live".equalsIgnoreCase(text)
+                || "clips".equalsIgnoreCase(text)
+                || "home".equalsIgnoreCase(text)
+                || "browse".equalsIgnoreCase(text)
+                || "search".equalsIgnoreCase(text);
     }
 
     private static String resourceName(View view) {
         try {
             if (view.getId() == View.NO_ID) return null;
-            return view.getResources().getResourceEntryName(view.getId());
+            return view.getResources().getResourceEntryName(view.getId()).toLowerCase(Locale.ROOT);
         } catch (Throwable ignored) {
             return null;
         }
+    }
+
+    private static int dp(View view, int value) {
+        return Math.round(value * view.getResources().getDisplayMetrics().density);
     }
 
     private static void requestLayout(View view) {
