@@ -12,6 +12,7 @@ internal val defaultHomeTabPatch = bytecodePatch {
             0,
             """
                 invoke-static {}, Lapp/morphe/extension/DefaultFollowing;->useNativeFollowing()Z
+                move-result v0
                 if-eqz v0, :kizu_default_home_original
                 sget-object v0, $FOLLOWING_PAGE_TYPE->INSTANCE:$FOLLOWING_PAGE_TYPE
                 return-object v0
