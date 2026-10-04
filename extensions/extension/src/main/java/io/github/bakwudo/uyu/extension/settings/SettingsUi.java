@@ -45,9 +45,9 @@ public final class SettingsUi {
      */
     public static boolean isDark(Context context) {
         Context themeContext = themeResolutionContext(context);
-        Boolean twitch = twitchNightMode(themeContext);
-        if (twitch != null) return twitch;
         Boolean userTheme = twitchUserTheme(themeContext);
+        if (userTheme != null) return userTheme;
+        Boolean twitch = twitchNightMode(themeContext);
         if (twitch != null) return twitch;
 
         int raw = twitchColor(themeContext, "background_body");
