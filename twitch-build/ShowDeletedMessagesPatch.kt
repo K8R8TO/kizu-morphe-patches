@@ -1,6 +1,5 @@
 package io.github.bakwudo.uyu.patches.twitch.chat
 
-import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
@@ -8,9 +7,6 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.Opcode
-import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction11x
-import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction3rc
-import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
@@ -101,9 +97,9 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 const/4 v$scratchRegister, 0x0
                 aget-object v$scratchRegister, v$arrayRegister, v$scratchRegister
                 iget-object p1, v$scratchRegister, $originalMessageField
-                const/4 p4, 0x1
-                const/4 v$scratchRegister, 0x0
-                new-array v$arrayRegister, v$scratchRegister, [$spanType
+                invoke-static {p1}, $SUPPORT->format(Landroid/text/Spanned;)Landroid/text/Spanned
+                move-result-object p1
+                return-object p1
             """,
             ExternalLabel("use_stock_array", formatter.getInstruction(arrayLengthIndex)),
         )
@@ -136,42 +132,5 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             }
         }
 
-        val returnIndexes = formatter.instructions.withIndex()
-            .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_OBJECT }
-            .map { it.index }
-            .distinct()
-            .sortedDescending()
-
-        if (returnIndexes.isEmpty()) {
-            throw PatchException(
-                "Twitch deleted messages: formatter has no return-object instruction.",
-            )
-        }
-
-        for (index in returnIndexes) {
-            val instruction = formatter.getInstruction<OneRegisterInstruction>(index)
-            val register = instruction.registerA
-            formatter.addInstruction(
-                index,
-                BuilderInstruction3rc(
-                    Opcode.INVOKE_STATIC_RANGE,
-                    register,
-                    1,
-                    ImmutableMethodReference(
-                        SUPPORT,
-                        "format",
-                        listOf("Landroid/text/Spanned;"),
-                        "Landroid/text/Spanned;",
-                    ),
-                ),
-            )
-            formatter.addInstruction(
-                index + 1,
-                BuilderInstruction11x(
-                    Opcode.MOVE_RESULT_OBJECT,
-                    register,
-                ),
-            )
-        }
     }
 }
