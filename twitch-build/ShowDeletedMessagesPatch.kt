@@ -16,10 +16,12 @@ import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 
+private const val SUPPORT = "Lapp/morphe/extension/twitch/chat/DeletedMessagesSupport;"
+
 internal val showDeletedMessagesPatch = bytecodePatch(
     name = "Show deleted messages",
-    description = "Keeps deleted or moderated chat messages readable instead of replacing them with " +
-        "\"<message deleted>\". The message remains a tappable spoiler that reveals the original text.",
+    description = "Keeps deleted or moderated chat messages readable, with selectable Default, Mod, " +
+        "Strikethrough or Grey presentation.",
 ) {
     compatibleWith(COMPATIBILITY_TWITCH)
 
@@ -92,6 +94,9 @@ internal val showDeletedMessagesPatch = bytecodePatch(
         formatter.addInstructionsWithLabels(
             arrayLengthIndex,
             """
+                invoke-static {}, $SUPPORT->useEnhancedStyle()Z
+                move-result p4
+                if-eqz p4, :use_stock_array
                 array-length v$scratchRegister, v$arrayRegister
                 if-eqz v$scratchRegister, :use_stock_array
                 const/4 v$scratchRegister, 0x0
@@ -117,7 +122,7 @@ internal val showDeletedMessagesPatch = bytecodePatch(
 
         if (accessReads.size != 2) {
             throw PatchException(
-                "Twitch deleted messages: expected two access-flag reads, found ${accessReads.size}.",
+                "Twitch deleted messages: expected two access-flag reads, found \${accessReads.size}.",
             )
         }
 
@@ -126,11 +131,38 @@ internal val showDeletedMessagesPatch = bytecodePatch(
                 val register = method.getInstruction<TwoRegisterInstruction>(index).registerA
                 if (register > 0xf) {
                     throw PatchException(
-                        "Twitch deleted messages: access-flag register no longer fits const/4.",
+                        "Twitch deleted messages: access-flag register no longer fits invoke-35c.",
                     )
                 }
-                method.addInstructions(index + 1, "const/4 v$register, 0x1")
+                method.addInstructions(
+                    index + 1,
+                    "invoke-static {v\$register}, $SUPPORT->resolveAccess(Z)Z\nmove-result v\$register",
+                )
             }
+        }
+
+        val returnIndexes = formatter.instructions.withIndex()
+            .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_OBJECT }
+            .map { it.index }
+            .distinct()
+            .sortedDescending()
+
+        if (returnIndexes.isEmpty()) {
+            throw PatchException(
+                "Twitch deleted messages: formatter has no return-object instruction.",
+            )
+        }
+
+        for (index in returnIndexes) {
+            val instruction = formatter.getInstruction<OneRegisterInstruction>(index)
+            val register = instruction.registerA
+            formatter.addInstructions(
+                index,
+                """
+                    invoke-static/range {v\$register .. v\$register}, $SUPPORT->format(Landroid/text/Spanned;)Landroid/text/Spanned
+                    move-result-object v\$register
+                """.trimIndent(),
+            )
         }
     }
 }
