@@ -6,12 +6,52 @@ import android.content.ContextWrapper;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.util.Log;
+import android.widget.TextView;
+import android.app.AlertDialog;
 import android.util.TypedValue;
 import android.view.View;
 
 public final class ThemeProbe {
     private static final String TAG = "KizuTheme";
     private ThemeProbe() {}
+
+    public static String buildReport(Context context) {
+        StringBuilder out = new StringBuilder();
+        try {
+            Activity activity = findActivity(context);
+            Context app = context == null ? null : context.getApplicationContext();
+            out.append("user_theme: ").append(userTheme(context)).append("\n");
+            out.append("ThemeManager (Kizu context): ").append(night(context)).append("\n");
+            out.append("ThemeManager (Activity): ").append(activity == null ? "n/a" : night(activity)).append("\n");
+            out.append("ThemeManager (Application): ").append(app == null ? "n/a" : night(app)).append("\n");
+            out.append("uiMode (Kizu context): ").append(ui(context)).append("\n");
+            out.append("uiMode (Activity): ").append(activity == null ? "n/a" : ui(activity)).append("\n");
+            out.append("uiMode (Application): ").append(app == null ? "n/a" : ui(app)).append("\n");
+            out.append("isLightTheme (Kizu): ").append(attr(context, android.R.attr.isLightTheme)).append("\n");
+            out.append("isLightTheme (Activity): ").append(activity == null ? "n/a" : attr(activity, android.R.attr.isLightTheme)).append("\n");
+            out.append("Kizu context: ").append(context == null ? "null" : context.getClass().getName()).append("\n");
+            out.append("Activity context: ").append(activity == null ? "n/a" : activity.getClass().getName()).append("\n");
+            out.append("Theme object (Kizu): ").append(context == null ? "n/a" : Integer.toHexString(System.identityHashCode(context.getTheme()))).append("\n");
+            out.append("Theme object (Activity): ").append(activity == null ? "n/a" : Integer.toHexString(System.identityHashCode(activity.getTheme()))).append("\n");
+        } catch (Throwable t) {
+            out.append("Probe error: ").append(t.getClass().getSimpleName()).append(": ").append(t.getMessage());
+        }
+        return out.toString();
+    }
+
+    public static void show(Context context) {
+        if (context == null) return;
+        final String report = buildReport(context);
+        new AlertDialog.Builder(context)
+                .setTitle("Theme Diagnostics")
+                .setMessage(report)
+                .setPositiveButton("Close", null)
+                .setNeutralButton("Copy", (dialog, which) -> {
+                    android.content.ClipboardManager clipboard = (android.content.ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Kizu Theme Diagnostics", report));
+                })
+                .show();
+    }
 
     public static void report(String where, View view) {
         if (view == null) {
