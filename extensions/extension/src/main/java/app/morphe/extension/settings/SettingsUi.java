@@ -44,14 +44,22 @@ public final class SettingsUi {
      * remains in a dark system configuration.
      */
     public static boolean isDark(Context context) {
-        Boolean twitch = twitchNightMode(context);
+        Context themeContext = themeResolutionContext(context);
+
+        // Prefer Twitch's explicit user theme preference. This is independent of the
+        // Fragment/Preference context and therefore cannot be overridden by a stale
+        // light/dark Configuration attached to Kizu's settings view.
+        Boolean userTheme = twitchUserTheme(themeContext);
+        if (userTheme != null) return userTheme;
+
+        Boolean twitch = twitchNightMode(themeContext);
         if (twitch != null) return twitch;
 
-        int raw = twitchColor(context, "background_body");
+        int raw = twitchColor(themeContext, "background_body");
         if (raw != Integer.MIN_VALUE) return luminance(raw) < 128d;
 
         TypedValue value = new TypedValue();
-        if (context != null && context.getTheme().resolveAttribute(
+        if (themeContext != null && themeContext.getTheme().resolveAttribute(
                 android.R.attr.colorBackground, value, true)) {
             if (value.type >= TypedValue.TYPE_FIRST_COLOR_INT &&
                     value.type <= TypedValue.TYPE_LAST_COLOR_INT) {
@@ -148,6 +156,29 @@ public final class SettingsUi {
         for (int i = 0; i < group.getChildCount(); i++) {
             styleTextTree(group.getChildAt(i), context);
         }
+    }
+
+    private static Context themeResolutionContext(Context context) {
+        if (context == null) return null;
+        try {
+            Context application = context.getApplicationContext();
+            return application != null ? application : context;
+        } catch (Throwable ignored) {
+            return context;
+        }
+    }
+
+    private static Boolean twitchUserTheme(Context context) {
+        if (context == null) return null;
+        try {
+            android.content.SharedPreferences prefs =
+                    android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+            String value = prefs.getString("user_theme", null);
+            if ("DARK".equalsIgnoreCase(value)) return true;
+            if ("LIGHT".equalsIgnoreCase(value)) return false;
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private static Boolean twitchNightMode(Context context) {
