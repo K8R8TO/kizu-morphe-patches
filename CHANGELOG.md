@@ -1,3 +1,10 @@
+# [1.8.9.1](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.9...v1.8.9.1) (2026-10-04)
+
+### Features
+
+* add PurpleTV-compatible deleted-message styles: Default, Mod, Strikethrough and Grey
+* expose the deleted-message style selector in Chat settings
+
 # [1.8.9](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.8.1...v1.8.9) (2026-10-04)
 
 ### Features
