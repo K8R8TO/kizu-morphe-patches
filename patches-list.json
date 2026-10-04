@@ -1,6 +1,6 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this file.",
-  "version": "1.8.9.27",
+  "version": "1.8.9.28",
   "patches": [
     {
       "name": "Twitch Enhancement",
@@ -8,17 +8,7 @@
       "default": true,
       "category": null,
       "dependencies": [
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch",
-        "BytecodePatch"
+        "BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch","BytecodePatch"
       ],
       "compatiblePackages": [
         {
@@ -28,15 +18,7 @@
           "appIconColor": "#9147FF",
           "apkFileType": "APKM",
           "signatures": null,
-          "targets": [
-            {
-              "version": "31.3.1",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ]
+          "targets": [{"version": "31.3.1","versionCodes": null,"isExperimental": false,"minSdk": null,"description": null}]
         }
       ],
       "options": []
