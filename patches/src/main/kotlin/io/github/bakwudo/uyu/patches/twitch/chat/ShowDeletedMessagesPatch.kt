@@ -1,5 +1,6 @@
 package io.github.bakwudo.uyu.patches.twitch.chat
 
+import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
@@ -8,6 +9,9 @@ import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction11x
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction3rc
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
@@ -153,11 +157,26 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         for (index in returnIndexes) {
             val instruction = formatter.getInstruction<OneRegisterInstruction>(index)
             val register = instruction.registerA
-            formatter.addInstructions(
+            formatter.addInstruction(
                 index,
-                "invoke-static/range {v" + register + " .. v" + register + "}, " + SUPPORT +
-                    "->format(Landroid/text/Spanned;)Landroid/text/Spanned\n" +
-                    "move-result-object v" + register,
+                BuilderInstruction3rc(
+                    Opcode.INVOKE_STATIC,
+                    register,
+                    1,
+                    ImmutableMethodReference(
+                        SUPPORT,
+                        "format",
+                        listOf("Landroid/text/Spanned;"),
+                        "Landroid/text/Spanned;",
+                    ),
+                ),
+            )
+            formatter.addInstruction(
+                index + 1,
+                BuilderInstruction11x(
+                    Opcode.MOVE_RESULT_OBJECT,
+                    register,
+                ),
             )
         }
     }
