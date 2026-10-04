@@ -132,7 +132,8 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 }
                 method.addInstructions(
                     index + 1,
-                    "invoke-static {v\$register}, $SUPPORT->resolveAccess(Z)Z\nmove-result v\$register",
+                    "invoke-static {v" + register + "}, " + SUPPORT +
+                        "->resolveAccess(Z)Z\nmove-result v" + register,
                 )
             }
         }
@@ -154,10 +155,9 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             val register = instruction.registerA
             formatter.addInstructions(
                 index,
-                """
-                    invoke-static/range {v\$register .. v\$register}, $SUPPORT->format(Landroid/text/Spanned;)Landroid/text/Spanned
-                    move-result-object v\$register
-                """.trimIndent(),
+                "invoke-static/range {v" + register + " .. v" + register + "}, " + SUPPORT +
+                    "->format(Landroid/text/Spanned;)Landroid/text/Spanned\n" +
+                    "move-result-object v" + register,
             )
         }
     }
