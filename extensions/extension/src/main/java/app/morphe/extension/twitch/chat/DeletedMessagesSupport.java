@@ -141,6 +141,7 @@ public final class DeletedMessagesSupport {
                 // The formatter result also keeps that prefix before the deleted
                 // span, so inserting it verbatim would produce "kz: kz: message".
                 original = stripDuplicatePrefix(builder, start, original);
+                original = stripLeadingChatterPrefix(original);
                 if (original.length() == 0) continue;
 
                 candidates.add(new DeletedSpanData(span, start, end, original));
@@ -206,6 +207,23 @@ public final class DeletedMessagesSupport {
         } catch (Throwable ignored) {
         }
         return original;
+    }
+
+    private static SpannedString stripLeadingChatterPrefix(SpannedString original) {
+        try {
+            String text = original.toString();
+            int delimiter = text.indexOf(": ");
+            if (delimiter <= 0) return original;
+
+            String prefix = text.substring(0, delimiter);
+            if (prefix.indexOf(' ') >= 0 || prefix.indexOf('\n') >= 0) return original;
+
+            SpannableStringBuilder cleaned = new SpannableStringBuilder(original);
+            cleaned.delete(0, delimiter + 2);
+            return SpannedString.valueOf(cleaned);
+        } catch (Throwable ignored) {
+            return original;
+        }
     }
 
     private static Field findOriginalMessageField(Object span) {
