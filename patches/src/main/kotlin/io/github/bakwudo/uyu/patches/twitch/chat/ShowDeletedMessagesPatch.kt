@@ -1,13 +1,14 @@
 package io.github.bakwudo.uyu.patches.twitch.chat
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction11x
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction3rc
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
@@ -87,25 +88,22 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             )
         }
 
-        formatter.addInstructionsWithLabels(
+        // Recover the original message from the deleted span before Twitch replaces it with the placeholder.
+        // This is the same proven structure used by the original Hooman patch for Twitch.
+        formatter.addInstructions(
             arrayLengthIndex,
             """
-                invoke-static {}, $SUPPORT->useEnhancedStyle()Z
-                move-result p4
-                if-eqz p4, :use_stock_array
                 array-length v$scratchRegister, v$arrayRegister
-                if-eqz v$scratchRegister, :use_stock_array
+                if-eqz v$scratchRegister, :unused_deleted_message_fallback
                 const/4 v$scratchRegister, 0x0
                 aget-object v$scratchRegister, v$arrayRegister, v$scratchRegister
                 iget-object p1, v$scratchRegister, $originalMessageField
-                invoke-static {p1}, $SUPPORT->format(Landroid/text/Spanned;)Landroid/text/Spanned
-                move-result-object p1
-                return-object p1
-            """,
-            ExternalLabel("use_stock_array", formatter.getInstruction(arrayLengthIndex)),
+                const/4 p4, 0x1
+                const/4 v$scratchRegister, 0x0
+                new-array v$arrayRegister, v$scratchRegister, [$spanType
+            """
         )
-
-        val accessReads = spanClass.methods.flatMap { method ->
+                val accessReads = spanClass.methods.flatMap { method ->
             method.instructions.withIndex().mapNotNull { (index, instruction) ->
                 val reference = (instruction as? ReferenceInstruction)?.reference as? FieldReference
                 if (instruction.opcode == Opcode.IGET_BOOLEAN && reference == accessField) {
@@ -125,17 +123,50 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         accessReads.groupBy({ it.first }, { it.second }).forEach { (method, indexes) ->
             indexes.sortedDescending().forEach { index ->
                 val register = method.getInstruction<TwoRegisterInstruction>(index).registerA
-                if (register > 0xf) {
-                    throw PatchException(
-                        "Twitch deleted messages: access-flag register no longer fits invoke-35c.",
-                    )
-                }
                 method.addInstructions(
                     index + 1,
                     "invoke-static {v" + register + "}, " + SUPPORT +
                         "->resolveAccess(Z)Z\nmove-result v" + register,
                 )
             }
+        }
+
+        val returnIndexes = formatter.instructions.withIndex()
+            .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_OBJECT }
+            .map { it.index }
+            .distinct()
+            .sortedDescending()
+
+        if (returnIndexes.isEmpty()) {
+            throw PatchException(
+                "Twitch deleted messages: formatter has no return-object instruction.",
+            )
+        }
+
+        for (index in returnIndexes) {
+            val instruction = formatter.getInstruction<OneRegisterInstruction>(index)
+            val register = instruction.registerA
+            formatter.addInstruction(
+                index,
+                BuilderInstruction3rc(
+                    Opcode.INVOKE_STATIC_RANGE,
+                    register,
+                    1,
+                    ImmutableMethodReference(
+                        SUPPORT,
+                        "format",
+                        listOf("Landroid/text/Spanned;"),
+                        "Landroid/text/Spanned;",
+                    ),
+                ),
+            )
+            formatter.addInstruction(
+                index + 1,
+                BuilderInstruction11x(
+                    Opcode.MOVE_RESULT_OBJECT,
+                    register,
+                ),
+            )
         }
 
     }
