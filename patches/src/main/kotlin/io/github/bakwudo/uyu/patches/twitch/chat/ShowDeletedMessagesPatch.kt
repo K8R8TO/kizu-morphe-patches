@@ -174,4 +174,4 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             )
         }
     }
-}\n\n        val returnIndexes = formatter.instructions.withIndex()\n            .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_OBJECT }\n            .map { it.index }\n            .distinct()\n            .sortedDescending()\n\n        if (returnIndexes.isEmpty()) {\n            throw PatchException(\n                "Twitch deleted messages: formatter has no return-object instruction.",\n            )\n        }\n\n        for (index in returnIndexes) {\n            val instruction = formatter.getInstruction<OneRegisterInstruction>(index)\n            val register = instruction.registerA\n            formatter.addInstructions(\n                index,\n                "invoke-static/range { v$register .. v$register }, $SUPPORT->format(Landroid/text/Spanned;)Landroid/text/Spanned;\\nmove-result-object v$register",\n            )\n        }
+}
