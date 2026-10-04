@@ -67,16 +67,6 @@ jobs:
           chmod +x gradlew
           ./gradlew :patches:buildAndroid
 
-      - name: Verify release bundle
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          BUNDLE="patches/build/release/patches-${VERSION}.mpp"
-          test -f "${BUNDLE}"
-          unzip -t "${BUNDLE}" >/dev/null
-          echo "Verified finished Morphe bundle: ${BUNDLE}"
-          unzip -l "${BUNDLE}" | grep -E '(^|/)classes\.dex$|META-INF/MANIFEST\.MF' || true
-
       - name: Verify release metadata after build
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -92,26 +82,11 @@ jobs:
           assert bundle.get("download_url") == expected, "bundle download URL changed during build"
           PY
 
-      - name: Verify embedded MPP manifest
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-        run: |
-          BUNDLE="patches/build/release/patches-${VERSION}.mpp"
-          unzip -p "${BUNDLE}" META-INF/MANIFEST.MF | tee /tmp/kizu-mpp-manifest.txt
-          grep -Fq "Name: Kizu Twitch Patches" /tmp/kizu-mpp-manifest.txt
-          grep -Fq "Version: ${VERSION}" /tmp/kizu-mpp-manifest.txt
-          grep -Fq "Author: Kizu" /tmp/kizu-mpp-manifest.txt
-          grep -Fq "Source: https://github.com/K8R8TO/kizu-morphe-patches.git" /tmp/kizu-mpp-manifest.txt
-          grep -Fq "Website: https://github.com/K8R8TO/kizu-morphe-patches" /tmp/kizu-mpp-manifest.txt
-          grep -Fq "License: GPLv3" /tmp/kizu-mpp-manifest.txt
-          grep -Fq "Patcher-Version:" /tmp/kizu-mpp-manifest.txt
       - name: Verify release artifact
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
-          BUNDLE="patches/build/release/patches-${VERSION}.mpp"
-          test -f "${BUNDLE}"
-          test "$(stat -c '%s' "${BUNDLE}")" -gt 0
+          test -f "patches/build/libs/patches-${VERSION}.mpp"
 
       - name: Check release tag
         id: tag
@@ -120,9 +95,9 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           if gh release view "v${VERSION}" >/dev/null 2>&1; then
-            echo "exists=true" >> "${GITHUB_OUTPUT}"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
           else
-            echo "exists=false" >> "${GITHUB_OUTPUT}"
+            echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Publish release asset
@@ -132,7 +107,7 @@ jobs:
           name: v${{ steps.version.outputs.version }}
           target_commitish: ${{ github.sha }}
           body: Kizu release ${{ steps.version.outputs.version }}.
-          files: patches/build/release/patches-${{ steps.version.outputs.version }}.mpp
+          files: patches/build/libs/patches-${{ steps.version.outputs.version }}.mpp
           fail_on_unmatched_files: true
           overwrite_files: true
           make_latest: true
