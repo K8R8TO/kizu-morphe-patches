@@ -792,6 +792,8 @@ for path, symbol in internal_patches:
 for path, symbol in [
     (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/channelpoints/AutoClaimChannelPointsPatch.kt",
      "autoClaimChannelPointsPatch"),
+    (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/chat/ShowDeletedMessagesPatch.kt",
+     "showDeletedMessagesPatch"),
     (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/danmaku/DanmakuCommentsPatch.kt",
      "danmakuCommentsPatch"),
     (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/separateapp/SeparateAppPatch.kt",
