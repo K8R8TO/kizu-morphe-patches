@@ -120,7 +120,9 @@ public class UyuSettingsFragment extends PreferenceFragment {
         screen.addPreference(preference);
     }
 
-    private void addGeneralSettings(PreferenceScreen screen) {
+        private void addGeneralSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.HIDE_STORIES, "Hide Stories",
+                "Hide the Stories shelf from Twitch's Following/Home feed.");
         Preference homeTab = new Preference(screen.getContext());
         homeTab.setTitle("Default Home Tab");
         homeTab.setSummary(homeTabName(Settings.DEFAULT_HOME_TAB.get()));
