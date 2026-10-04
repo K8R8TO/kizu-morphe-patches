@@ -23,23 +23,11 @@ final class SettingsUi {
      * Twitch's own page background, so the screen matches light and dark mode.
      */
     static int backgroundColor(Context context) {
-        int color = Utils.getResourceId(context, "background_body", "color");
-        if (color != 0) return context.getColor(color);
-
-        TypedValue value = new TypedValue();
-        if (context.getTheme().resolveAttribute(android.R.attr.colorBackground, value, true)
-                && value.type >= TypedValue.TYPE_FIRST_COLOR_INT
-                && value.type <= TypedValue.TYPE_LAST_COLOR_INT) {
-            return value.data;
-        }
-        return 0xFF000000;
+        return ThemeSupport.backgroundColor(context);
     }
 
     static boolean isDark(Context context) {
-        int background = backgroundColor(context);
-        double luminance = 0.299 * Color.red(background) + 0.587 * Color.green(background)
-                + 0.114 * Color.blue(background);
-        return luminance < 128;
+        return ThemeSupport.isDark(context);
     }
 
     /**
