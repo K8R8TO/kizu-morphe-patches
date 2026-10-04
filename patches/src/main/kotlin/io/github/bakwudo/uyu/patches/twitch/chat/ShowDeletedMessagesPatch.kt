@@ -122,7 +122,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         if (accessReads.size != 2) {
             throw PatchException(
-                "Twitch deleted messages: expected two access-flag reads, found \${accessReads.size}.",
+                "Twitch deleted messages: expected two access-flag reads, found ${accessReads.size}.",
             )
         }
 
@@ -160,7 +160,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             formatter.addInstruction(
                 index,
                 BuilderInstruction3rc(
-                    Opcode.INVOKE_STATIC,
+                    Opcode.INVOKE_STATIC_RANGE,
                     register,
                     1,
                     ImmutableMethodReference(
