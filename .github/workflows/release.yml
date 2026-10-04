@@ -8,6 +8,7 @@ on:
 
 jobs:
   release:
+    if: !contains(github.event.head_commit.message, '[release-mirror]')
     name: Release
     permissions:
       contents: write
@@ -49,9 +50,10 @@ jobs:
           plist = json.loads(pathlib.Path("patches-list.json").read_text())
           if bundle.get("version") != v or plist.get("version") != v:
               raise SystemExit(f"Version mismatch: gradle={v}, bundle={bundle.get('version')}, list={plist.get('version')}")
-          expected = f"https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v{v}/patches-{v}.mpp"
-          if bundle.get("download_url") != expected:
-              raise SystemExit("patches-bundle.json download_url does not match release version")
+          expected_release = f"https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v{v}/patches-{v}.mpp"
+          expected_mirror = f"https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/mirror/patches-{v}.mpp"
+          if bundle.get("download_url") not in (expected_release, expected_mirror):
+              raise SystemExit("patches-bundle.json download_url does not match release or mirror URL")
           PY
 
       - name: Pin local release tag for metadata generation
@@ -88,8 +90,9 @@ jobs:
           plist = json.loads(pathlib.Path("patches-list.json").read_text())
           assert bundle.get("version") == v, f"bundle version changed during build: {bundle.get('version')}"
           assert plist.get("version") == v, f"patch list version changed during build: {plist.get('version')}"
-          expected = f"https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v{v}/patches-{v}.mpp"
-          assert bundle.get("download_url") == expected, "bundle download URL changed during build"
+          expected_release = f"https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v{v}/patches-{v}.mpp"
+          expected_mirror = f"https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/mirror/patches-{v}.mpp"
+          assert bundle.get("download_url") in (expected_release, expected_mirror), "bundle download URL changed unexpectedly during build"
           PY
 
       - name: Verify embedded MPP manifest
@@ -145,3 +148,48 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           gh release view "v${VERSION}" --json tagName,assets --jq '.tagName + " " + ([.assets[].name] | join(","))' | grep -F "v${VERSION} patches-${VERSION}.mpp"
+      - name: Publish stable raw MPP mirror
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          BUNDLE="patches/build/release/patches-${VERSION}.mpp"
+          MIRROR="mirror/patches-${VERSION}.mpp"
+          RAW_URL="https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/${MIRROR}"
+          mkdir -p mirror
+          cp "${BUNDLE}" "${MIRROR}"
+
+          PUBLISHED_AT="$(gh release view "v${VERSION}" --json publishedAt --jq '.publishedAt')"
+          export PUBLISHED_AT
+          python3 - <<'PY'
+          import json, os, pathlib
+          version = os.environ["VERSION"]
+          published_at = os.environ["PUBLISHED_AT"]
+          path = pathlib.Path("patches-bundle.json")
+          data = json.loads(path.read_text())
+          data["version"] = version
+          data["created_at"] = published_at
+          data["download_url"] = f"https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/mirror/patches-{version}.mpp"
+          path.write_text(json.dumps(data, indent=2) + "\n")
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "mirror/patches-${VERSION}.mpp" patches-bundle.json
+          git commit -m "ci: mirror v${VERSION} MPP [release-mirror]"
+          git push origin HEAD:main
+
+          EXPECTED_SHA="$(sha256sum "${BUNDLE}" | cut -d' ' -f1)"
+          for attempt in $(seq 1 30); do
+            if curl -fsSL --retry 2 --retry-delay 1 "${RAW_URL}" -o /tmp/kizu-mirror.mpp; then
+              ACTUAL_SHA="$(sha256sum /tmp/kizu-mirror.mpp | cut -d' ' -f1)"
+              if [ "${ACTUAL_SHA}" = "${EXPECTED_SHA}" ] && unzip -t /tmp/kizu-mirror.mpp >/dev/null; then
+                echo "Verified raw MPP mirror: ${RAW_URL}"
+                exit 0
+              fi
+            fi
+            sleep 2
+          done
+          echo "Raw MPP mirror did not become readable with the expected SHA-256: ${RAW_URL}"
+          exit 1
