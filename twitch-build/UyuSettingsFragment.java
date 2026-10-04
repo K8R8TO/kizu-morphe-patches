@@ -108,7 +108,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addSectionLink(PreferenceScreen screen, String linkedSection, String summary) {
-        Preference preference = new Preference(screen.getContext());
+        Preference preference = new Preference(SettingsUi.preferenceContext(screen.getContext()));
         preference.setTitle(title(linkedSection));
         preference.setSummary(summary);
         preference.setOnPreferenceClickListener(clicked -> {
@@ -130,9 +130,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addAppearanceSettings(PreferenceScreen screen) {
-        addSwitch(screen, Settings.AMOLED_THEME, "True AMOLED black theme",
-                "Use pure black neutral backgrounds across Twitch and Kizu UI while keeping controls and accents intact.");
-        addSwitch(screen, Settings.HIDE_SUBSCRIBE_BUTTONS, "Hide the subscribe and Bits buttons",
+                addSwitch(screen, Settings.HIDE_SUBSCRIBE_BUTTONS, "Hide the subscribe and Bits buttons",
                 "Hides the row above chat with the Bits, gift a sub and subscribe buttons.");
         addSwitch(screen, Settings.HIDE_CHAT_BITS_BUTTON, "Hide the Bits button in the chat box",
                 "Hides the Bits button next to the emote button.");
@@ -143,7 +141,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
                         + "SUBtember, above the player and above chat, and the banner that "
                         + "advertises Turbo.");
 
-        Preference note = new Preference(screen.getContext());
+        Preference note = new Preference(SettingsUi.preferenceContext(screen.getContext()));
         note.setSummary("Items you show again appear the next time you open a stream.");
         note.setSelectable(false);
         screen.addPreference(note);
@@ -192,13 +190,13 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 "Blocks live, VOD and display ads. Ads that are part of the stream itself are "
                         + "covered with a black screen and muted until they end.");
 
-        Preference proxy = new TextPreference(screen.getContext(), Settings.ADS_PROXY_URL,
+        Preference proxy = new TextPreference(SettingsUi.preferenceContext(screen.getContext()), Settings.ADS_PROXY_URL,
                 "https://example.com/live/{channel}",
                 "Not set. Ads are blocked on the device only.");
         proxy.setTitle("Proxy URL");
         screen.addPreference(proxy);
 
-        Preference note = new Preference(screen.getContext());
+        Preference note = new Preference(SettingsUi.preferenceContext(screen.getContext()));
         note.setSummary("Optional. Live streams are loaded through this proxy, which can remove "
                 + "the ads that are part of the stream. {channel} is replaced with the channel "
                 + "name; without it, the name is added to the end.\n\n"
@@ -225,7 +223,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private void addChatSettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.CHAT_DELETED_MESSAGES, "Deleted messages",
                 "Control whether deleted chat messages remain visible locally.");        
-        Preference deletedMessageStyle = new Preference(screen.getContext());
+        Preference deletedMessageStyle = new Preference(SettingsUi.preferenceContext(screen.getContext()));
         deletedMessageStyle.setTitle("Deleted message style");
         deletedMessageStyle.setSummary(deletedMessageStyleName(Settings.CHAT_DELETED_MESSAGES_STYLE.get()));
         deletedMessageStyle.setOnPreferenceClickListener(clicked -> {
@@ -300,7 +298,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ThemeSupport.applySettingsView(view);
+        SettingsUi.applySettingsView(view);
         view.setClickable(true);
     }
 
@@ -355,37 +353,23 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     private void addSwitch(PreferenceGroup group, BooleanSetting setting,
                                   String title, String summary) {
-        SwitchPreference preference = new SwitchPreference(group.getContext());
+        SwitchPreference preference = new SwitchPreference(SettingsUi.preferenceContext(group.getContext()));
         preference.setKey(setting.key);
         preference.setDefaultValue(setting.defaultValue);
         preference.setTitle(title);
         preference.setSummary(summary);
-        if (setting == Settings.AMOLED_THEME) {
-            preference.setOnPreferenceChangeListener((changed, value) -> {
-                Activity activity = getActivity();
-                if (activity != null) {
-                    View decor = activity.getWindow().getDecorView();
-                    decor.postDelayed(() -> {
-                        ThemeSupport.apply(activity);
-                        View settingsView = getView();
-                        if (settingsView != null) ThemeSupport.applySettingsView(settingsView);
-                    }, 80L);
-                }
-                return true;
-            });
-        }
         group.addPreference(preference);
     }
 
     private static void addSlider(PreferenceGroup group, IntSetting setting, int step,
                                   String title, SliderPreference.Formatter formatter) {
-        Preference preference = new SliderPreference(group.getContext(), setting, step, formatter);
+        Preference preference = new SliderPreference(SettingsUi.preferenceContext(group.getContext()), setting, step, formatter);
         preference.setTitle(title);
         group.addPreference(preference);
     }
 
     private static void addColor(PreferenceGroup group, IntSetting setting, String title) {
-        Preference preference = new ColorPreference(group.getContext(), setting);
+        Preference preference = new ColorPreference(SettingsUi.preferenceContext(group.getContext()), setting);
         preference.setTitle(title);
         group.addPreference(preference);
     }
