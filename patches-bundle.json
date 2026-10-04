@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-05T00:00:00",
-  "description": "# [1.8.9.25] Revert crashing native Following hook",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.25/patches-1.8.9.25.mpp",
+  "created_at": "2026-10-05T00:15:00+05:30",
+  "description": "# [1.8.9.26] Restore native Following resolver for Twitch 31.3.1",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.8.9.26/patches-1.8.9.26.mpp",
   "signature_download_url": "",
-  "version": "1.8.9.25"
+  "version": "1.8.9.26"
 }
