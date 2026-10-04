@@ -10,6 +10,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.WeakHashMap;
 
 import io.github.bakwudo.uyu.extension.settings.Settings;
@@ -17,13 +18,14 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 /**
  * Removes Twitch's Stories shelf from the UI when enabled.
  *
- * This is deliberately view-only. It does not touch Twitch's story data or navigation models.
- * The shelf is loaded asynchronously, so the scan is retried after activity start/resume.
+ * This deliberately uses a single tree walk per retry. The previous implementation recursively
+ * searched every candidate subtree, which could rescan the whole Twitch view tree many times.
  */
 public final class HideStories {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final long[] RETRY_DELAYS_MS = {0L, 250L, 750L, 1500L, 3000L, 6000L};
-    private static final WeakHashMap<View, Boolean> HIDDEN = new WeakHashMap<>();
+    private static final WeakHashMap<View, Boolean> HIDDEN =
+            new WeakHashMap<>();
 
     private HideStories() {}
 
@@ -56,21 +58,21 @@ public final class HideStories {
         }
 
         View root = activity.getWindow().getDecorView();
-        if (root == null) return;
+        if (root == null || root.getWidth() <= 0) return;
 
-        List<View> candidates = new ArrayList<>();
-        collect(root, candidates);
+        List<View> views = new ArrayList<>();
+        collectVisibleViews(root, views);
 
-        for (View view : candidates) {
-            View shelf = findStoryShelf(view);
-            if (shelf != null && shelf != root && shelf.getVisibility() == View.VISIBLE) {
-                try {
-                    HIDDEN.put(shelf, Boolean.TRUE);
-                    shelf.setVisibility(View.GONE);
-                    requestLayout(shelf);
-                } catch (Throwable ignored) {
-                }
+        View shelf = findStoriesShelf(views, root);
+        if (shelf == null || shelf == root) return;
+
+        try {
+            synchronized (HIDDEN) {
+                HIDDEN.put(shelf, Boolean.TRUE);
             }
+            shelf.setVisibility(View.GONE);
+            requestLayout(shelf);
+        } catch (Throwable ignored) {
         }
     }
 
@@ -89,39 +91,46 @@ public final class HideStories {
         }
     }
 
-    private static void collect(View view, List<View> out) {
+    private static void collectVisibleViews(View view, List<View> out) {
         if (view == null || view.getVisibility() != View.VISIBLE || !view.isShown()) return;
         out.add(view);
-        if (!(view instanceof ViewGroup)) return;
 
+        if (!(view instanceof ViewGroup)) return;
         ViewGroup group = (ViewGroup) view;
         for (int i = 0; i < group.getChildCount(); i++) {
-            collect(group.getChildAt(i), out);
+            collectVisibleViews(group.getChildAt(i), out);
         }
     }
 
-    /**
-     * Prefer the actual feed-item/container that owns the Stories label. If Twitch exposes a
-     * story-specific resource name, use that only when the view is large enough to be a shelf.
-     */
-    private static View findStoryShelf(View view) {
-        if (hasStoriesLabel(view)) {
-            View recyclerChild = nearestRecyclerChild(view);
-            if (recyclerChild != null) return recyclerChild;
+    private static View findStoriesShelf(List<View> views, View root) {
+        // First prefer an actual "Stories" label. Climb only through a small number of parents
+        // and only accept a container that looks like a horizontal feed shelf.
+        for (View view : views) {
+            if (!isStoriesLabel(view)) continue;
 
-            View parent = view;
-            for (int i = 0; i < 5 && parent.getParent() instanceof View; i++) {
-                parent = (View) parent.getParent();
-                if (isLargeEnough(parent, view.getRootView())) {
-                    return parent;
+            View current = view;
+            for (int depth = 0; depth < 6 && current.getParent() instanceof View; depth++) {
+                current = (View) current.getParent();
+
+                if (isRecyclerView(current) && current instanceof ViewGroup) {
+                    return current;
+                }
+
+                if (looksLikeShelf(current, root)) {
+                    return current;
                 }
             }
         }
 
-        String resource = resourceName(view);
-        if (resource != null && resource.toLowerCase(java.util.Locale.ROOT).contains("stor")) {
-            String cls = view.getClass().getName().toLowerCase(java.util.Locale.ROOT);
-            if (!cls.contains("imageview") && isLargeEnough(view, view.getRootView())) {
+        // Fallback: some Twitch builds may expose a story-specific resource/container name
+        // without a visible text label.
+        for (View view : views) {
+            String resource = resourceName(view);
+            if (resource == null) continue;
+            String normalized = resource.toLowerCase(Locale.ROOT);
+            if (!normalized.contains("stor")) continue;
+
+            if (looksLikeShelf(view, root)) {
                 return view;
             }
         }
@@ -129,52 +138,42 @@ public final class HideStories {
         return null;
     }
 
-    private static boolean hasStoriesLabel(View view) {
+    private static boolean isStoriesLabel(View view) {
         if (view instanceof TextView) {
             CharSequence text = ((TextView) view).getText();
-            if (isStoriesText(text)) return true;
+            if (containsStories(text)) return true;
         }
 
-        CharSequence description = view.getContentDescription();
-        if (isStoriesText(description)) return true;
-
-        if (view instanceof ViewGroup) {
-            ViewGroup group = (ViewGroup) view;
-            for (int i = 0; i < group.getChildCount(); i++) {
-                if (hasStoriesLabel(group.getChildAt(i))) return true;
-            }
-        }
-        return false;
+        return containsStories(view.getContentDescription());
     }
 
-    private static boolean isStoriesText(CharSequence value) {
+    private static boolean containsStories(CharSequence value) {
         if (value == null) return false;
         String text = value.toString().trim();
         return "stories".equalsIgnoreCase(text)
-                || "twitch stories".equalsIgnoreCase(text)
-                || text.toLowerCase(java.util.Locale.ROOT).contains("stories");
+                || "twitch stories".equalsIgnoreCase(text);
     }
 
-    private static View nearestRecyclerChild(View view) {
-        View current = view;
-        for (int i = 0; i < 8 && current != null; i++) {
-            if (!(current.getParent() instanceof ViewGroup)) return null;
-            ViewGroup parent = (ViewGroup) current.getParent();
-            String name = parent.getClass().getName().toLowerCase(java.util.Locale.ROOT);
-            if (name.contains("recyclerview") || name.contains("lazycolumn")) {
-                return current;
-            }
-            current = parent;
-        }
-        return null;
+    private static boolean isRecyclerView(View view) {
+        String name = view.getClass().getName().toLowerCase(Locale.ROOT);
+        return name.contains("recyclerview")
+                || name.contains("lazycolumn")
+                || name.contains("lazyrow");
     }
 
-    private static boolean isLargeEnough(View view, View root) {
-        if (view == null) return false;
-        int rootWidth = root == null ? 0 : root.getWidth();
+    private static boolean looksLikeShelf(View view, View root) {
+        if (!(view instanceof ViewGroup)) return false;
+
         int width = view.getWidth();
         int height = view.getHeight();
-        return width >= 180 && height >= 40 && (rootWidth <= 0 || width >= rootWidth / 4);
+        int rootWidth = root == null ? 0 : root.getWidth();
+
+        if (width < 180 || height < 40) return false;
+        if (rootWidth > 0 && width < rootWidth / 3) return false;
+
+        // Avoid selecting the whole screen or an arbitrary parent container.
+        if (root != null && view == root) return false;
+        return height < Math.max(240, rootWidth / 2);
     }
 
     private static String resourceName(View view) {
@@ -192,6 +191,7 @@ public final class HideStories {
             for (int i = 0; i < 8 && current != null; i++) {
                 current.requestLayout();
                 current.invalidate();
+
                 if (!(current.getParent() instanceof View)) break;
                 current = (View) current.getParent();
             }
