@@ -61,6 +61,9 @@ public final class Settings {
             new StringSetting("ads_proxy_url", "");
 
     // Emotes.
+    /** Master switch for all third-party emote providers (7TV, BTTV and FFZ). */
+    public static final BooleanSetting EMOTES_THIRD_PARTY =
+            new BooleanSetting("emotes_third_party", true);
     public static final BooleanSetting EMOTES_7TV =
             new BooleanSetting("emotes_7tv", true);
     public static final BooleanSetting EMOTES_BTTV =
@@ -80,7 +83,7 @@ public final class Settings {
     public static final BooleanSetting CHAT_DELETED_MESSAGES =
             new BooleanSetting("chat_deleted_messages", true);
     public static final StringSetting CHAT_DELETED_MESSAGES_STYLE =
-            new StringSetting("chat_deleted_messages_style", "strikethrough");
+            new StringSetting("chat_deleted_messages_style", "mod");
     public static final BooleanSetting CHAT_TIMESTAMPS =
             new BooleanSetting("chat_timestamps", true);
     public static final StringSetting CHAT_TIMESTAMP_FORMAT =

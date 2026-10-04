@@ -35,6 +35,7 @@ public final class SettingsPatch {
     public static View addSettingsEntry(View settingsView) {
         try {
             Context context = settingsView.getContext();
+            ThemeProbe.report("TwitchSettings", settingsView);
             int layout = Utils.getResourceId(context, "settings_menu_item", "layout");
             if (layout == 0) {
                 Utils.logInfo("settings_menu_item layout not found, uyu entry not added");

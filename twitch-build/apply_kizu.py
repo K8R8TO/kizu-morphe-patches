@@ -20,6 +20,11 @@ stream_proxy.write_text(proxy_text.replace(old, new, 1))
 (settings_dst / "UyuSettingsFragment.java").write_text(Path("twitch-build/UyuSettingsFragment.java").read_text())
 (settings_dst / "PrivacySupport.java").write_text(Path("twitch-build/PrivacySupport.java").read_text())
 
+chat_patch_dst = ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/chat"
+chat_patch_dst.mkdir(parents=True, exist_ok=True)
+(chat_patch_dst / "Fingerprints.kt").write_text(Path("twitch-build/ChatFingerprints.kt").read_text())
+(chat_patch_dst / "ShowDeletedMessagesPatch.kt").write_text(Path("twitch-build/ShowDeletedMessagesPatch.kt").read_text())
+
 enhancement_dst = ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/enhancement"
 enhancement_dst.mkdir(parents=True, exist_ok=True)
 (enhancement_dst / "EnhancementPatch.kt").write_text(Path("twitch-build/EnhancementPatch.kt").read_text())
@@ -172,13 +177,13 @@ s = s.replace(
 s = s.replace(
     "        schedule(globalSevenTv, now, () -> loadGlobalSevenTv(applicationContext));\n"
     "        schedule(globalBetterTtv, now, () -> loadGlobalBetterTtv(applicationContext));",
-    "        if (Settings.EMOTES_7TV.get()) {\n"
+    "        if (Settings.EMOTES_THIRD_PARTY.get()) {\n"
     "            schedule(globalSevenTv, now, () -> loadGlobalSevenTv(applicationContext));\n"
     "        }\n"
-    "        if (Settings.EMOTES_BTTV.get()) {\n"
+    "        if (Settings.EMOTES_THIRD_PARTY.get()) {\n"
     "            schedule(globalBetterTtv, now, () -> loadGlobalBetterTtv(applicationContext));\n"
     "        }\n"
-    "        if (Settings.EMOTES_FFZ.get()) {\n"
+    "        if (Settings.EMOTES_THIRD_PARTY.get()) {\n"
     "            schedule(globalFfz, now, () -> loadGlobalFfz(applicationContext));\n"
     "        }",
 )
@@ -186,23 +191,23 @@ s = s.replace(
     "        schedule(channel.sevenTv, now, () -> loadChannelSevenTv(applicationContext, channelId, channel));\n"
     "        schedule(channel.betterTtv, now,\n"
     "                () -> loadChannelBetterTtv(applicationContext, channelId, channel));",
-    "        if (Settings.EMOTES_7TV.get()) {\n"
+    "        if (Settings.EMOTES_THIRD_PARTY.get()) {\n"
     "            schedule(channel.sevenTv, now, () -> loadChannelSevenTv(applicationContext, channelId, channel));\n"
     "        }\n"
-    "        if (Settings.EMOTES_BTTV.get()) {\n"
+    "        if (Settings.EMOTES_THIRD_PARTY.get()) {\n"
     "            schedule(channel.betterTtv, now,\n"
     "                    () -> loadChannelBetterTtv(applicationContext, channelId, channel));\n"
     "        }\n"
-    "        if (Settings.EMOTES_FFZ.get()) {\n"
+    "        if (Settings.EMOTES_THIRD_PARTY.get()) {\n"
     "            schedule(channel.ffz, now, () -> loadChannelFfz(applicationContext, channelId, channel));\n"
     "        }",
 )
 s, count = re.subn(
     r"    Emote find\(String channelId, String name\) \{.*?\n    \}\n\n    private void schedule",
     """    Emote find(String channelId, String name) {
-        boolean sevenTv = Settings.EMOTES_7TV.get();
-        boolean betterTtv = Settings.EMOTES_BTTV.get();
-        boolean ffz = Settings.EMOTES_FFZ.get();
+        boolean sevenTv = Settings.EMOTES_THIRD_PARTY.get();
+        boolean betterTtv = Settings.EMOTES_THIRD_PARTY.get();
+        boolean ffz = Settings.EMOTES_THIRD_PARTY.get();
 
         if (channelId != null) {
             ChannelState channel = getChannel(channelId, false);
@@ -661,7 +666,7 @@ if needle not in s:
 s = s.replace(
     needle,
     needle +
-    "        if (!Settings.EMOTES_7TV.get() && !Settings.EMOTES_BTTV.get() && !Settings.EMOTES_FFZ.get()) {\n"
+    "        if (!Settings.EMOTES_THIRD_PARTY.get() && !Settings.EMOTES_THIRD_PARTY.get() && !Settings.EMOTES_THIRD_PARTY.get()) {\n"
     "            forget(textView);\n"
     "            return;\n"
     "        }\n"
@@ -787,16 +792,21 @@ for path, symbol in internal_patches:
 for path, symbol in [
     (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/channelpoints/AutoClaimChannelPointsPatch.kt",
      "autoClaimChannelPointsPatch"),
+    (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/chat/ShowDeletedMessagesPatch.kt",
+     "showDeletedMessagesPatch"),
     (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/danmaku/DanmakuCommentsPatch.kt",
      "danmakuCommentsPatch"),
     (ROOT / "patches/src/main/kotlin/io/github/bakwudo/uyu/patches/twitch/separateapp/SeparateAppPatch.kt",
      "separateAppPatch"),
 ]:
     text = path.read_text()
-    needle = f'val {symbol} ='
-    if needle not in text:
-        raise RuntimeError(f"Could not locate public patch {symbol}")
-    text = text.replace(needle, f'internal val {symbol} =', 1)
+    internal_needle = f'internal val {symbol} ='
+    public_needle = f'val {symbol} ='
+    if internal_needle in text:
+        continue
+    if public_needle not in text:
+        raise RuntimeError(f"Could not locate patch {symbol}")
+    text = text.replace(public_needle, internal_needle, 1)
     path.write_text(text)
 
 # --- Emote picker (global third-party emotes in the native picker) -----------
@@ -823,17 +833,17 @@ if "getAllForChannel" not in _ps:
         if (channelId != null) {
             ChannelState channel = getChannel(channelId, false);
             if (channel != null) {
-                if (Settings.EMOTES_7TV.get()) {
+                if (Settings.EMOTES_THIRD_PARTY.get()) {
                     for (Emote emote : channel.sevenTv.emotes.values()) {
                         if (!unique.containsKey(emote.name)) unique.put(emote.name, emote);
                     }
                 }
-                if (Settings.EMOTES_BTTV.get()) {
+                if (Settings.EMOTES_THIRD_PARTY.get()) {
                     for (Emote emote : channel.betterTtv.emotes.values()) {
                         if (!unique.containsKey(emote.name)) unique.put(emote.name, emote);
                     }
                 }
-                if (Settings.EMOTES_FFZ.get()) {
+                if (Settings.EMOTES_THIRD_PARTY.get()) {
                     for (Emote emote : channel.ffz.emotes.values()) {
                         if (!unique.containsKey(emote.name)) unique.put(emote.name, emote);
                     }
@@ -841,17 +851,17 @@ if "getAllForChannel" not in _ps:
             }
         }
 
-        if (Settings.EMOTES_7TV.get()) {
+        if (Settings.EMOTES_THIRD_PARTY.get()) {
             for (Emote emote : globalSevenTv.emotes.values()) {
                 if (!unique.containsKey(emote.name)) unique.put(emote.name, emote);
             }
         }
-        if (Settings.EMOTES_BTTV.get()) {
+        if (Settings.EMOTES_THIRD_PARTY.get()) {
             for (Emote emote : globalBetterTtv.emotes.values()) {
                 if (!unique.containsKey(emote.name)) unique.put(emote.name, emote);
             }
         }
-        if (Settings.EMOTES_FFZ.get()) {
+        if (Settings.EMOTES_THIRD_PARTY.get()) {
             for (Emote emote : globalFfz.emotes.values()) {
                 if (!unique.containsKey(emote.name)) unique.put(emote.name, emote);
             }

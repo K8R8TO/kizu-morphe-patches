@@ -21,8 +21,10 @@ import android.view.ViewGroup;
 import java.util.WeakHashMap;
 
 import app.morphe.extension.twitch.emotes.EmoteSupport;
+import app.morphe.extension.channelpoints.ChannelPoints;
 import app.morphe.extension.twitch.emotes.EmotePickerBridge;
 import io.github.bakwudo.uyu.extension.settings.Settings;
+import io.github.bakwudo.uyu.extension.danmaku.LandscapeChatPatch;
 
 public final class Utils {
     private static final String TAG = "kizu";
@@ -65,11 +67,15 @@ public final class Utils {
 
                 @Override public void onActivityStarted(Activity activity) {
                     currentActivity = activity;
+                    try { DefaultFollowing.onActivityStarted(activity); } catch (Throwable ignored) {}
+                    try { LandscapeChatPatch.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
                 }
 
                 @Override public void onActivityResumed(Activity activity) {
                     currentActivity = activity;
+                    try { DefaultFollowing.onActivityStarted(activity); } catch (Throwable ignored) {}
+                    try { LandscapeChatPatch.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
                 }
 
@@ -92,11 +98,9 @@ public final class Utils {
         io.github.bakwudo.uyu.extension.Utils.setContext(appContext);
         EmoteSupport.init(appContext);
 
-        if (!claimWatcherStarted) {
-            claimWatcherStarted = true;
-            MAIN.removeCallbacks(CLAIM_WATCHER);
-            MAIN.post(CLAIM_WATCHER);
-        }
+        // Channel Points uses the isolated GraphQL claimant. Do not start the old UI scanner:
+        // it is intentionally retired because UI/model lifecycle hooks caused regressions.
+        ChannelPoints.start(appContext);
 
         try {
             Context applicationContext = appContext == null ? null : appContext.getApplicationContext();
@@ -224,7 +228,7 @@ public final class Utils {
         return null;
     }
 
-    private static void showClaimStatus(final String message) {
+    public static void showClaimStatus(final String message) {
         final Activity activity = currentActivity;
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
         MAIN.post(new Runnable() {
