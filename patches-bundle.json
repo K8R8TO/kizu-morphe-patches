@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-04T19:15:53Z",
   "description": "# [1.8.9.27] Publish finished Morphe bundle with embedded metadata",
-  "download_url": "https://raw.githubusercontent.com/K8R8TO/kizu-morphe-patches/main/mirror/patches-1.8.9.27.mpp",
+  "download_url": "https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/mirror/patches-1.8.9.27.mpp",
   "signature_download_url": "",
   "version": "1.8.9.27"
 }
