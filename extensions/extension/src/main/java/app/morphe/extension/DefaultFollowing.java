@@ -31,6 +31,15 @@ public final class DefaultFollowing {
     private DefaultFollowing() {
     }
 
+    /**
+     * The bytecode home-page hook uses Twitch's native Following page when the user selected
+     * Following. Live and Clips continue through the existing tab-selection fallback below,
+     * preserving Kizu's three-way setting while we use the native hook where it maps cleanly.
+     */
+    public static boolean useNativeFollowing() {
+        return "following".equalsIgnoreCase(Settings.DEFAULT_HOME_TAB.get());
+    }
+
     public static void onActivityStarted(Activity activity) {
         schedule(activity);
     }
