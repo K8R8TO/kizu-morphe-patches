@@ -23,7 +23,7 @@ public final class DeletedMessagesSupport {
     public static boolean useEnhancedStyle() {
         try {
             if (!Settings.CHAT_DELETED_MESSAGES.get()) return false;
-            return !"default".equals(normalizeStyle());
+            return true;
         } catch (Throwable ignored) {
             return false;
         }
@@ -32,7 +32,7 @@ public final class DeletedMessagesSupport {
     public static boolean resolveAccess(boolean original) {
         try {
             if (!Settings.CHAT_DELETED_MESSAGES.get()) return original;
-            return "default".equals(normalizeStyle()) ? original : true;
+            return true;
         } catch (Throwable ignored) {
             return original;
         }
