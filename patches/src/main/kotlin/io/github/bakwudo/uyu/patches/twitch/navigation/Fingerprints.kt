@@ -7,7 +7,7 @@ internal const val DISCOVERY_FEED_PAGE_TYPE =
     "Ltv/twitch/android/models/feed/DiscoveryFeedPage;"
 
 internal const val FOLLOWING_PAGE_TYPE =
-    "Ltv/twitch/android/models/feed/DiscoveryFeedPage\\$FollowingPage;"
+    "Ltv/twitch/android/models/feed/DiscoveryFeedPage\$FollowingPage;"
 
 /**
  * Twitch 31.3.1: the native home resolver is Ltgk.b() -> DiscoveryFeedPage,
