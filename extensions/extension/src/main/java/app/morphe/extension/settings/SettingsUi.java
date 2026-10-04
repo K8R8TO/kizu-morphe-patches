@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.util.TypedValue;
 
 import io.github.bakwudo.uyu.extension.Utils;
+import io.github.bakwudo.uyu.extension.settings.ThemeSupport;
 
 /**
  * Helpers shared by the uyu settings screen and its preferences.
