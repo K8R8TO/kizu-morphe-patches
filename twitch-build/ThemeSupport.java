@@ -156,11 +156,6 @@ public final class ThemeSupport {
         ViewGroup group = (ViewGroup) root;
         for (int i = 0; i < group.getChildCount(); i++) {
             View child = group.getChildAt(i);
-            if (!(child instanceof TextView)) {
-                if (child instanceof ViewGroup) {
-                    child.setBackgroundColor(isAmoled() ? AMOLED_BLACK : Color.TRANSPARENT);
-                }
-            }
             styleSettingsTree(child, context);
         }
     }
