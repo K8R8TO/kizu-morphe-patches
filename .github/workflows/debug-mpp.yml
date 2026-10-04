@@ -1,0 +1,25 @@
+name: Debug MPP
+on:
+  push:
+    branches:
+      - debug/mpp-1.8.9.28
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Download release asset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v1.8.9.28 --repo K8R8TO/kizu-morphe-patches --pattern 'patches-1.8.9.28.mpp' --clobber
+      - name: Inspect
+        run: |
+          unzip -t patches-1.8.9.28.mpp
+          echo '--- CONTENTS ---'
+          unzip -l patches-1.8.9.28.mpp
+          echo '--- MANIFEST ---'
+          unzip -p patches-1.8.9.28.mpp META-INF/MANIFEST.MF
+          echo '--- TOP LEVEL ---'
+          unzip -Z1 patches-1.8.9.28.mpp | sed -n '1,80p'
