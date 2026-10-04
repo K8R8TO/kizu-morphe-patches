@@ -42,7 +42,8 @@ internal val showDeletedMessagesPatch = bytecodePatch(
         constructor.addInstructions(
             constructor.instructions.lastIndex,
             """
-                const/4 p3, 0x1
+                invoke-static {p3}, $SUPPORT->resolveAccess(Z)Z
+                move-result p3
                 iput-boolean p3, p0, $accessField
             """,
         )
