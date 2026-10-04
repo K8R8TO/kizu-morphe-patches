@@ -1,3 +1,9 @@
+# [1.8.9.3](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.9.2...v1.8.9.3) (2026-10-04)
+
+### Fixes
+
+* fix deleted-message patcher register interpolation so Morphe receives valid smali syntax
+
 # [1.8.9.2](https://github.com/K8R8TO/kizu-morphe-patches/compare/v1.8.9.1...v1.8.9.2) (2026-10-04)
 
 ### Fixes
