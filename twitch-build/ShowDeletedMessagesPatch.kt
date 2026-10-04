@@ -1,5 +1,6 @@
 package io.github.bakwudo.uyu.patches.twitch.chat
 
+import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
@@ -7,6 +8,9 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction11x
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction3rc
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
@@ -87,7 +91,22 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             )
         }
 
-        // Recover the original message from the deleted span before Twitch replaces it with the placeholder.\n        // Keep the control-flow injection in the compiler-compatible form used by 1.9.0.6.\n        formatter.addInstructionsWithLabels(\n            arrayLengthIndex,\n            \"\"\"\n                array-length v$scratchRegister, v$arrayRegister\n                if-eqz v$scratchRegister, :use_stock_array\n                const/4 v$scratchRegister, 0x0\n                aget-object v$scratchRegister, v$arrayRegister, v$scratchRegister\n                iget-object p1, v$scratchRegister, $originalMessageField\n                const/4 p4, 0x1\n                const/4 v$scratchRegister, 0x0\n                new-array v$arrayRegister, v$scratchRegister, [$spanType\n            \"\"\",\n            ExternalLabel(\"use_stock_array\", formatter.getInstruction(arrayLengthIndex)),\n        )
+        // Recover the original message from the deleted span before Twitch replaces it with the placeholder.
+        // This is the same proven structure used by the original Hooman patch for Twitch.
+        formatter.addInstructionsWithLabels(
+            arrayLengthIndex,
+            """
+                array-length v$scratchRegister, v$arrayRegister
+                if-eqz v$scratchRegister, :use_stock_array
+                const/4 v$scratchRegister, 0x0
+                aget-object v$scratchRegister, v$arrayRegister, v$scratchRegister
+                iget-object p1, v$scratchRegister, $originalMessageField
+                const/4 p4, 0x1
+                const/4 v$scratchRegister, 0x0
+                new-array v$arrayRegister, v$scratchRegister, [$spanType
+            """,
+            ExternalLabel("use_stock_array", formatter.getInstruction(arrayLengthIndex)),
+        )
 
         val accessReads = spanClass.methods.flatMap { method ->
             method.instructions.withIndex().mapNotNull { (index, instruction) ->
@@ -117,5 +136,42 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             }
         }
 
+        val returnIndexes = formatter.instructions.withIndex()
+            .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_OBJECT }
+            .map { it.index }
+            .distinct()
+            .sortedDescending()
+
+        if (returnIndexes.isEmpty()) {
+            throw PatchException(
+                "Twitch deleted messages: formatter has no return-object instruction.",
+            )
+        }
+
+        for (index in returnIndexes) {
+            val instruction = formatter.getInstruction<OneRegisterInstruction>(index)
+            val register = instruction.registerA
+            formatter.addInstruction(
+                index,
+                BuilderInstruction3rc(
+                    Opcode.INVOKE_STATIC_RANGE,
+                    register,
+                    1,
+                    ImmutableMethodReference(
+                        SUPPORT,
+                        "format",
+                        listOf("Landroid/text/Spanned;"),
+                        "Landroid/text/Spanned;",
+                    ),
+                ),
+            )
+            formatter.addInstruction(
+                index + 1,
+                BuilderInstruction11x(
+                    Opcode.MOVE_RESULT_OBJECT,
+                    register,
+                ),
+            )
+        }
     }
-}\n        // Apply the selected deleted-message presentation to every formatter result.\n        // This avoids the parser-sensitive direct-return smali used by 1.9.0.7.\n        val returnIndexes = formatter.instructions.withIndex()\n            .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_OBJECT }\n            .map { it.index }\n            .distinct()\n            .sortedDescending()\n\n        if (returnIndexes.isEmpty()) {\n            throw PatchException(\n                \"Twitch deleted messages: formatter has no return-object instruction.\",\n            )\n        }\n\n        for (index in returnIndexes) {\n            val instruction = formatter.getInstruction<OneRegisterInstruction>(index)\n            val register = instruction.registerA\n            formatter.addInstructions(\n                index,\n                \"invoke-static/range { v$register .. v$register }, $SUPPORT->format(Landroid/text/Spanned;)Landroid/text/Spanned;\\nmove-result-object v$register\",\n            )\n        }\n
+}\n\n        val returnIndexes = formatter.instructions.withIndex()\n            .filter { (_, instruction) -> instruction.opcode == Opcode.RETURN_OBJECT }\n            .map { it.index }\n            .distinct()\n            .sortedDescending()\n\n        if (returnIndexes.isEmpty()) {\n            throw PatchException(\n                "Twitch deleted messages: formatter has no return-object instruction.",\n            )\n        }\n\n        for (index in returnIndexes) {\n            val instruction = formatter.getInstruction<OneRegisterInstruction>(index)\n            val register = instruction.registerA\n            formatter.addInstructions(\n                index,\n                "invoke-static/range { v$register .. v$register }, $SUPPORT->format(Landroid/text/Spanned;)Landroid/text/Spanned;\\nmove-result-object v$register",\n            )\n        }
