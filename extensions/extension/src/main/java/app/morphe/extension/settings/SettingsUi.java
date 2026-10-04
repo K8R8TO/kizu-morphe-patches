@@ -45,13 +45,8 @@ public final class SettingsUi {
      */
     public static boolean isDark(Context context) {
         Context themeContext = themeResolutionContext(context);
-
-        // Prefer Twitch's explicit user theme preference. This is independent of the
-        // Fragment/Preference context and therefore cannot be overridden by a stale
-        // light/dark Configuration attached to Kizu's settings view.
         Boolean userTheme = twitchUserTheme(themeContext);
         if (userTheme != null) return userTheme;
-
         Boolean twitch = twitchNightMode(themeContext);
         if (twitch != null) return twitch;
 
@@ -200,10 +195,11 @@ public final class SettingsUi {
     }
 
     private static int twitchColor(Context context, String name) {
-        if (context == null) return Integer.MIN_VALUE;
+        Context themeContext = themeResolutionContext(context);
+        if (themeContext == null) return Integer.MIN_VALUE;
         try {
-            int id = Utils.getResourceId(context, name, "color");
-            if (id != 0) return context.getColor(id);
+            int id = Utils.getResourceId(themeContext, name, "color");
+            if (id != 0) return themeContext.getColor(id);
         } catch (Throwable ignored) {
         }
         return Integer.MIN_VALUE;

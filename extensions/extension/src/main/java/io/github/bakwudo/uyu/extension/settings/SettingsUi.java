@@ -44,14 +44,17 @@ public final class SettingsUi {
      * remains in a dark system configuration.
      */
     public static boolean isDark(Context context) {
-        Boolean twitch = twitchNightMode(context);
+        Context themeContext = themeResolutionContext(context);
+        Boolean userTheme = twitchUserTheme(themeContext);
+        if (userTheme != null) return userTheme;
+        Boolean twitch = twitchNightMode(themeContext);
         if (twitch != null) return twitch;
 
-        int raw = twitchColor(context, "background_body");
+        int raw = twitchColor(themeContext, "background_body");
         if (raw != Integer.MIN_VALUE) return luminance(raw) < 128d;
 
         TypedValue value = new TypedValue();
-        if (context != null && context.getTheme().resolveAttribute(
+        if (themeContext != null && themeContext.getTheme().resolveAttribute(
                 android.R.attr.colorBackground, value, true)) {
             if (value.type >= TypedValue.TYPE_FIRST_COLOR_INT &&
                     value.type <= TypedValue.TYPE_LAST_COLOR_INT) {
@@ -150,6 +153,29 @@ public final class SettingsUi {
         }
     }
 
+    private static Context themeResolutionContext(Context context) {
+        if (context == null) return null;
+        try {
+            Context application = context.getApplicationContext();
+            return application != null ? application : context;
+        } catch (Throwable ignored) {
+            return context;
+        }
+    }
+
+    private static Boolean twitchUserTheme(Context context) {
+        if (context == null) return null;
+        try {
+            android.content.SharedPreferences prefs =
+                    android.preference.PreferenceManager.getDefaultSharedPreferences(context);
+            String value = prefs.getString("user_theme", null);
+            if ("DARK".equalsIgnoreCase(value)) return true;
+            if ("LIGHT".equalsIgnoreCase(value)) return false;
+        } catch (Throwable ignored) {
+        }
+        return null;
+    }
+
     private static Boolean twitchNightMode(Context context) {
         if (context == null) return null;
         try {
@@ -169,10 +195,11 @@ public final class SettingsUi {
     }
 
     private static int twitchColor(Context context, String name) {
-        if (context == null) return Integer.MIN_VALUE;
+        Context themeContext = themeResolutionContext(context);
+        if (themeContext == null) return Integer.MIN_VALUE;
         try {
-            int id = Utils.getResourceId(context, name, "color");
-            if (id != 0) return context.getColor(id);
+            int id = Utils.getResourceId(themeContext, name, "color");
+            if (id != 0) return themeContext.getColor(id);
         } catch (Throwable ignored) {
         }
         return Integer.MIN_VALUE;
