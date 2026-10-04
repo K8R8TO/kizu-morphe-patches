@@ -11,10 +11,18 @@ import android.text.style.StrikethroughSpan;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
- * Applies PurpleTV-compatible deleted-message presentation without touching normal chat rows.
+ * Applies selectable deleted-message presentation.
+ *
+ * Twitch's deleted-message span stores the original message in a private
+ * SpannedString field while displaying "<message deleted>". For the Mod style
+ * we leave Twitch's native clickable spoiler untouched. For the visual styles
+ * we replace that placeholder with the stored original text first, then style
+ * only the recovered message range.
  */
 public final class DeletedMessagesSupport {
     private DeletedMessagesSupport() {
@@ -22,8 +30,7 @@ public final class DeletedMessagesSupport {
 
     public static boolean useEnhancedStyle() {
         try {
-            if (!Settings.CHAT_DELETED_MESSAGES.get()) return false;
-            return true;
+            return Settings.CHAT_DELETED_MESSAGES.get();
         } catch (Throwable ignored) {
             return false;
         }
@@ -49,6 +56,8 @@ public final class DeletedMessagesSupport {
             if ("grey".equals(style)) {
                 return createGrey(message);
             }
+
+            // Mod is Twitch's native recovered-message behaviour. Keep it exactly as-is.
             return message;
         } catch (Throwable ignored) {
             return message;
@@ -57,26 +66,31 @@ public final class DeletedMessagesSupport {
 
     private static String normalizeStyle() {
         String style = Settings.CHAT_DELETED_MESSAGES_STYLE.get();
-        if (style == null) return "strikethrough";
+        if (style == null) return "mod";
         style = style.trim().toLowerCase(Locale.ROOT);
-        if ("default".equals(style)
-                || "mod".equals(style)
+
+        // "default" was exposed by an earlier build and is intentionally kept as
+        // a compatibility alias for Mod, which has the same behaviour.
+        if ("default".equals(style)) return "mod";
+        if ("mod".equals(style)
                 || "strikethrough".equals(style)
                 || "grey".equals(style)) {
             return style;
         }
-        return "strikethrough";
+        return "mod";
     }
 
     private static Spanned createStrikethrough(Spanned message) {
-        SpannableStringBuilder builder = withoutDeletedSpan(message);
-        int start = findMessageStart(builder);
-        if (start < builder.length()) {
-            if (builder.getSpans(start, builder.length(), StrikethroughSpan.class).length == 0) {
+        SpannableStringBuilder builder = new SpannableStringBuilder(message);
+        List<int[]> ranges = restoreOriginalMessages(builder);
+        if (ranges.isEmpty()) return message;
+
+        for (int[] range : ranges) {
+            if (range[0] < range[1]) {
                 builder.setSpan(
                         new StrikethroughSpan(),
-                        start,
-                        builder.length(),
+                        range[0],
+                        range[1],
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                 );
             }
@@ -85,67 +99,98 @@ public final class DeletedMessagesSupport {
     }
 
     private static Spanned createGrey(Spanned message) {
-        SpannableStringBuilder builder = withoutDeletedSpan(message);
-        ForegroundColorSpan[] colors =
-                builder.getSpans(0, builder.length(), ForegroundColorSpan.class);
-        for (ForegroundColorSpan span : colors) {
-            builder.removeSpan(span);
-        }
-        if (builder.length() > 0) {
-            builder.setSpan(
-                    new ForegroundColorSpan(Color.GRAY),
-                    0,
-                    builder.length(),
-                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            );
+        SpannableStringBuilder builder = new SpannableStringBuilder(message);
+        List<int[]> ranges = restoreOriginalMessages(builder);
+        if (ranges.isEmpty()) return message;
+
+        for (int[] range : ranges) {
+            if (range[0] < range[1]) {
+                builder.setSpan(
+                        new ForegroundColorSpan(Color.GRAY),
+                        range[0],
+                        range[1],
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                );
+            }
         }
         return SpannedString.valueOf(builder);
     }
 
-    private static SpannableStringBuilder withoutDeletedSpan(Spanned message) {
-        SpannableStringBuilder builder = new SpannableStringBuilder(message);
+    private static List<int[]> restoreOriginalMessages(SpannableStringBuilder builder) {
+        List<DeletedSpanData> candidates = new ArrayList<>();
+
         ClickableSpan[] clickable =
                 builder.getSpans(0, builder.length(), ClickableSpan.class);
         for (ClickableSpan span : clickable) {
-            if (looksLikeDeletedSpan(span)) {
-                builder.removeSpan(span);
+            Field originalField = findOriginalMessageField(span);
+            if (originalField == null) continue;
+
+            int start = builder.getSpanStart(span);
+            int end = builder.getSpanEnd(span);
+            if (start < 0 || end <= start) continue;
+
+            try {
+                originalField.setAccessible(true);
+                Object value = originalField.get(span);
+                if (!(value instanceof SpannedString)) continue;
+
+                SpannedString original = (SpannedString) value;
+                if (original.length() == 0) continue;
+
+                candidates.add(new DeletedSpanData(span, start, end, original));
+            } catch (Throwable ignored) {
             }
         }
-        return builder;
+
+        // Replace from right to left so multiple deleted spans cannot invalidate
+        // the character offsets we collected above.
+        candidates.sort((left, right) -> Integer.compare(right.start, left.start));
+
+        List<int[]> ranges = new ArrayList<>();
+        for (DeletedSpanData candidate : candidates) {
+            try {
+                int start = candidate.start;
+                int end = candidate.end;
+                builder.replace(start, end, candidate.original);
+                builder.removeSpan(candidate.span);
+                ranges.add(new int[]{start, start + candidate.original.length()});
+            } catch (Throwable ignored) {
+            }
+        }
+
+        ranges.sort((left, right) -> Integer.compare(left[0], right[0]));
+        return ranges;
     }
 
-    private static boolean looksLikeDeletedSpan(Object span) {
-        if (span == null) return false;
+    private static Field findOriginalMessageField(Object span) {
+        if (span == null) return null;
+
         for (Class<?> current = span.getClass();
              current != null && current != Object.class;
              current = current.getSuperclass()) {
             try {
                 for (Field field : current.getDeclaredFields()) {
-                    if (field.getType() == SpannedString.class) return true;
+                    if (field.getType() == SpannedString.class) {
+                        return field;
+                    }
                 }
             } catch (Throwable ignored) {
             }
         }
-        return false;
+        return null;
     }
 
-    private static int findMessageStart(Spanned message) {
-        try {
-            Class<?> usernameClass = Class.forName(
-                    "tv.twitch.android.shared.chat.messages.span.ClickableUsernameSpan"
-            );
-            Object[] spans = message.getSpans(0, message.length(), usernameClass);
-            if (spans != null && spans.length > 0) {
-                int end = message.getSpanEnd(spans[0]);
-                int after = end + 2;
-                if (after <= message.length()
-                        && ": ".contentEquals(message.subSequence(end, after))) {
-                    return after;
-                }
-                return end;
-            }
-        } catch (Throwable ignored) {
+    private static final class DeletedSpanData {
+        final ClickableSpan span;
+        final int start;
+        final int end;
+        final SpannedString original;
+
+        DeletedSpanData(ClickableSpan span, int start, int end, SpannedString original) {
+            this.span = span;
+            this.start = start;
+            this.end = end;
+            this.original = original;
         }
-        return 0;
     }
 }

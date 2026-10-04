@@ -268,8 +268,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
         deletedMessageStyle.setOnPreferenceClickListener(clicked -> {
             Activity activity = getActivity();
             if (activity == null) return true;
-            String[] names = {"Default", "Mod", "Strikethrough", "Grey"};
-            String[] values = {"default", "mod", "strikethrough", "grey"};
+            String[] names = {"Mod", "Strikethrough", "Grey"};
+            String[] values = {"mod", "strikethrough", "grey"};
             int selected = deletedMessageStyleIndex(Settings.CHAT_DELETED_MESSAGES_STYLE.get());
             new AlertDialog.Builder(activity)
                     .setTitle("Deleted message style")
@@ -299,17 +299,17 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private static int deletedMessageStyleIndex(String value) {
-        if ("mod".equalsIgnoreCase(value)) return 1;
-        if ("strikethrough".equalsIgnoreCase(value)) return 2;
-        if ("grey".equalsIgnoreCase(value)) return 3;
+        if ("strikethrough".equalsIgnoreCase(value)) return 1;
+        if ("grey".equalsIgnoreCase(value)) return 2;
+        // "default" is a legacy value and is equivalent to Mod.
         return 0;
     }
 
     private static String deletedMessageStyleName(String value) {
-        if ("mod".equalsIgnoreCase(value)) return "Mod";
         if ("strikethrough".equalsIgnoreCase(value)) return "Strikethrough";
         if ("grey".equalsIgnoreCase(value)) return "Grey";
-        return "Default";
+        // "default" is a legacy value and is equivalent to Mod.
+        return "Mod";
     }
 
     private void addPrivacySettings(PreferenceScreen screen) {
