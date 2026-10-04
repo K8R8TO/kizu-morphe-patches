@@ -226,11 +226,11 @@ This distinction is intentional: a project being listed here does not automatica
 
 ## Add to Morphe
 
-Add this repository as a remote patch source in Morphe Manager:
+Recommended source URL:
 
-github.com/K8R8TO/kizu-morphe-patches
+https://cdn.jsdelivr.net/gh/K8R8TO/kizu-morphe-patches@main/patches-bundle.json
 
-Morphe supports GitHub repository patch sources and can keep them updated automatically.
+This direct CDN source avoids GitHub Raw and is the canonical source URL for Morphe Manager.
 
 ## Building locally
 
