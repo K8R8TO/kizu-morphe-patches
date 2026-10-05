@@ -1,9 +1,6 @@
 package io.github.bakwudo.uyu.extension.appearance;
 
-import android.widget.ImageView;
-
-import androidx.compose.ui.platform.ComposeView;
-import androidx.mediarouter.app.MediaRouteButton;
+import android.view.View;
 
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
@@ -12,9 +9,7 @@ public final class PlayerOverlaySupport {
     private PlayerOverlaySupport() {
     }
 
-    public static void bind(ComposeView createClipButton,
-                            ImageView shareButton,
-                            MediaRouteButton castButton) {
+    public static void bind(View createClipButton, View shareButton, View castButton) {
         try {
             if (createClipButton != null) {
                 HiddenView.attach(createClipButton,
