@@ -84,12 +84,13 @@ internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
 
 /**
  * Exact Twitch 31.3.1 Following-tab header binder. The supplied APKM contains one occurrence
- * of the Go Ad-Free button resource id (0x7f0b0942) in Lmx5.a(View):Lr4;.
+ * of the Go Ad-Free button resource id (0x7f0b0942 = following_tab_turbo_button)
+ * in Lmx5.a(View):Lr4;. The method is public final (access flags 0x11).
  */
 internal object FollowingGoAdFreeButtonFingerprint : Fingerprint(
     definingClass = "Lmx5;",
     name = "a",
-    accessFlags = listOf(AccessFlags.PUBLIC),
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "Lr4;",
     parameters = listOf("Landroid/view/View;"),
     custom = { method, _ ->
