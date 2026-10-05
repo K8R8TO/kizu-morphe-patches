@@ -1,10 +1,11 @@
-# [1.9.2-beta.9](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.9) (2026-10-05)
+# [1.9.2-beta.10](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.10) (2026-10-05)
 
 ### Fixes
 
-* fix Hide Go Ad-Free/Turbo in the Following feed with a layout-driven scan instead of fixed timing windows
-* always expose the Kizu Appearance settings page so the Go Ad-Free switch is visible
-* keep Go Ad-Free hiding defaulted ON through the existing `HIDE_TURBO_UPSELL` setting
+* hook the exact Twitch 31.3.1 Following-header binder containing the unique Go Ad-Free resource constant 0x7f0b0942
+* bind the Go Ad-Free button directly when Twitch inflates the Following-header item
+* expose Hide Go Ad-Free at the Kizu settings root with the existing default-ON setting
+
 
 # [1.9.2-beta.8](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.8) (2026-10-05)
 
