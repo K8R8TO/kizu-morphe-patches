@@ -46,6 +46,33 @@ public final class HidePromotionsPatch {
 
     private HidePromotionsPatch() {}
 
+    /**
+     * Binds Twitch 31.3.1's actual Following Go Ad-Free button to the Kizu setting.
+     * The call comes from the exact Lmx5.a(View):Lr4; binder, so the search is scoped to
+     * the header view Twitch is already constructing rather than scanning the whole feed.
+     */
+    public static void bindGoAdFree(View root) {
+        if (root == null) return;
+        try {
+            bindGoAdFreeNow(root);
+            root.postDelayed(() -> bindGoAdFreeNow(root), 100L);
+            root.postDelayed(() -> bindGoAdFreeNow(root), 500L);
+            root.postDelayed(() -> bindGoAdFreeNow(root), 1200L);
+        } catch (Exception ex) {
+            Utils.logError("Failed to bind Go Ad-Free", ex);
+        }
+    }
+
+    private static void bindGoAdFreeNow(View root) {
+        Context context = root.getContext();
+        int id = Utils.getResourceId(context, "following_tab_turbo_button", "id");
+        if (id == 0) return;
+        View button = root.findViewById(id);
+        if (button != null) {
+            HiddenView.attach(button, view -> Settings.HIDE_TURBO_UPSELL.get(), true);
+        }
+    }
+
     public static void onViewCreated(View root) {
         try {
             Context context = root.getContext();
