@@ -16,3 +16,5 @@ Any future emote work must leave this path untouched unless the user explicitly 
 Verified release: v1.1.17 (`6f1bc4c34eaefc81dca7a1deb372d7767bbbc72` plus release packaging).
 
 Beta7 release trigger note: this file change exists only to trigger the prerelease workflow; it does not change Twitch patch behavior.
+
+CI trigger update for beta7 release workflow.
