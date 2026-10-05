@@ -42,3 +42,39 @@ internal object SubtemberHighlightTypeFingerprint : Fingerprint(
             classDef.fields.any { AccessFlags.STATIC.isSet(it.accessFlags) && it.type == classDef.type }
     },
 )
+
+/**
+ * Exact Twitch 31.3.1 player overlay constructor. Its fields are populated from:
+ * create_clip_button_compose_view -> j, share_button -> k, media_route_button -> q.
+ */
+internal object PlayerOverlayConstructorFingerprint : Fingerprint(
+    definingClass = "Lout;",
+    name = "<init>",
+    returnType = "V",
+    parameters = listOf(
+        "Landroid/content/Context;",
+        "Landroid/view/View;",
+        "Lo57;",
+        "Lylg;",
+        "Lxks;",
+        "Lh7a;",
+    ),
+)
+
+/**
+ * Exact external-link disclaimer method verified in Twitch 31.3.1.
+ * Loy3.d(Fragment, Uri, boolean, callback, boolean) constructs the Twitch warning.
+ */
+internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
+    definingClass = "Loy3;",
+    name = "d",
+    returnType = "V",
+    parameters = listOf(
+        "Landroidx/fragment/app/n;",
+        "Landroid/net/Uri;",
+        "Z",
+        "Lsii;",
+        "Z",
+    ),
+    strings = listOf("twitch.tv", "twitch.a2z.com", "targetUrl"),
+)
