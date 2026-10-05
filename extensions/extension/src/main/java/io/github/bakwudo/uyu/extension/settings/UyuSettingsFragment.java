@@ -37,6 +37,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     static final String SECTION_EMOTES = "emotes";
     static final String SECTION_CHAT = "chat";
     static final String SECTION_PRIVACY = "privacy";
+    static final String SECTION_HOME = "home";
 
     private static final String ARG_SECTION = "section";
 
@@ -86,6 +87,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
             addChatSettings(screen);
         } else if (section.equals(SECTION_PRIVACY)) {
             addPrivacySettings(screen);
+        } else if (section.equals(SECTION_HOME)) {
+            addHomeSettings(screen);
         }
     }
 
@@ -105,6 +108,9 @@ public class UyuSettingsFragment extends PreferenceFragment {
         }
         addSectionLink(screen, SECTION_EMOTES, "7TV, BTTV, FFZ and animated emotes");
         addSectionLink(screen, SECTION_CHAT, "Chat controls");
+        if (PatchStatus.homeCleanup()) {
+            addSectionLink(screen, SECTION_HOME, "Home and navigation cleanup");
+        }
         addSectionLink(screen, SECTION_PRIVACY, "Privacy");
     }
 
@@ -138,9 +144,9 @@ public class UyuSettingsFragment extends PreferenceFragment {
         addSwitch(screen, Settings.HIDE_GIFT_LEADERBOARD, "Hide the gift leaderboard",
                 "Hides the ranking of top gifters and cheerers above chat.");
         addSwitch(screen, Settings.HIDE_SUBSCRIPTION_PROMOTIONS, "Hide subscription promotions",
-                "Hides the banners that advertise subscription and gift discounts and "
-                        + "SUBtember, above the player and above chat, and the banner that "
-                        + "advertises Turbo.");
+                "Hides subscription and gift-discount campaign banners.");
+        addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free promotion",
+                "Hides Twitch's Go Ad-Free/Turbo promotional control.");
 
         Preference note = new Preference(screen.getContext());
         note.setSummary("Items you show again appear the next time you open a stream.");
@@ -274,11 +280,42 @@ public class UyuSettingsFragment extends PreferenceFragment {
         return "Mod";
     }
 
+    private void addHomeSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.HIDE_FEATURED_CLIPS, "Hide featured clips",
+                "Remove the featured clips section from the Following feed.");
+        addSwitch(screen, Settings.HIDE_RECOMMENDATIONS, "Hide recommendations",
+                "Remove recommendation sections from the Following feed.");
+        addSwitch(screen, Settings.HIDE_RESUME_WATCHING, "Hide resume watching",
+                "Remove the resume-watching section.");
+        addSwitch(screen, Settings.HIDE_OFFLINE_CHANNELS, "Hide offline channels",
+                "Remove the offline followed-channels section.");
+        addSwitch(screen, Settings.HIDE_UPCOMING_STREAMS, "Hide upcoming streams",
+                "Remove the upcoming streams section.");
+        addSwitch(screen, Settings.HIDE_GAME_SECTION, "Hide game section",
+                "Remove the game section from the Following feed.");
+        addSwitch(screen, Settings.HIDE_HOME_LEADERBOARDS, "Hide leaderboards",
+                "Remove leaderboard UI from the feed.");
+        addSwitch(screen, Settings.FULL_FOLLOWED_CARDS, "Full followed cards",
+                "Use larger followed-channel cards instead of the compact presentation.");
+        addSwitch(screen, Settings.HIDE_CREATE_BUTTON, "Hide Create button",
+                "Remove the Create control from navigation.");
+        addSwitch(screen, Settings.FORCE_SEARCH_BUTTON, "Force toolbar Search button",
+                "Keep the Search control available in the toolbar.");
+        addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide player Create Clip button",
+                "Remove the Create Clip control from the player.");
+        addSwitch(screen, Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON, "Hide player Live Share button",
+                "Remove the Live Share control from the player.");
+        addSwitch(screen, Settings.HIDE_CAST_BUTTON, "Hide Cast button",
+                "Remove the Cast control.");
+    }
+
     private void addPrivacySettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.DISABLE_COMSCORE, "Disable Comscore",
                 "Prevent Twitch's Comscore measurement component from starting.");
         addSwitch(screen, Settings.DISABLE_BUGSNAG, "Disable crash reporting",
                 "Prevent Twitch's crash-reporting component from collecting reports.");
+        addSwitch(screen, Settings.DISABLE_LINK_DISCLAIMER, "Disable link disclaimer",
+                "Skip Twitch's external-link disclaimer before opening links.");
     }
 
     @Override
@@ -351,6 +388,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 return "Chat";
             case SECTION_PRIVACY:
                 return "Privacy";
+            case SECTION_HOME:
+                return "Home & navigation";
             default:
                 return SettingsPatch.TITLE;
         }
