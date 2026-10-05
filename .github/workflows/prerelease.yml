@@ -1,5 +1,8 @@
 name: Pre-release
 on:
+  push:
+    branches:
+      - beta
   pull_request_target:
     types:
       - opened
