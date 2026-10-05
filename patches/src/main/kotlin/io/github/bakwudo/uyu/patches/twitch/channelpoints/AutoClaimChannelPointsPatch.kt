@@ -1,34 +1,57 @@
 package io.github.bakwudo.uyu.patches.twitch.channelpoints
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
+import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
-import io.github.bakwudo.uyu.patches.twitch.shared.Constants
-import io.github.bakwudo.uyu.patches.twitch.shared.reference
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction35c
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
+import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
+import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
-@Suppress("unused")
-val autoClaimChannelPointsPatch = bytecodePatch(
-    name = "Auto-claim bonus channel points",
-    description = "Claims available bonus rewards in live playback.",
-    default = true,
-) {
-    compatibleWith(Constants.COMPATIBILITY_TWITCH)
+private const val CHANNEL_CLASS =
+    "Ltv/twitch/android/shared/chat/pub/messages/data/ChannelChatConnectionKey;"
+private const val CHANNEL_POINTS =
+    "Lapp/morphe/extension/channelpoints/ChannelPoints;"
+
+internal val autoClaimChannelPointsPatch = bytecodePatch {
+    compatibleWith(COMPATIBILITY_TWITCH)
+    dependsOn(sharedExtensionPatch)
+
     execute {
-        val points = resolvePointsHooks()
-        val player = resolvePlayerHooks()
-        val claimBridge = pointsBridge(points)
-        val configureBridge = playerConfigurationBridge(player)
-        val stateBridge = playerStateBridge(player)
-        mutableClassDefBy(points.update.definingClass).methods.single { it.reference == points.update.reference }
-            .addInstruction(points.updateIndex + 1,
-                "invoke-static {v${points.providerRegister}, v${points.modelRegister}}, $claimBridge")
-        mutableClassDefBy(player.player.type).methods.single { it.reference == player.configure.reference }
-            .addInstruction(0, "invoke-static/range {p0 .. p2}, $configureBridge")
-        mutableClassDefBy(player.player.type).methods.single { it.reference == player.state.reference }
-            .addInstruction(0, "invoke-static/range {p0 .. p1}, $stateBridge")
-        mutableClassDefBy(player.player.type).methods.single { it.reference == player.release.reference }
-            .addInstruction(
-                0,
-                "invoke-static/range {p0 .. p0}, Lapp/morphe/extension/channelpoints/ChannelPoints;->release(Ljava/lang/Object;)V",
-            )
+        val classDef = classDefByOrNull(CHANNEL_CLASS)
+            ?: throw PatchException("Kizu Channel Points: ChannelChatConnectionKey was not found.")
+        val channelClass = mutableClassDefBy(classDef)
+        val constructor = channelClass.methods.singleOrNull { method ->
+            method.name == "<init>" &&
+                method.returnType == "V" &&
+                method.parameterTypes.map { it.toString() } ==
+                    listOf("Ljava/lang/String;", "Ljava/lang/String;")
+        } ?: throw PatchException(
+            "Kizu Channel Points: expected one ChannelChatConnectionKey(String,String) constructor.",
+        )
+
+        val returnIndex = constructor.implementation?.instructions?.indexOfLast {
+            it.opcode == Opcode.RETURN_VOID
+        } ?: -1
+        if (returnIndex < 0) {
+            throw PatchException("Kizu Channel Points: channel constructor has no return-void.")
+        }
+
+        // This hook is owned by the Channel Points patch so auto-claim remains functional even
+        // if the third-party-emotes patch changes independently.
+        constructor.addInstruction(
+            returnIndex,
+            BuilderInstruction35c(
+                Opcode.INVOKE_STATIC,
+                2, 1, 2, 0, 0, 0,
+                ImmutableMethodReference(
+                    CHANNEL_POINTS,
+                    "onChannelChanged",
+                    listOf("Ljava/lang/String;", "Ljava/lang/String;"),
+                    "V",
+                ),
+            ),
+        )
     }
 }
