@@ -1,6 +1,7 @@
 package io.github.bakwudo.uyu.patches.twitch.chat
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.PatchException
@@ -87,6 +88,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         val getSpansRegisterD = getSpans.registerD
         val getSpansRegisterE = getSpans.registerE
         val getSpansRegisterF = getSpans.registerF
+
         if (spanArrayRegister == getSpansRegisterF) {
             throw PatchException(
                 "Twitch deleted messages: getSpans result register aliases its Class argument register.",
@@ -114,21 +116,25 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         val deletedSpanRegister = getSpansRegisterF
 
-        formatter.addInstructions(
+        formatter.addInstructionsWithLabels(
             injectionIndex,
             """
+                array-length v$deletedSpanRegister, v$spanArrayRegister
+                if-eqz v$deletedSpanRegister, :kizu_deleted_messages_restore
                 const/4 v$deletedSpanRegister, 0x0
                 aget-object v$deletedSpanRegister, v$spanArrayRegister, v$deletedSpanRegister
                 invoke-static {p1, v$deletedSpanRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;Landroid/text/style/ClickableSpan;)Landroid/text/SpannedString;
                 move-result-object v$spanArrayRegister
                 if-nez v$spanArrayRegister, :kizu_deleted_messages_return
+                :kizu_deleted_messages_restore
                 const-class v$deletedSpanRegister, $classType
                 invoke-virtual {v$getSpansRegisterC, v$getSpansRegisterD, v$getSpansRegisterE, v$getSpansRegisterF}, Landroid/text/SpannedString;->getSpans(IILjava/lang/Class;)[Ljava/lang/Object;
                 move-result-object v$spanArrayRegister
+                goto :kizu_deleted_messages_continue
                 :kizu_deleted_messages_return
                 return-object v$spanArrayRegister
+                :kizu_deleted_messages_continue
             """,
         )
     }
 }
-
