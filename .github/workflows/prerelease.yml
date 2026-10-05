@@ -1,8 +1,9 @@
 name: Pre-release
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
+      - synchronize
   workflow_dispatch:
 concurrency:
   group: kizu-prerelease
