@@ -4,6 +4,8 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.AccessFlags
+import com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction35c
+import com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.ClassDef
 import com.android.tools.smali.dexlib2.iface.Method
@@ -12,7 +14,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.iface.reference.StringReference
-import io.github.bakwudo.uyu.patches.twitch.shared.COMPATIBILITY_TWITCH
+import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
 private const val MODEL = "Ltv/twitch/android/models/communitypoints/CommunityPointsModel;"
@@ -91,7 +93,16 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
 
         updateMethod.addInstruction(
             updateIndex + 1,
-            "invoke-static {v${store.registerB}, v${store.registerA}}, $ON_MODEL_UPDATED",
+            BuilderInstruction35c(
+                Opcode.INVOKE_STATIC,
+                2, 0, store.registerB, store.registerA, 0, 0,
+                ImmutableMethodReference(
+                    CHANNEL_POINTS,
+                    "onModelUpdated",
+                    listOf("Ljava/lang/Object;", "Ljava/lang/Object;"),
+                    "V",
+                ),
+            ),
         )
 
         val playerMatches = mutableListOf<Pair<ClassDef, Method>>()
@@ -117,7 +128,16 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
             it.name == configure.name && it.parameterTypes == configure.parameterTypes
         }.addInstruction(
             0,
-            "invoke-static {p0, p2}, $ON_PLAYBACK_CONFIGURED",
+            BuilderInstruction35c(
+                Opcode.INVOKE_STATIC,
+                2, 0, 2, 0, 0, 0,
+                ImmutableMethodReference(
+                    CHANNEL_POINTS,
+                    "onPlaybackConfigured",
+                    listOf("Ljava/lang/Object;", "Ljava/lang/Object;"),
+                    "V",
+                ),
+            ),
         )
 
         val stateMatches = player.methods.filter { method ->
@@ -140,19 +160,29 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
             it.name == stateMethod.name && it.parameterTypes == stateMethod.parameterTypes
         }.addInstruction(
             0,
-            "invoke-static {p0, p1}, $ON_PLAYBACK_STATE",
+            BuilderInstruction35c(
+                Opcode.INVOKE_STATIC,
+                2, 0, 1, 0, 0, 0,
+                ImmutableMethodReference(
+                    CHANNEL_POINTS,
+                    "onPlaybackStateChanged",
+                    listOf("Ljava/lang/Object;", "Ljava/lang/Object;"),
+                    "V",
+                ),
+            ),
         )
 
         val releaseMatches = player.methods.filter { method ->
             method.parameterTypes.isEmpty() &&
                 method.returnType == "V" &&
-                method.references().filterIsInstance<MethodReference>().any {
-                    it.definingClass == "Lcom/amazonaws/ivs/player/Player;" &&
-                        it.name == "removeListener" &&
-                        it.parameterTypes.map { parameter -> parameter.toString() } ==
+                method.implementation?.instructions?.any { instruction ->
+                    val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+                    reference?.definingClass == "Lcom/amazonaws/ivs/player/Player;" &&
+                        reference.name == "removeListener" &&
+                        reference.parameterTypes.map { parameter -> parameter.toString() } ==
                             listOf("Lcom/amazonaws/ivs/player/Player\$Listener;") &&
-                        it.returnType == "V"
-                }
+                        reference.returnType == "V"
+                } == true
         }
 
         if (releaseMatches.size != 1) {
@@ -166,7 +196,16 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
             it.name == releaseMethod.name && it.parameterTypes == releaseMethod.parameterTypes
         }.addInstruction(
             0,
-            "invoke-static {p0}, $ON_PLAYBACK_RELEASED",
+            BuilderInstruction35c(
+                Opcode.INVOKE_STATIC,
+                1, 0, 0, 0, 0, 0,
+                ImmutableMethodReference(
+                    CHANNEL_POINTS,
+                    "onPlaybackReleased",
+                    listOf("Ljava/lang/Object;"),
+                    "V",
+                ),
+            ),
         )
     }
 }
