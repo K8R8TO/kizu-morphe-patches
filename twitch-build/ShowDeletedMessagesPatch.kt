@@ -85,13 +85,12 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         val deletedSpanRegister = getSpans.registerF
 
-        val originalRegister = formatter
-            .getFreeRegisterProvider(
-                injectionIndex,
-                1,
-                listOf(spanArrayRegister, deletedSpanRegister),
-            )
-            .getFreeRegister()
+        val originalRegister = getFreeRegisterProvider(
+            injectionIndex,
+            1,
+            spanArrayRegister,
+            deletedSpanRegister,
+        ).getFreeRegister()
 
         if (deletedSpanRegister > 15 || originalRegister > 15) {
             throw PatchException(
