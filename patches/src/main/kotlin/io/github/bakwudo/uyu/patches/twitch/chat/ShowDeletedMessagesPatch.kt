@@ -10,6 +10,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 
 private const val SUPPORT = "Lapp/morphe/extension/twitch/chat/DeletedMessagesSupport;"
@@ -24,7 +25,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         val accessField = spanClass.fields.singleOrNull { field -> field.type == "Z" }
             ?: throw PatchException("Twitch deleted messages: access flag field was not found uniquely.")
 
-        val originalMessageField = spanClass.fields.singleOrNull { field ->
+        spanClass.fields.singleOrNull { field ->
             field.type == SPANNED_STRING
         } ?: throw PatchException("Twitch deleted messages: original-message field was not found uniquely.")
 
@@ -84,43 +85,18 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         val deletedSpanRegister = getSpans.registerF
 
-        // registerF holds the Class argument used by getSpans(). It is no longer needed
-        // after the call, so reuse it as the temporary DeletedMessageSpan register.
-        // On the fallback path, restore the original Class object before Twitch continues.
-        val classRegisterRestore = formatterInstructions
-            .subList(0, getSpansIndex)
-            .indexOfLast { instruction ->
-                instruction.opcode == Opcode.CONST_CLASS &&
-                    (instruction as? OneRegisterInstruction)?.registerA == deletedSpanRegister
-            }
-
-        if (classRegisterRestore < 0) {
-            throw PatchException(
-                "Twitch deleted messages: could not locate the getSpans class-register initializer.",
-            )
-        }
-
-        val classInit = formatterInstructions[classRegisterRestore] as ReferenceInstruction
-        val classType = classInit.reference.toString()
-        if (!classType.startsWith("L") || !classType.endsWith(";")) {
-            throw PatchException(
-                "Twitch deleted messages: unexpected getSpans class reference $classType.",
-            )
-        }
-
         formatter.addInstructions(
             injectionIndex,
             """
                 const/4 v$deletedSpanRegister, 0x0
                 aget-object v$deletedSpanRegister, v$spanArrayRegister, v$deletedSpanRegister
-                invoke-static {p1, v$deletedSpanRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;Landroid/text/style/ClickableSpan;)Z
-                move-result v$deletedSpanRegister
-                if-nez v$deletedSpanRegister, :kizu_deleted_messages_return
+                invoke-static {p1, v$deletedSpanRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;Landroid/text/style/ClickableSpan;)Landroid/text/SpannedString;
+                move-result-object v$spanArrayRegister
+                if-nez v$spanArrayRegister, :kizu_deleted_messages_return
                 const-class v$deletedSpanRegister, $classType
-                goto :kizu_deleted_messages_original
+                invoke-virtual {v$spanArrayRegister}, Landroid/text/SpannedString;->getSpans(II[Ljava/lang/Class;)[Ljava/lang/Object;
                 :kizu_deleted_messages_return
-                return-object p1
-                :kizu_deleted_messages_original
+                return-object v$spanArrayRegister
             """,
         )
     }
