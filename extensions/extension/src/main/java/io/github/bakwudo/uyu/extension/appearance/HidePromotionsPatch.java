@@ -5,7 +5,9 @@ import android.view.View;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
@@ -53,6 +55,9 @@ public final class HidePromotionsPatch {
                     view -> Settings.HIDE_TURBO_UPSELL.get(), false),
     };
 
+    /** Following feed roots whose Turbo control can be inflated after the delegate is created. */
+    private static final Map<View, Boolean> TURBO_SCANS_SCHEDULED = new WeakHashMap<>();
+
     private HidePromotionsPatch() {
     }
 
@@ -71,9 +76,51 @@ public final class HidePromotionsPatch {
                 View view = root.findViewById(id);
                 if (view != null) HiddenView.attach(view, target.condition, target.restore);
             }
+            scheduleFollowingTurboScan(root);
         } catch (Exception ex) {
             Utils.logError("Failed to hide promotions", ex);
         }
+    }
+
+    /**
+     * The Following feed's Turbo controls can be inflated into the recycler after the
+     * BaseViewDelegate constructor returns. Re-scan the same verified resource IDs after the
+     * first layout and while the initial feed is settling, without adding another bytecode hook.
+     */
+    private static void scheduleFollowingTurboScan(View root) {
+        if (!isFollowingRoot(root)) return;
+        if (TURBO_SCANS_SCHEDULED.put(root, Boolean.TRUE) != null) return;
+
+        attachFollowingTurboViews(root);
+        root.postDelayed(() -> attachFollowingTurboViews(root), 100);
+        root.postDelayed(() -> attachFollowingTurboViews(root), 500);
+        root.postDelayed(() -> attachFollowingTurboViews(root), 1200);
+    }
+
+    private static void attachFollowingTurboViews(View root) {
+        attachTarget(root, "following_tab_turbo_button");
+        attachTarget(root, "turbo_upsell_container");
+    }
+
+    private static void attachTarget(View root, String resourceName) {
+        Context context = root.getContext();
+        int id = Utils.getResourceId(context, resourceName, "id");
+        if (id == 0) return;
+        View view = root.findViewById(id);
+        if (view != null) {
+            HiddenView.attach(view, v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+        }
+    }
+
+    private static boolean isFollowingRoot(View root) {
+        return findId(root, "following_list_recycler_view") != null
+                || findId(root, "following_tab_section_header") != null;
+    }
+
+    private static View findId(View root, String name) {
+        Context context = root.getContext();
+        int id = Utils.getResourceId(context, name, "id");
+        return id == 0 ? null : root.findViewById(id);
     }
 
     /**

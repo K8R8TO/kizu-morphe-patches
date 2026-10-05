@@ -1,3 +1,10 @@
+# [1.9.2-beta.8](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.8) (2026-10-05)
+
+### Fixes
+
+* fix Hide Go Ad-Free/Turbo in Twitch's Following feed by re-scanning the verified Twitch 31.3.1 Turbo resource IDs after delayed feed inflation
+* keep the beta8 change isolated to the existing promotion patch; no new player, link-disclaimer, Continue Watching, or Offline Channels hooks are added
+
 # [1.9.2-beta.7](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.7) (2026-10-05)
 
 ### Fixes
@@ -20,15 +27,10 @@
 * keep the unsafe global Home cleanup hook out of the Twitch Enhancement dependency graph
 * leave Continue Watching and Offline Channels disabled until their exact feed hooks are verified
 
-# [1.9.2-beta.5](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.5) (2026-10-05)
+# [1.9.2-beta.5](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.5)
 
 ### Fixes
 
 * remove the Tier-1 Home/navigation global launch hook that caused Twitch to crash during startup
 * restore the launch-safe stable Twitch Enhancement dependency graph
 
-# [1.9.2-beta.4](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.4) (2026-10-05)
-
-### Features
-
-* implement Tier-1 Home/navigation controls from the supplied Twitch 31.3.1 APKM
