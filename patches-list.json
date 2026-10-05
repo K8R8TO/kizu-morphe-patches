@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-beta.4",
+  "version": "1.9.2-beta.5",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1, including third-party emotes, animated emotes, privacy and appearance controls, deleted-message controls, Hide Stories, ad handling, automatic Channel Points claiming, stable default-home navigation, and Tier-1 Home/navigation controls implemented from the supplied Twitch 31.3.1 APKM.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta5 restores the launch-safe stable feature set; Tier-1 Home/navigation hooks are being rebuilt against specific Twitch 31.3.1 fingerprints.",
       "default": true,
       "category": null,
       "dependencies": [
