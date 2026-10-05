@@ -11,6 +11,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Objects;
 import java.nio.charset.StandardCharsets;
 
 import app.morphe.extension.Utils;
@@ -203,7 +204,7 @@ public final class ChannelPoints {
                 }
 
                 Object previous = playbackPlayer.get();
-                if (previous != player || !same(playbackChannel, channel)) {
+                if (previous != player || !Objects.equals(playbackChannel, channel)) {
                     playbackPlaying = false;
                 }
                 playbackPlayer = new WeakReference<>(player);
@@ -249,7 +250,7 @@ public final class ChannelPoints {
         synchronized (STATE_LOCK) {
             if (!Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) return false;
             if (!playbackLive || !playbackPlaying || playbackPlayer.get() == null) return false;
-            if (!same(playbackChannel, claimChannel)) return false;
+            if (!Objects.equals(playbackChannel, claimChannel)) return false;
 
             String id = channelId;
             if (id == null || id.isEmpty()) return false;
