@@ -1,13 +1,14 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-beta.7",
+  "version": "1.9.2-beta.8",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Launch-safe Kizu Twitch enhancements for Twitch 31.3.1. Player-overlay and link-disclaimer hooks remain excluded pending isolated runtime verification; Continue Watching and Offline Channels remain pending exact feed fingerprints.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta8 specifically fixes Hide Go Ad-Free/Turbo in the Following feed by re-scanning the verified Twitch 31.3.1 Turbo resource IDs after delayed feed inflation; no other experimental Tier-1 hooks are enabled by this release.",
       "default": true,
       "category": null,
       "dependencies": [
+        "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
         "BytecodePatch",
