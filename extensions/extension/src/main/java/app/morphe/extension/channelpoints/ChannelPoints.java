@@ -10,8 +10,6 @@ import java.io.File;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.lang.ref.WeakReference;
-import java.util.Objects;
 
 import app.morphe.extension.Utils;
 import app.morphe.extension.settings.Settings;
@@ -79,12 +77,6 @@ public final class ChannelPoints {
     private static volatile String channelLogin;
     private static volatile String lastSuccessfulClaimKey;
     private static volatile boolean started;
-    private static volatile Context applicationContext;
-    private static volatile WeakReference<Object> playbackPlayer = new WeakReference<>(null);
-    private static volatile Object playbackChannel;
-    private static volatile boolean playbackLive;
-    private static volatile boolean playbackPlaying;
-    private static volatile String inFlightClaimKey;
 
     private ChannelPoints() {}
 
@@ -92,7 +84,6 @@ public final class ChannelPoints {
         if (context == null) return;
 
         final Context app = context.getApplicationContext();
-        applicationContext = app;
         synchronized (STATE_LOCK) {
             if (started) return;
             started = true;
@@ -105,7 +96,7 @@ public final class ChannelPoints {
 
                 while (!Thread.currentThread().isInterrupted()) {
                     try {
-                        if (Settings.AUTO_CLAIM_CHANNEL_POINTS.get() && isPlaybackReady()) {
+                        if (Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) {
                             claimAvailable(app);
                         }
                     } catch (Throwable error) {
@@ -123,51 +114,6 @@ public final class ChannelPoints {
 
         watcher.setDaemon(true);
         watcher.start();
-    }
-
-    public static void configure(Object player, Object channel, boolean live) {
-        if (player == null) return;
-        synchronized (STATE_LOCK) {
-            Object previousPlayer = playbackPlayer.get();
-            boolean changed = previousPlayer != player || !Objects.equals(playbackChannel, channel);
-            playbackPlayer = new WeakReference<>(player);
-            playbackChannel = live ? channel : null;
-            playbackLive = live && channel != null;
-            if (changed || !playbackLive) playbackPlaying = false;
-        }
-    }
-
-    public static void state(Object player, boolean playing) {
-        if (player == null) return;
-        boolean becamePlaying = false;
-        synchronized (STATE_LOCK) {
-            if (playbackPlayer.get() != player) return;
-            boolean previous = playbackPlaying;
-            playbackPlaying = playbackLive && playing;
-            becamePlaying = playbackPlaying && !previous;
-        }
-        if (becamePlaying) triggerClaimCheck(null);
-    }
-
-    public static void release(Object player) {
-        synchronized (STATE_LOCK) {
-            if (playbackPlayer.get() != player) return;
-            playbackPlayer.clear();
-            playbackChannel = null;
-            playbackLive = false;
-            playbackPlaying = false;
-            inFlightClaimKey = null;
-        }
-    }
-
-    public static void onBonusDetected(Object claimChannel, String claimId) {
-        if (claimChannel == null || claimId == null || claimId.isEmpty()) return;
-        if (!reserveClaim(claimChannel, claimId)) return;
-        triggerClaimCheck(claimId);
-    }
-
-    public static void observation(String category) {
-        if (category != null) log(category);
     }
 
     /** Called by the existing stable ChannelChatConnectionKey(String,String) hook. */
@@ -188,58 +134,7 @@ public final class ChannelPoints {
         }
     }
 
-    private static void triggerClaimCheck(final String expectedClaimId) {
-        final Context app = applicationContext;
-        if (app == null || !isPlaybackReady()) return;
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    claimAvailable(app, expectedClaimId);
-                } catch (Throwable error) {
-                    log("lifecycle claim error: " + error);
-                }
-            }
-        }, "kizu-channel-points-claim");
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    private static boolean isPlaybackReady() {
-        synchronized (STATE_LOCK) {
-            return Settings.AUTO_CLAIM_CHANNEL_POINTS.get() &&
-                    playbackLive &&
-                    playbackPlaying &&
-                    playbackPlayer.get() != null &&
-                    playbackChannel != null;
-        }
-    }
-
-    private static boolean reserveClaim(Object claimChannel, String claimId) {
-        synchronized (STATE_LOCK) {
-            if (!Settings.AUTO_CLAIM_CHANNEL_POINTS.get() ||
-                    !playbackLive ||
-                    !playbackPlaying ||
-                    playbackPlayer.get() == null ||
-                    !Objects.equals(playbackChannel, claimChannel)) return false;
-
-            String id = channelId;
-            if (id == null || id.isEmpty()) return false;
-
-            String key = id + ":" + claimId;
-            if (key.equals(lastSuccessfulClaimKey) || key.equals(inFlightClaimKey)) return false;
-            inFlightClaimKey = key;
-            return true;
-        }
-    }
-
     private static void claimAvailable(Context context) {
-        claimAvailable(context, null);
-    }
-
-    private static void claimAvailable(Context context, String expectedClaimId) {
-        if (!isPlaybackReady()) return;
-
         String id = channelId;
         String login = channelLogin;
         if (id == null || id.isEmpty() || login == null || login.isEmpty()) return;
@@ -253,31 +148,19 @@ public final class ChannelPoints {
         String claimId = available.optString("id", "");
         if (claimId.isEmpty()) return;
 
-        if (expectedClaimId != null && !expectedClaimId.equals(claimId)) return;
-
         String claimKey = id + ":" + claimId;
-        synchronized (STATE_LOCK) {
-            if (claimKey.equals(lastSuccessfulClaimKey)) return;
-            if (claimKey.equals(inFlightClaimKey) && expectedClaimId == null) return;
-            inFlightClaimKey = claimKey;
-        }
+        if (claimKey.equals(lastSuccessfulClaimKey)) return;
 
         log("bonus available channel=" + login + " claim=" + claimId);
 
         ClaimResult result = submitClaim(token, id, claimId);
         if (!result.success) {
             log("claim failed: " + result.error);
-            synchronized (STATE_LOCK) {
-                if (claimKey.equals(inFlightClaimKey)) inFlightClaimKey = null;
-            }
             Utils.showClaimStatus("Channel Points claim failed");
             return;
         }
 
-        synchronized (STATE_LOCK) {
-            lastSuccessfulClaimKey = claimKey;
-            if (claimKey.equals(inFlightClaimKey)) inFlightClaimKey = null;
-        }
+        lastSuccessfulClaimKey = claimKey;
         String message = result.points > 0
                 ? "Channel Points +" + result.points + " claimed"
                 : "Channel Points +50 claimed";
