@@ -28,13 +28,9 @@ public final class HomeCleanupSupport {
     public static void onViewCreated(View root) {
         try {
             skipLinkDisclaimer(root);
-            if (!isFollowingRoot(root)) return;
 
-            attachId(root, "following_tab_turbo_button", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
             forceVisibleId(root, "open_search_bar_text_view_container");
             forceVisibleId(root, "open_search_bar_text_view");
-            attachId(root, "following_tab_turbo_button", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
-            attachId(root, "turbo_upsell_container", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
             attachId(root, "create_button", v -> Settings.HIDE_CREATE_BUTTON.get(), false);
             attachId(root, "following_nav_rail_create_button", v -> Settings.HIDE_CREATE_BUTTON.get(), false);
             attachId(root, "bottom_nav_create_button", v -> Settings.HIDE_CREATE_BUTTON.get(), false);
@@ -45,6 +41,11 @@ public final class HomeCleanupSupport {
                     v -> Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON.get(), false);
             attachId(root, "share_stream_button",
                     v -> Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON.get(), false);
+
+            if (!isFollowingRoot(root)) return;
+
+            attachId(root, "following_tab_turbo_button", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+            attachId(root, "turbo_upsell_container", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
             attachId(root, "leaderboards_container",
                     v -> Settings.HIDE_HOME_LEADERBOARDS.get(), false);
             attachId(root, "resume_auto_scroll_root",
