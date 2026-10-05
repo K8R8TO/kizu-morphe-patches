@@ -27,6 +27,10 @@ public final class Settings {
     public static final BooleanSetting HIDE_SUBSCRIPTION_PROMOTIONS =
             new BooleanSetting("hide_subscription_promotions", false);
 
+    /** Hide Twitch's Go Ad-Free/Turbo control in the Following feed. */
+    public static final BooleanSetting HIDE_TURBO_UPSELL =
+            new BooleanSetting("hide_turbo_upsell", true);
+
     public static final BooleanSetting DANMAKU_ENABLED =
             new BooleanSetting("danmaku_enabled", false);
     public static final BooleanSetting DANMAKU_PORTRAIT =
