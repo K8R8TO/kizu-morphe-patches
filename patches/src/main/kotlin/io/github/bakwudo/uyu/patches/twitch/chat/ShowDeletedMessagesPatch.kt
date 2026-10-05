@@ -87,7 +87,32 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         val getSpansRegisterD = getSpans.registerD
         val getSpansRegisterE = getSpans.registerE
         val getSpansRegisterF = getSpans.registerF
-        val deletedSpanRegister = getSpans.registerF
+        if (spanArrayRegister == getSpansRegisterF) {
+            throw PatchException(
+                "Twitch deleted messages: getSpans result register aliases its Class argument register.",
+            )
+        }
+
+        val classRegisterRestore = formatterInstructions
+            .subList(0, getSpansIndex)
+            .indexOfLast { instruction ->
+                instruction.opcode == Opcode.CONST_CLASS &&
+                    (instruction as? OneRegisterInstruction)?.registerA == getSpansRegisterF
+            }
+
+        if (classRegisterRestore < 0) {
+            throw PatchException(
+                "Twitch deleted messages: could not locate the getSpans Class-register initializer.",
+            )
+        }
+
+        val classInit = formatterInstructions[classRegisterRestore] as ReferenceInstruction
+        val classType = (classInit.reference as? TypeReference)?.type
+            ?: throw PatchException(
+                "Twitch deleted messages: getSpans Class-register initializer is not a type reference.",
+            )
+
+        val deletedSpanRegister = getSpansRegisterF
 
         formatter.addInstructions(
             injectionIndex,
