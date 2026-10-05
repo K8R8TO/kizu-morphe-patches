@@ -48,7 +48,9 @@ public final class HidePromotionsPatch {
             new Target("promo_banner_container",
                     view -> Settings.HIDE_SUBSCRIPTION_PROMOTIONS.get(), false),
             new Target("turbo_upsell_container",
-                    view -> Settings.HIDE_SUBSCRIPTION_PROMOTIONS.get(), false),
+                    view -> Settings.HIDE_TURBO_UPSELL.get(), false),
+            new Target("following_tab_turbo_button",
+                    view -> Settings.HIDE_TURBO_UPSELL.get(), false),
     };
 
     private HidePromotionsPatch() {
