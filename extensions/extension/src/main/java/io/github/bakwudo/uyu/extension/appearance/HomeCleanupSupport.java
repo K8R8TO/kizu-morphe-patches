@@ -5,7 +5,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
+
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -16,14 +20,19 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 public final class HomeCleanupSupport {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final int MAX_DEPTH = 12;
+    private static final Map<View, Boolean> FORCED_VISIBLE = new WeakHashMap<>();
 
     private HomeCleanupSupport() {
     }
 
     public static void onViewCreated(View root) {
         try {
+            skipLinkDisclaimer(root);
             if (!isFollowingRoot(root)) return;
 
+            attachId(root, "following_tab_turbo_button", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+            forceVisibleId(root, "open_search_bar_text_view_container");
+            forceVisibleId(root, "open_search_bar_text_view");
             attachId(root, "following_tab_turbo_button", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
             attachId(root, "turbo_upsell_container", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
             attachId(root, "create_button", v -> Settings.HIDE_CREATE_BUTTON.get(), false);
@@ -86,10 +95,47 @@ public final class HomeCleanupSupport {
 
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
+            if (Settings.FULL_FOLLOWED_CARDS.get()) enlargeFollowedCard(group);
             for (int i = 0; i < group.getChildCount(); i++) {
                 scan(group.getChildAt(i), depth + 1);
             }
         }
+    }
+
+    private static void enlargeFollowedCard(ViewGroup group) {
+        int followedId = Utils.getResourceId(group.getContext(), "followed_user", "id");
+        if (followedId == 0 || group.findViewById(followedId) == null) return;
+        int height = (int) (112 * group.getResources().getDisplayMetrics().density + 0.5f);
+        if (group.getMinimumHeight() < height) group.setMinimumHeight(height);
+    }
+
+    private static void skipLinkDisclaimer(View root) {
+        if (!Settings.DISABLE_LINK_DISCLAIMER.get()) return;
+        View dialog = findId(root, "browser_link_disclaimer");
+        if (dialog == null) return;
+        View button = findId(root, "continue_button");
+        if (button != null) {
+            button.post(() -> {
+                try {
+                    if (button.isShown()) button.performClick();
+                } catch (Throwable t) {
+                    Utils.logError("Failed to skip link disclaimer", t);
+                }
+            });
+        }
+    }
+
+    private static void forceVisibleId(View root, String name) {
+        if (!Settings.FORCE_SEARCH_BUTTON.get()) return;
+        View view = findId(root, name);
+        if (view == null || FORCED_VISIBLE.put(view, Boolean.TRUE) != null) return;
+        ViewTreeObserver observer = view.getViewTreeObserver();
+        observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                if (view.getVisibility() != View.VISIBLE) view.setVisibility(View.VISIBLE);
+                return true;
+            }
+        });
     }
 
     private static boolean isFollowingRoot(View root) {
