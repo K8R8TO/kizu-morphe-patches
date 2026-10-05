@@ -32,7 +32,6 @@ val twitchEnhancementPatch = bytecodePatch(
         autoClaimChannelPointsPatch,
         hidePromotionsPatch,
         playerOverlayUiPatch,
-        linkDisclaimerPatch,
         showDeletedMessagesPatch,
         thirdPartyEmotesPatch,
         thirdPartyEmotePickerPatch,
