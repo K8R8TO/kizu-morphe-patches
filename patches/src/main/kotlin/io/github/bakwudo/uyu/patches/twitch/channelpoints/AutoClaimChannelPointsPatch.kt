@@ -11,6 +11,7 @@ import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import com.android.tools.smali.dexlib2.iface.reference.StringReference
 import io.github.bakwudo.uyu.patches.twitch.shared.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
@@ -100,9 +101,7 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
                     method.parameterTypes.size == 2 &&
                         method.returnType == "V" &&
                         !AccessFlags.STATIC.isSet(method.accessFlags) &&
-                        method.references().filterIsInstance<MethodReference>().any {
-                            it.name == "getPlayer" || it.name == "getChannelId"
-                        }
+                        hasStrings(method, "player", "channel_id")
                 }.forEach { playerMatches.add(type to it) }
             }
         }
@@ -124,9 +123,10 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
         val stateMatches = player.methods.filter { method ->
             method.parameterTypes.size == 1 &&
                 method.returnType == "V" &&
-                method.references().filterIsInstance<MethodReference>().any {
-                    it.name == "setValue"
-                }
+                method.implementation?.instructions?.any { instruction ->
+                    val reference = (instruction as? ReferenceInstruction)?.reference
+                    reference is MethodReference && reference.name == "setValue"
+                } == true
         }
 
         if (stateMatches.size != 1) {
@@ -169,4 +169,13 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
             "invoke-static {p0}, $ON_PLAYBACK_RELEASED",
         )
     }
+}
+
+private fun hasStrings(method: Method, vararg expected: String): Boolean {
+    val found = mutableSetOf<String>()
+    method.implementation?.instructions?.forEach { instruction ->
+        val reference = (instruction as? ReferenceInstruction)?.reference
+        if (reference is StringReference) found += reference.string
+    }
+    return expected.all(found::contains)
 }
