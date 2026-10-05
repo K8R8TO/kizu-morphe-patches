@@ -97,6 +97,6 @@ internal object FollowingGoAdFreeButtonFingerprint : Fingerprint(
             it.opcode == Opcode.CONST &&
                 it is NarrowLiteralInstruction &&
                 it.narrowLiteral == 0x7f0b0942
-        }
+        } == true
     },
 )
