@@ -5,6 +5,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.util.getFreeRegisterProvider
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
@@ -40,6 +41,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         val formatter = DeletedMessageFormatterFingerprint.method
         val formatterInstructions = formatter.instructions
+
         val getSpansIndex = formatterInstructions.indexOfFirst { instruction ->
             val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
             reference?.definingClass == SPANNED_STRING &&
@@ -47,40 +49,67 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 reference.returnType == "[Ljava/lang/Object;"
         }
 
-        if (getSpansIndex < 0) throw PatchException("Twitch deleted messages: formatter getSpans call was not found.")
+        if (getSpansIndex < 0) {
+            throw PatchException("Twitch deleted messages: formatter getSpans call was not found.")
+        }
 
         val getSpans = formatterInstructions[getSpansIndex] as? FiveRegisterInstruction
             ?: throw PatchException("Twitch deleted messages: formatter getSpans invocation is not five-register form.")
 
-        val spanArrayRegister = formatter.getInstruction<OneRegisterInstruction>(getSpansIndex + 1).registerA
-        val checkCastIndex = getSpansIndex + 2
-        if (formatterInstructions[checkCastIndex].opcode != Opcode.CHECK_CAST) {
-            throw PatchException("Twitch deleted messages: formatter deleted-span array check-cast was not found.")
+        if (getSpans.registerCount != 4) {
+            throw PatchException(
+                "Twitch deleted messages: formatter getSpans expected 4 arguments, found ${getSpans.registerCount}.",
+            )
         }
+
+        val moveResultIndex = formatterInstructions.indices.firstOrNull { index ->
+            index > getSpansIndex && formatterInstructions[index].opcode == Opcode.MOVE_RESULT_OBJECT
+        } ?: throw PatchException(
+            "Twitch deleted messages: formatter getSpans move-result-object was not found.",
+        )
+
+        val spanArrayRegister =
+            formatter.getInstruction<OneRegisterInstruction>(moveResultIndex).registerA
+
+        val checkCastIndex = formatterInstructions.indices.firstOrNull { index ->
+            index > moveResultIndex && formatterInstructions[index].opcode == Opcode.CHECK_CAST
+        } ?: throw PatchException(
+            "Twitch deleted messages: formatter deleted-span array check-cast was not found.",
+        )
 
         val injectionIndex = formatterInstructions.indices.firstOrNull { index ->
             index > checkCastIndex && formatterInstructions[index].opcode == Opcode.ARRAY_LENGTH
-        } ?: throw PatchException("Twitch deleted messages: formatter array-length check was not found.")
+        } ?: throw PatchException(
+            "Twitch deleted messages: formatter array-length check was not found.",
+        )
 
-        if (spanArrayRegister != 0 || getSpans.registerC != 2) {
-            throw PatchException("Twitch deleted messages: unexpected 31.3.1 formatter register layout.")
+        val deletedSpanRegister = getSpans.registerF
+
+        val originalRegister = formatter
+            .getFreeRegisterProvider(
+                injectionIndex,
+                1,
+                listOf(spanArrayRegister, deletedSpanRegister),
+            )
+            .getFreeRegister()
+
+        if (deletedSpanRegister > 15 || originalRegister > 15) {
+            throw PatchException(
+                "Twitch deleted messages: formatter temporary register is outside 35c range " +
+                    "(deletedSpan=v${deletedSpanRegister}, original=v${originalRegister}).",
+            )
         }
 
         formatter.addInstructions(
             injectionIndex,
             """
-                array-length v3, v0
-                if-eqz v3, :kizu_deleted_messages_original
-                aget-object v1, v0, v2
-                iget-object v5, v1, $originalMessageField
-                invoke-virtual {p1, v1}, $SPANNED_STRING->getSpanStart(Ljava/lang/Object;)I
-                move-result v3
-                invoke-virtual {p1, v1}, $SPANNED_STRING->getSpanEnd(Ljava/lang/Object;)I
-                move-result v4
-                invoke-static {p1, v1, v5, v3, v4}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;Landroid/text/style/ClickableSpan;Landroid/text/SpannedString;II)Landroid/text/SpannedString;
-                move-result-object v5
-                if-eqz v5, :kizu_deleted_messages_original
-                return-object v5
+                const/4 v$deletedSpanRegister, 0x0
+                aget-object v$deletedSpanRegister, v$spanArrayRegister, v$deletedSpanRegister
+                iget-object v$originalRegister, v$deletedSpanRegister, $originalMessageField
+                invoke-static {p1, v$deletedSpanRegister, v$originalRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;Landroid/text/style/ClickableSpan;Landroid/text/SpannedString;)Landroid/text/SpannedString;
+                move-result-object v$originalRegister
+                if-eqz v$originalRegister, :kizu_deleted_messages_original
+                return-object v$originalRegister
                 :kizu_deleted_messages_original
             """,
         )
