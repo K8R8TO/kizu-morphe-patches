@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-beta.6",
+  "version": "1.9.2-beta.7",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1 with targeted player Cast/Create Clip/Live Share controls, Go Ad-Free hiding, and link-disclaimer bypass. Continue Watching and Offline Channels remain pending verified feed hooks.",
+      "description": "Launch-safe Kizu Twitch enhancements for Twitch 31.3.1. Player-overlay and link-disclaimer hooks remain excluded pending isolated runtime verification; Continue Watching and Offline Channels remain pending exact feed fingerprints.",
       "default": true,
       "category": null,
       "dependencies": [
