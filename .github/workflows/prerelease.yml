@@ -3,12 +3,17 @@ on:
   push:
     branches:
       - beta
+  pull_request:
+    types:
+      - closed
+      - synchronize
   workflow_dispatch:
 concurrency:
   group: kizu-prerelease
   cancel-in-progress: true
 jobs:
   prerelease:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
     name: Build pre-release
     permissions:
       contents: write
@@ -36,7 +41,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - name: Validate Morphe pre-release metadata
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${steps.version.outputs.version}
         run: |
           python3 - <<'PY'
           import json, os, pathlib, re
@@ -53,13 +58,13 @@ jobs:
           PY
       - name: Build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${secrets.GITHUB_TOKEN}
         run: |
           chmod +x gradlew
           ./gradlew :patches:buildAndroid
       - name: Verify pre-release metadata after build
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${steps.version.outputs.version}
         run: |
           python3 - <<'PY'
           import json, os, pathlib
@@ -73,29 +78,29 @@ jobs:
           PY
       - name: Verify release artifact
         env:
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${steps.version.outputs.version}
         run: |
           test -f "patches/build/libs/patches-$VERSION.mpp"
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: v${{ steps.version.outputs.version }}
-          name: v${{ steps.version.outputs.version }} (Pre-release)
-          target_commitish: ${{ github.sha }}
+          tag_name: v${steps.version.outputs.version}
+          name: v${steps.version.outputs.version} (Pre-release)
+          target_commitish: ${github.sha}
           body: |
-            Kizu Twitch Patches v${{ steps.version.outputs.version }} pre-release.
+            Kizu Twitch Patches v${steps.version.outputs.version} pre-release.
             Testing channel only. This is not the stable release.
           prerelease: true
           make_latest: false
-          files: patches/build/libs/patches-${{ steps.version.outputs.version }}.mpp
+          files: patches/build/libs/patches-${steps.version.outputs.version}.mpp
           fail_on_unmatched_files: true
           overwrite_files: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${secrets.GITHUB_TOKEN}
       - name: Verify pre-release asset
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
+          GH_TOKEN: ${secrets.GITHUB_TOKEN}
+          VERSION: ${steps.version.outputs.version}
         run: |
           gh release view "v$VERSION" --json isDraft,isPrerelease,tagName,assets --jq '.isDraft, .isPrerelease, .tagName, ([.assets[].name] | join(","))' | grep -F "true"
           gh release view "v$VERSION" --json tagName,assets --jq '.tagName + " " + ([.assets[].name] | join(","))' | grep -F "v$VERSION patches-$VERSION.mpp"
