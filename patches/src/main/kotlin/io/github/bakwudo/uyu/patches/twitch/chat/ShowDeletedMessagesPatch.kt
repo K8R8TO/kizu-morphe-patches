@@ -89,4 +89,24 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             """,
         )
     }
+}        val checkCastIndex = formatterInstructions.indices.firstOrNull { index ->
+            index > moveResultIndex && formatterInstructions[index].opcode == Opcode.CHECK_CAST
+        } ?: throw PatchException(
+            "Twitch deleted messages: formatter deleted-span array check-cast was not found.",
+        )
+
+        val injectionIndex = formatterInstructions.indices.firstOrNull { index ->
+            index > checkCastIndex && formatterInstructions[index].opcode == Opcode.ARRAY_LENGTH
+        } ?: throw PatchException(
+            "Twitch deleted messages: formatter array-length check was not found.",
+        )
+
+        formatter.addInstructions(
+            injectionIndex,
+            """
+                invoke-static {p1, v$spanArrayRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;[Ljava/lang/Object;)Landroid/text/SpannedString;
+                move-result-object p1
+            """,
+        )
+    }
 }
