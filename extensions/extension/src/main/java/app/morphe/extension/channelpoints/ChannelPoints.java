@@ -7,6 +7,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
+import java.lang.reflect.Method;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -77,6 +79,12 @@ public final class ChannelPoints {
     private static volatile String channelLogin;
     private static volatile String lastSuccessfulClaimKey;
     private static volatile boolean started;
+    private static volatile Context applicationContext;
+    private static volatile WeakReference<Object> playbackPlayer = new WeakReference<>(null);
+    private static volatile Object playbackChannel;
+    private static volatile boolean playbackLive;
+    private static volatile boolean playbackPlaying;
+    private static volatile String inFlightClaimKey;
 
     private ChannelPoints() {}
 
@@ -84,6 +92,7 @@ public final class ChannelPoints {
         if (context == null) return;
 
         final Context app = context.getApplicationContext();
+        applicationContext = app;
         synchronized (STATE_LOCK) {
             if (started) return;
             started = true;
@@ -134,7 +143,184 @@ public final class ChannelPoints {
         }
     }
 
+    /**
+     * Called from Twitch's CommunityPointsModel update path. The model/player hooks are deliberately
+     * kept as a thin trigger layer; the existing GraphQL claimant remains the source of truth.
+     */
+    public static void onModelUpdated(Object provider, Object model) {
+        if (model == null || !Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) return;
+        try {
+            Object enabled = invokeNoArg(model, "getEnabled");
+            if (enabled instanceof Boolean && !((Boolean) enabled)) return;
+
+            Object claim = invokeNoArg(model, "getClaim");
+            if (claim == null) return;
+
+            Object claimChannel = invokeNoArg(claim, "getChannel");
+            Object claimTuid = claimChannel == null ? null : invokeNoArg(claimChannel, "getTuid");
+            String claimId = stringValue(invokeNoArg(claim, "getId"));
+            if (claimTuid == null || claimId == null || claimId.isEmpty()) return;
+
+            if (!offer(claimTuid, claimId)) return;
+
+            final Context app = applicationContext;
+            if (app == null) return;
+            new Thread(new Runnable() {
+                @Override public void run() {
+                    try {
+                        claimAvailable(app, claimId);
+                    } catch (Throwable error) {
+                        log("lifecycle claim error: " + error);
+                    } finally {
+                        synchronized (STATE_LOCK) {
+                            if (claimId.equals(inFlightClaimKey)) inFlightClaimKey = null;
+                        }
+                    }
+                }
+            }, "kizu-channel-points-claim").start();
+        } catch (Throwable error) {
+            log("model hook error: " + error);
+        }
+    }
+
+    /**
+     * Called when Twitch configures an IVS player. Only LIVE playback is eligible.
+     */
+    public static void onPlaybackConfigured(Object player, Object metadata) {
+        if (player == null) return;
+        try {
+            Object channel = findReturnBySimpleName(metadata, "Tuid");
+            Object mode = findReturnBySimpleName(metadata, "ContentMode");
+            boolean live = mode != null && "LIVE".equalsIgnoreCase(mode.toString());
+
+            synchronized (STATE_LOCK) {
+                if (!live || channel == null) {
+                    playbackPlayer = new WeakReference<>(null);
+                    playbackChannel = null;
+                    playbackLive = false;
+                    playbackPlaying = false;
+                    return;
+                }
+
+                Object previous = playbackPlayer.get();
+                if (previous != player || !same(playbackChannel, channel)) {
+                    playbackPlaying = false;
+                }
+                playbackPlayer = new WeakReference<>(player);
+                playbackChannel = channel;
+                playbackLive = true;
+            }
+        } catch (Throwable error) {
+            log("playback configure hook error: " + error);
+        }
+    }
+
+    /**
+     * Called when Twitch publishes IVS player state.
+     */
+    public static void onPlaybackStateChanged(Object player, Object state) {
+        if (player == null) return;
+        try {
+            boolean playing = isPlayingState(state);
+            synchronized (STATE_LOCK) {
+                if (playbackPlayer.get() == player) playbackPlaying = playing;
+            }
+        } catch (Throwable error) {
+            log("playback state hook error: " + error);
+        }
+    }
+
+    /**
+     * Called when Twitch releases the IVS player.
+     */
+    public static void onPlaybackReleased(Object player) {
+        synchronized (STATE_LOCK) {
+            if (playbackPlayer.get() != player) return;
+            playbackPlayer.clear();
+            playbackChannel = null;
+            playbackLive = false;
+            playbackPlaying = false;
+            inFlightClaimKey = null;
+        }
+    }
+
+    private static boolean offer(Object claimChannel, String claimId) {
+        if (claimChannel == null || claimId == null || claimId.isEmpty()) return false;
+        synchronized (STATE_LOCK) {
+            if (!Settings.AUTO_CLAIM_CHANNEL_POINTS.get()) return false;
+            if (!playbackLive || !playbackPlaying || playbackPlayer.get() == null) return false;
+            if (!same(playbackChannel, claimChannel)) return false;
+
+            String id = channelId;
+            if (id == null || id.isEmpty()) return false;
+
+            String key = id + ":" + claimId;
+            if (key.equals(lastSuccessfulClaimKey) || key.equals(inFlightClaimKey)) return false;
+            inFlightClaimKey = key;
+            return true;
+        }
+    }
+
+    private static boolean isPlayingState(Object state) {
+        if (state == null) return false;
+        try {
+            if (state instanceof Enum) {
+                return "PLAYING".equalsIgnoreCase(((Enum<?>) state).name());
+            }
+            String value = state.toString();
+            if ("PLAYING".equalsIgnoreCase(value)) return true;
+            java.lang.reflect.Field field = state.getClass().getField("PLAYING");
+            Object playing = field.get(null);
+            return playing == state || (playing != null && playing.equals(state));
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static Object findReturnBySimpleName(Object target, String simpleName) {
+        if (target == null) return null;
+        Class<?> type = target.getClass();
+        while (type != null) {
+            for (Method method : type.getDeclaredMethods()) {
+                if (method.getParameterTypes().length != 0) continue;
+                if (!method.getReturnType().getSimpleName().equals(simpleName)) continue;
+                try {
+                    method.setAccessible(true);
+                    return method.invoke(target);
+                } catch (Throwable ignored) {
+                }
+            }
+            type = type.getSuperclass();
+        }
+        return null;
+    }
+
+    private static Object invokeNoArg(Object target, String name) {
+        if (target == null) return null;
+        Class<?> type = target.getClass();
+        while (type != null) {
+            try {
+                Method method = type.getDeclaredMethod(name);
+                method.setAccessible(true);
+                return method.invoke(target);
+            } catch (Throwable ignored) {
+                type = type.getSuperclass();
+            }
+        }
+        return null;
+    }
+
+    private static String stringValue(Object value) {
+        if (value == null) return null;
+        String text = value.toString();
+        return text == null || text.trim().isEmpty() ? null : text.trim();
+    }
+
     private static void claimAvailable(Context context) {
+        claimAvailable(context, null);
+    }
+
+    private static void claimAvailable(Context context, String expectedClaimId) {
         String id = channelId;
         String login = channelLogin;
         if (id == null || id.isEmpty() || login == null || login.isEmpty()) return;
@@ -147,6 +333,8 @@ public final class ChannelPoints {
 
         String claimId = available.optString("id", "");
         if (claimId.isEmpty()) return;
+
+        if (expectedClaimId != null && !expectedClaimId.equals(claimId)) return;
 
         String claimKey = id + ":" + claimId;
         if (claimKey.equals(lastSuccessfulClaimKey)) return;
