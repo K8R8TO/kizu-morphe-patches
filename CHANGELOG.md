@@ -1,3 +1,13 @@
+# [1.9.2-beta.11](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.11) (2026-10-05)
+
+### Fixes
+
+* correct the Twitch 31.3.1 Go Ad-Free binder fingerprint to its actual PUBLIC + FINAL access flags
+* verify resource 0x7f0b0942 is exactly following_tab_turbo_button in the supplied Twitch 31.3.1 APKM
+* bind and re-scan that exact Following-header root instead of globally scanning the feed
+* keep Hide Go Ad-Free defaulted ON and preserve the existing Kizu settings surface
+
+
 # [1.9.2-beta.10](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.10) (2026-10-05)
 
 ### Fixes
