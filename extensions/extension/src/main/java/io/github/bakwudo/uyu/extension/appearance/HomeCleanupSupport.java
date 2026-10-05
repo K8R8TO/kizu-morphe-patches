@@ -11,8 +11,6 @@ import android.widget.TextView;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import androidx.recyclerview.widget.RecyclerView;
-
 import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
@@ -173,7 +171,7 @@ public final class HomeCleanupSupport {
 
     private static boolean hasRecyclerChild(ViewGroup group) {
         for (int i = 0; i < group.getChildCount(); i++) {
-            if (group.getChildAt(i) instanceof RecyclerView) return true;
+            if (group.getChildAt(i).getClass().getName().contains("RecyclerView")) return true;
         }
         return false;
     }
