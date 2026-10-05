@@ -83,6 +83,10 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             "Twitch deleted messages: formatter array-length check was not found.",
         )
 
+        val getSpansRegisterC = getSpans.registerC
+        val getSpansRegisterD = getSpans.registerD
+        val getSpansRegisterE = getSpans.registerE
+        val getSpansRegisterF = getSpans.registerF
         val deletedSpanRegister = getSpans.registerF
 
         formatter.addInstructions(
@@ -94,7 +98,8 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 move-result-object v$spanArrayRegister
                 if-nez v$spanArrayRegister, :kizu_deleted_messages_return
                 const-class v$deletedSpanRegister, $classType
-                invoke-virtual {v$spanArrayRegister}, Landroid/text/SpannedString;->getSpans(II[Ljava/lang/Class;)[Ljava/lang/Object;
+                invoke-virtual {v$getSpansRegisterC, v$getSpansRegisterD, v$getSpansRegisterE, v$getSpansRegisterF}, Landroid/text/SpannedString;->getSpans(IILjava/lang/Class;)[Ljava/lang/Object;
+                move-result-object v$spanArrayRegister
                 :kizu_deleted_messages_return
                 return-object v$spanArrayRegister
             """,
