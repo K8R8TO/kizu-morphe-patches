@@ -1,3 +1,9 @@
+# [1.9.2-beta.3](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.3) (2026-10-05)
+
+### Fixes
+
+* remove the beta Home Cleanup global hook that could crash Twitch during launch
+
 # [1.9.2-beta.2](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.2) (2026-10-05)
 
 ### Fixes
