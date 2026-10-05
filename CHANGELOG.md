@@ -1,3 +1,9 @@
+# [1.9.2-beta.2](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.2) (2026-10-05)
+
+### Fixes
+
+* synchronize Morphe dev prerelease metadata with beta.2
+
 # [1.9.2-beta.1](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.1) (2026-10-05)
 
 ### Features
