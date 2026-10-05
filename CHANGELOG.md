@@ -1,3 +1,11 @@
+# [1.9.2-beta.7](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.7) (2026-10-05)
+
+### Fixes
+
+* restore the known-stable Twitch Enhancement dependency graph
+* remove the unverified player-overlay and link-disclaimer hooks from the release path
+* keep Continue Watching and Offline Channels disabled until exact Twitch 31.3.1 feed fingerprints are verified
+
 # [1.9.2-beta.6](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.6) (2026-10-05)
 
 ### Features
