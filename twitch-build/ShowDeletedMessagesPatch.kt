@@ -5,12 +5,12 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
-import app.morphe.util.getFreeRegisterProvider
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 
 private const val SUPPORT = "Lapp/morphe/extension/twitch/chat/DeletedMessagesSupport;"
@@ -25,7 +25,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         val accessField = spanClass.fields.singleOrNull { field -> field.type == "Z" }
             ?: throw PatchException("Twitch deleted messages: access flag field was not found uniquely.")
 
-        val originalMessageField = spanClass.fields.singleOrNull { field ->
+        spanClass.fields.singleOrNull { field ->
             field.type == SPANNED_STRING
         } ?: throw PatchException("Twitch deleted messages: original-message field was not found uniquely.")
 
@@ -83,34 +83,52 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             "Twitch deleted messages: formatter array-length check was not found.",
         )
 
-        val deletedSpanRegister = getSpans.registerF
-
-        val originalRegister = getFreeRegisterProvider(
-            injectionIndex,
-            1,
-            spanArrayRegister,
-            deletedSpanRegister,
-        ).getFreeRegister()
-
-        if (deletedSpanRegister > 15 || originalRegister > 15) {
+        val getSpansRegisterC = getSpans.registerC
+        val getSpansRegisterD = getSpans.registerD
+        val getSpansRegisterE = getSpans.registerE
+        val getSpansRegisterF = getSpans.registerF
+        if (spanArrayRegister == getSpansRegisterF) {
             throw PatchException(
-                "Twitch deleted messages: formatter temporary register is outside 35c range " +
-                    "(deletedSpan=v${deletedSpanRegister}, original=v${originalRegister}).",
+                "Twitch deleted messages: getSpans result register aliases its Class argument register.",
             )
         }
+
+        val classRegisterRestore = formatterInstructions
+            .subList(0, getSpansIndex)
+            .indexOfLast { instruction ->
+                instruction.opcode == Opcode.CONST_CLASS &&
+                    (instruction as? OneRegisterInstruction)?.registerA == getSpansRegisterF
+            }
+
+        if (classRegisterRestore < 0) {
+            throw PatchException(
+                "Twitch deleted messages: could not locate the getSpans Class-register initializer.",
+            )
+        }
+
+        val classInit = formatterInstructions[classRegisterRestore] as ReferenceInstruction
+        val classType = (classInit.reference as? TypeReference)?.type
+            ?: throw PatchException(
+                "Twitch deleted messages: getSpans Class-register initializer is not a type reference.",
+            )
+
+        val deletedSpanRegister = getSpansRegisterF
 
         formatter.addInstructions(
             injectionIndex,
             """
                 const/4 v$deletedSpanRegister, 0x0
                 aget-object v$deletedSpanRegister, v$spanArrayRegister, v$deletedSpanRegister
-                iget-object v$originalRegister, v$deletedSpanRegister, $originalMessageField
-                invoke-static {p1, v$deletedSpanRegister, v$originalRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;Landroid/text/style/ClickableSpan;Landroid/text/SpannedString;)Landroid/text/SpannedString;
-                move-result-object v$originalRegister
-                if-eqz v$originalRegister, :kizu_deleted_messages_original
-                return-object v$originalRegister
-                :kizu_deleted_messages_original
+                invoke-static {p1, v$deletedSpanRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;Landroid/text/style/ClickableSpan;)Landroid/text/SpannedString;
+                move-result-object v$spanArrayRegister
+                if-nez v$spanArrayRegister, :kizu_deleted_messages_return
+                const-class v$deletedSpanRegister, $classType
+                invoke-virtual {v$getSpansRegisterC, v$getSpansRegisterD, v$getSpansRegisterE, v$getSpansRegisterF}, Landroid/text/SpannedString;->getSpans(IILjava/lang/Class;)[Ljava/lang/Object;
+                move-result-object v$spanArrayRegister
+                :kizu_deleted_messages_return
+                return-object v$spanArrayRegister
             """,
         )
     }
 }
+
