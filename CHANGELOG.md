@@ -1,3 +1,11 @@
+# [1.9.2-beta.9](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.9) (2026-10-05)
+
+### Fixes
+
+* fix Hide Go Ad-Free/Turbo in the Following feed with a layout-driven scan instead of fixed timing windows
+* always expose the Kizu Appearance settings page so the Go Ad-Free switch is visible
+* keep Go Ad-Free hiding defaulted ON through the existing `HIDE_TURBO_UPSELL` setting
+
 # [1.9.2-beta.8](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.8) (2026-10-05)
 
 ### Fixes
