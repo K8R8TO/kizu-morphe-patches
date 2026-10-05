@@ -7,7 +7,7 @@ on:
       - main
 
 concurrency:
-  group: kizu-release
+  group: kizu-release-v2
   cancel-in-progress: true
 
 jobs:
