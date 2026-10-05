@@ -14,25 +14,36 @@ import java.util.WeakHashMap;
 import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
+/**
+ * Tier-1 Home/navigation controls for Twitch 31.3.1.
+ *
+ * All resource IDs referenced here were verified against the supplied Twitch 31.3.1 APKM.
+ * This class reuses the existing stable BaseViewDelegate hook instead of adding another global
+ * bytecode hook.
+ */
 @SuppressWarnings("unused")
 public final class HomeCleanupSupport {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
-    private static final int MAX_DEPTH = 12;
+    private static final int MAX_DEPTH = 16;
     private static final Map<View, Boolean> FORCED_VISIBLE = new WeakHashMap<>();
+    private static final Map<ViewGroup, Boolean> SCROLL_WATCHED = new WeakHashMap<>();
 
     private HomeCleanupSupport() {
     }
 
+    public static boolean disableLinkDisclaimer() {
+        return Settings.DISABLE_LINK_DISCLAIMER.get();
+    }
+
     public static void onViewCreated(View root) {
         try {
-            skipLinkDisclaimer(root);
-
-            forceVisibleId(root, "open_search_bar_text_view_container");
-            forceVisibleId(root, "open_search_bar_text_view");
-            attachId(root, "create_button", v -> Settings.HIDE_CREATE_BUTTON.get(), false);
-            attachId(root, "following_nav_rail_create_button", v -> Settings.HIDE_CREATE_BUTTON.get(), false);
-            attachId(root, "bottom_nav_create_button", v -> Settings.HIDE_CREATE_BUTTON.get(), false);
-            attachId(root, "cast_button", v -> Settings.HIDE_CAST_BUTTON.get(), false);
+            // Exact Twitch 31.3.1 resource IDs for global/navigation/player controls.
+            attachId(root, "create_button",
+                    v -> Settings.HIDE_CREATE_BUTTON.get(), false);
+            attachId(root, "following_nav_rail_create_button",
+                    v -> Settings.HIDE_CREATE_BUTTON.get(), false);
+            attachId(root, "cast_button",
+                    v -> Settings.HIDE_CAST_BUTTON.get(), false);
             attachId(root, "create_clip_button_compose_view",
                     v -> Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON.get(), false);
             attachId(root, "create_clip_text_button",
@@ -40,113 +51,170 @@ public final class HomeCleanupSupport {
             attachId(root, "share_stream_button",
                     v -> Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON.get(), false);
 
-            if (!isFollowingRoot(root)) return;
+            forceVisibleId(root, "open_search_bar_text_view_container");
+            forceVisibleId(root, "open_search_bar_text_view");
+            forceVisibleId(root, "search_button");
 
-            attachId(root, "following_tab_turbo_button", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
-            attachId(root, "turbo_upsell_container", v -> Settings.HIDE_TURBO_UPSELL.get(), false);
-            attachId(root, "leaderboards_container",
-                    v -> Settings.HIDE_HOME_LEADERBOARDS.get(), false);
+            attachId(root, "recommended",
+                    v -> Settings.HIDE_RECOMMENDATIONS.get(), false);
+            attachId(root, "recommended_channels_list_title",
+                    v -> Settings.HIDE_RECOMMENDATIONS.get(), false);
             attachId(root, "resume_auto_scroll_root",
                     v -> Settings.HIDE_RESUME_WATCHING.get(), false);
-            attachId(root, "following_drawer_section_offline_channels",
-                    v -> Settings.HIDE_OFFLINE_CHANNELS.get(), false);
 
-            // Twitch's Following feed is populated asynchronously. These retries cover
-            // sections inserted after the delegate itself was constructed.
-            scheduleScan(root, 150);
-            scheduleScan(root, 600);
-            scheduleScan(root, 1500);
+            if (!isFollowingRoot(root)) return;
+
+            ViewGroup recycler = findFollowingRecycler(root);
+            if (recycler == null) return;
+
+            attachId(recycler, "leaderboards_container",
+                    v -> Settings.HIDE_HOME_LEADERBOARDS.get(), false);
+            attachId(recycler, "following_tab_turbo_button",
+                    v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+            attachId(recycler, "turbo_upsell_container",
+                    v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+
+            watchFollowingScroll(recycler);
+            scanFollowingRecycler(recycler);
+            scheduleRecyclerScan(recycler, 100);
+            scheduleRecyclerScan(recycler, 500);
+            scheduleRecyclerScan(recycler, 1200);
         } catch (Throwable t) {
-            Utils.logError("Failed to prepare Home cleanup", t);
+            Utils.logError("Failed to prepare Home tier-1 controls", t);
         }
     }
 
-    private static void scheduleScan(final View root, long delay) {
+    private static void watchFollowingScroll(final ViewGroup recycler) {
+        if (SCROLL_WATCHED.put(recycler, Boolean.TRUE) != null) return;
+
+        ViewTreeObserver observer = recycler.getViewTreeObserver();
+        observer.addOnScrollChangedListener(() -> scheduleRecyclerScan(recycler, 100));
+    }
+
+    private static void scheduleRecyclerScan(final ViewGroup recycler, long delay) {
         MAIN.postDelayed(() -> {
             try {
-                if (root.isAttachedToWindow() && isFollowingRoot(root)) scan(root, 0);
+                if (recycler.isAttachedToWindow()) scanFollowingRecycler(recycler);
             } catch (Throwable t) {
-                Utils.logError("Home cleanup scan failed", t);
+                Utils.logError("Following tier-1 scan failed", t);
             }
         }, delay);
     }
 
-    private static void scan(View view, int depth) {
+    private static void scanFollowingRecycler(ViewGroup recycler) {
+        for (int i = 0; i < recycler.getChildCount(); i++) {
+            scanSectionText(recycler.getChildAt(i), 0);
+        }
+    }
+
+    private static void scanSectionText(View view, int depth) {
         if (depth > MAX_DEPTH) return;
 
         if (view instanceof TextView) {
-            String text = String.valueOf(((TextView) view).getText()).trim().toLowerCase();
+            String text = String.valueOf(((TextView) view).getText())
+                    .trim().toLowerCase(java.util.Locale.ROOT);
+
             if (!text.isEmpty()) {
-                if (Settings.HIDE_FEATURED_CLIPS.get() && containsAny(text, "featured clips")) {
-                    hideSection(view);
+                if (Settings.HIDE_FEATURED_CLIPS.get()
+                        && containsAny(text, "featured clips")) {
+                    hideSectionItem(view);
                 } else if (Settings.HIDE_RECOMMENDATIONS.get()
-                        && containsAny(text, "recommended channels", "recommended for you", "recommendations")) {
-                    hideSection(view);
+                        && containsAny(text, "recommended for you",
+                        "recommended channels", "recommended live channels",
+                        "recommendations")) {
+                    hideSectionItem(view);
+                } else if (Settings.HIDE_RESUME_WATCHING.get()
+                        && containsAny(text, "resume watching", "continue watching")) {
+                    hideSectionItem(view);
+                } else if (Settings.HIDE_OFFLINE_CHANNELS.get()
+                        && containsAny(text, "offline channels")) {
+                    hideSectionItem(view);
                 } else if (Settings.HIDE_UPCOMING_STREAMS.get()
                         && containsAny(text, "upcoming streams", "upcoming events")) {
-                    hideSection(view);
+                    hideSectionItem(view);
                 } else if (Settings.HIDE_GAME_SECTION.get()
                         && isGameHeading(text)) {
-                    hideSection(view);
+                    hideSectionItem(view);
+                } else if (Settings.HIDE_HOME_LEADERBOARDS.get()
+                        && containsAny(text, "leaderboards")) {
+                    hideSectionItem(view);
                 }
             }
         }
 
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
-            if (Settings.FULL_FOLLOWED_CARDS.get()) enlargeFollowedCard(group);
             for (int i = 0; i < group.getChildCount(); i++) {
-                scan(group.getChildAt(i), depth + 1);
+                scanSectionText(group.getChildAt(i), depth + 1);
             }
         }
     }
 
-    private static void enlargeFollowedCard(ViewGroup group) {
-        int followedId = Utils.getResourceId(group.getContext(), "followed_user", "id");
-        if (followedId == 0 || group.findViewById(followedId) == null) return;
-        int height = (int) (112 * group.getResources().getDisplayMetrics().density + 0.5f);
-        if (group.getMinimumHeight() < height) group.setMinimumHeight(height);
-    }
+    private static void hideSectionItem(View title) {
+        ViewGroup recycler = findRecyclerAncestor(title);
+        if (recycler == null) {
+            HiddenView.attach(title, v -> true, true);
+            return;
+        }
 
-    private static void skipLinkDisclaimer(View root) {
-        if (!Settings.DISABLE_LINK_DISCLAIMER.get()) return;
-        View dialog = findId(root, "browser_link_disclaimer");
-        if (dialog == null) return;
-        View button = findId(root, "continue_button");
-        if (button != null) {
-            button.post(() -> {
-                try {
-                    if (button.isShown()) button.performClick();
-                } catch (Throwable t) {
-                    Utils.logError("Failed to skip link disclaimer", t);
-                }
-            });
+        View sectionItem = findDirectRecyclerChild(title, recycler);
+        if (sectionItem == null) {
+            HiddenView.attach(title, v -> true, true);
+            return;
+        }
+
+        int start = recycler.indexOfChild(sectionItem);
+        if (start < 0) {
+            HiddenView.attach(title, v -> true, true);
+            return;
+        }
+
+        for (int i = start; i < recycler.getChildCount(); i++) {
+            View child = recycler.getChildAt(i);
+            if (i > start && isFollowingSectionHeader(child)) break;
+            HiddenView.attach(child, v -> true, true);
         }
     }
 
-    private static void forceVisibleId(View root, String name) {
-        if (!Settings.FORCE_SEARCH_BUTTON.get()) return;
-        View view = findId(root, name);
-        if (view == null || FORCED_VISIBLE.put(view, Boolean.TRUE) != null) return;
-        ViewTreeObserver observer = view.getViewTreeObserver();
-        observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override public boolean onPreDraw() {
-                if (view.getVisibility() != View.VISIBLE) view.setVisibility(View.VISIBLE);
-                return true;
-            }
-        });
+    private static boolean isFollowingSectionHeader(View view) {
+        return findId(view, "following_tab_section_header") != null;
+    }
+
+    private static ViewGroup findFollowingRecycler(View root) {
+        View view = findId(root, "following_list_recycler_view");
+        return view instanceof ViewGroup ? (ViewGroup) view : null;
     }
 
     private static boolean isFollowingRoot(View root) {
-        return findId(root, "following_header") != null
-                || findId(root, "following_tab_header_item") != null
-                || findId(root, "following_tab_turbo_button") != null
-                || findId(root, "discovery_feed_following_page") != null;
+        return findId(root, "following_list_recycler_view") != null
+                || findId(root, "following_tab_section_header") != null
+                || findId(root, "following_tab_turbo_button") != null;
+    }
+
+    private static ViewGroup findRecyclerAncestor(View view) {
+        View current = view;
+        for (int i = 0; i < MAX_DEPTH && current.getParent() instanceof ViewGroup; i++) {
+            ViewGroup parent = (ViewGroup) current.getParent();
+            if (parent.getClass().getName().contains("RecyclerView")) return parent;
+            current = parent;
+        }
+        return null;
+    }
+
+    private static View findDirectRecyclerChild(View view, ViewGroup recycler) {
+        View current = view;
+        for (int i = 0; i < MAX_DEPTH && current.getParent() instanceof ViewGroup; i++) {
+            if (current.getParent() == recycler) return current;
+            current = (View) current.getParent();
+        }
+        return null;
     }
 
     private static boolean isGameHeading(String text) {
-        return "games".equals(text) || "game".equals(text)
-                || text.startsWith("games ") || text.startsWith("game ");
+        return "games".equals(text)
+                || "game".equals(text)
+                || "categories".equals(text)
+                || "followed categories".equals(text);
     }
 
     private static boolean containsAny(String text, String... needles) {
@@ -156,29 +224,27 @@ public final class HomeCleanupSupport {
         return false;
     }
 
-    private static void hideSection(View title) {
-        View current = title;
-        for (int i = 0; i < 5 && current.getParent() instanceof ViewGroup; i++) {
-            ViewGroup parent = (ViewGroup) current.getParent();
-            if (parent.getChildCount() >= 2 && hasRecyclerChild(parent)) {
-                HiddenView.attach(parent, v -> true, true);
-                return;
-            }
-            current = parent;
-        }
-        HiddenView.attach(title, v -> true, true);
-    }
-
-    private static boolean hasRecyclerChild(ViewGroup group) {
-        for (int i = 0; i < group.getChildCount(); i++) {
-            if (group.getChildAt(i).getClass().getName().contains("RecyclerView")) return true;
-        }
-        return false;
-    }
-
-    private static void attachId(View root, String name, HiddenView.Condition condition, boolean restore) {
+    private static void attachId(View root, String name,
+                                 HiddenView.Condition condition, boolean restore) {
         View view = findId(root, name);
         if (view != null) HiddenView.attach(view, condition, restore);
+    }
+
+    private static void forceVisibleId(View root, String name) {
+        View view = findId(root, name);
+        if (view == null || FORCED_VISIBLE.put(view, Boolean.TRUE) != null) return;
+
+        ViewTreeObserver observer = view.getViewTreeObserver();
+        observer.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                if (Settings.FORCE_SEARCH_BUTTON.get()
+                        && view.getVisibility() != View.VISIBLE) {
+                    view.setVisibility(View.VISIBLE);
+                }
+                return true;
+            }
+        });
     }
 
     private static View findId(View root, String name) {
