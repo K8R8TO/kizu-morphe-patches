@@ -19,6 +19,7 @@ import io.github.bakwudo.uyu.patches.util.thisRegister
 import io.github.bakwudo.uyu.patches.util.writesRegister
 
 private const val EXTENSION_CLASS = "$EXTENSION_PACKAGE/appearance/HidePromotionsPatch;"
+private const val HOME_EXTENSION_CLASS = "$EXTENSION_PACKAGE/appearance/HomeCleanupSupport;"
 
 internal val hidePromotionsPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
@@ -49,7 +50,8 @@ private fun BytecodePatchContext.hookViewDelegates() {
         returnIndices.asReversed().forEach { returnIndex ->
             addInstructionsAtControlFlowLabel(
                 returnIndex,
-                "invoke-static/range { p2 .. p2 }, $EXTENSION_CLASS->onViewCreated(Landroid/view/View;)V",
+                "invoke-static/range { p2 .. p2 }, $EXTENSION_CLASS->onViewCreated(Landroid/view/View;)V
+                    invoke-static/range { p2 .. p2 }, $HOME_EXTENSION_CLASS->onViewCreated(Landroid/view/View;)V",
             )
         }
     }

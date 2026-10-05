@@ -42,3 +42,22 @@ internal object SubtemberHighlightTypeFingerprint : Fingerprint(
             classDef.fields.any { AccessFlags.STATIC.isSet(it.accessFlags) && it.type == classDef.type }
     },
 )
+
+/**
+ * Exact external-link disclaimer method verified in Twitch 31.3.1.
+ * Loy3.d(Fragment, Uri, boolean, callback, boolean) constructs the Twitch warning.
+ */
+internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
+    definingClass = "Loy3;",
+    name = "d",
+    returnType = "V",
+    parameters = listOf(
+        "Landroidx/fragment/app/n;",
+        "Landroid/net/Uri;",
+        "Z",
+        "Lsii;",
+        "Z",
+    ),
+    strings = listOf("twitch.tv", "twitch.a2z.com", "targetUrl"),
+)
+}
