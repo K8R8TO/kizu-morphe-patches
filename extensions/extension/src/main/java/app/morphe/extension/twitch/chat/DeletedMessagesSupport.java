@@ -25,7 +25,7 @@ public final class DeletedMessagesSupport {
         }
     }
 
-    public static boolean recoverDeletedMessage(
+    public static SpannedString recoverDeletedMessage(
             SpannedString message,
             ClickableSpan deletedSpan
     ) {
@@ -33,18 +33,18 @@ public final class DeletedMessagesSupport {
             if (message == null
                     || deletedSpan == null
                     || !Settings.CHAT_DELETED_MESSAGES.get()) {
-                return false;
+                return null;
             }
 
             int spanStart = message.getSpanStart(deletedSpan);
             int spanEnd = message.getSpanEnd(deletedSpan);
             if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) {
-                return false;
+                return null;
             }
 
             SpannedString original = findOriginalMessage(deletedSpan);
             if (original == null || original.length() == 0) {
-                return false;
+                return null;
             }
 
             SpannableStringBuilder builder = new SpannableStringBuilder(message);
@@ -55,7 +55,7 @@ public final class DeletedMessagesSupport {
                     original
             );
             if (recovered.length() == 0) {
-                return false;
+                return null;
             }
 
             builder.replace(spanStart, spanEnd, recovered);
@@ -63,13 +63,9 @@ public final class DeletedMessagesSupport {
 
             int recoveredEnd = spanStart + recovered.length();
             applyStyle(builder, spanStart, recoveredEnd);
-
-            // Update the existing message object in place. The formatter can then safely
-            // continue using its original register state on the fallback path.
-            message = SpannedString.valueOf(builder);
-            return true;
+            return SpannedString.valueOf(builder);
         } catch (Throwable ignored) {
-            return false;
+            return null;
         }
     }
 
