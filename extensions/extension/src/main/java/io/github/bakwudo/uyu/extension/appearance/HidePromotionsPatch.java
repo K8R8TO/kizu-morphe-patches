@@ -29,6 +29,22 @@ public final class HidePromotionsPatch {
             "gift_promotion"
     ));
 
+    /** Exact Twitch 31.3.1 Following-header Go Ad-Free button id, verified from the supplied APKM. */
+    private static final int FOLLOWING_GO_AD_FREE_BUTTON_ID = 0x7f0b0942;
+
+    /** Called from the exact Following-header binder after its item view has been inflated. */
+    public static void bindGoAdFree(View root) {
+        try {
+            if (root == null) return;
+            View button = root.findViewById(FOLLOWING_GO_AD_FREE_BUTTON_ID);
+            if (button != null) {
+                HiddenView.attach(button, v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+            }
+        } catch (Exception ex) {
+            Utils.logError("Failed to bind Go Ad-Free hiding", ex);
+        }
+    }
+
     private static final Target LEADERBOARD_BUTTON =
             new Target("leaderboards_icon", view -> Settings.HIDE_GIFT_LEADERBOARD.get(), false);
     /** Items of the chat header row besides the subscribe buttons. Only their ids are used. */
