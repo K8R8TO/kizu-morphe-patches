@@ -1,7 +1,5 @@
 package app.morphe.extension.settings;
 
-import java.lang.Boolean;
-
 /**
  * Tells the settings screen which patches were applied, so it only shows their settings.
  * Each method returns false here and is replaced with {@code return true} by its patch.
