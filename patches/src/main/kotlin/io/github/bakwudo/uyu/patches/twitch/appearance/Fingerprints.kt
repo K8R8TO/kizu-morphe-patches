@@ -60,4 +60,3 @@ internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
     ),
     strings = listOf("twitch.tv", "twitch.a2z.com", "targetUrl"),
 )
-}

@@ -50,8 +50,10 @@ private fun BytecodePatchContext.hookViewDelegates() {
         returnIndices.asReversed().forEach { returnIndex ->
             addInstructionsAtControlFlowLabel(
                 returnIndex,
-                "invoke-static/range { p2 .. p2 }, $EXTENSION_CLASS->onViewCreated(Landroid/view/View;)V
-                    invoke-static/range { p2 .. p2 }, $HOME_EXTENSION_CLASS->onViewCreated(Landroid/view/View;)V",
+                """
+                    invoke-static/range { p2 .. p2 }, $EXTENSION_CLASS->onViewCreated(Landroid/view/View;)V
+                    invoke-static/range { p2 .. p2 }, $HOME_EXTENSION_CLASS->onViewCreated(Landroid/view/View;)V
+                """,
             )
         }
     }
