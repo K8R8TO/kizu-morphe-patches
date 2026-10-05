@@ -171,8 +171,7 @@ public final class DeletedMessagesSupport {
                 // The stored original can already contain the chatter prefix.
                 // The formatter result also keeps that prefix before the deleted
                 // span, so inserting it verbatim would produce "kz: kz: message".
-                original = stripDuplicatePrefix(builder, start, original);
-                original = stripLeadingChatterPrefix(original);
+                original = stripChatterHeader(builder, start, original);
                 if (original.length() == 0) continue;
 
                 candidates.add(new DeletedSpanData(span, start, end, original));
@@ -240,20 +239,59 @@ public final class DeletedMessagesSupport {
         return original;
     }
 
-    private static SpannedString stripLeadingChatterPrefix(SpannedString original) {
+    private static SpannedString stripChatterHeader(
+            SpannableStringBuilder builder,
+            int spanStart,
+            SpannedString original
+    ) {
         try {
-            String text = original.toString();
-            int delimiter = text.indexOf(": ");
-            if (delimiter <= 0) return original;
+            int lineStart = 0;
+            for (int i = spanStart - 1; i >= 0; i--) {
+                if (builder.charAt(i) == '\n') {
+                    lineStart = i + 1;
+                    break;
+                }
+            }
 
-            String prefix = text.substring(0, delimiter);
-            if (prefix.indexOf(' ') >= 0 || prefix.indexOf('\n') >= 0) return original;
+            // Use Twitch's actual username span instead of guessing whether a
+            // prefix is a username, role, or some other chat decoration.
+            Class<?> usernameClass = Class.forName(
+                    "tv.twitch.android.shared.chat.messages.span.ClickableUsernameSpan"
+            );
+            Object[] usernameSpans =
+                    builder.getSpans(lineStart, spanStart, usernameClass);
+            if (usernameSpans != null && usernameSpans.length > 0) {
+                Object usernameSpan = usernameSpans[usernameSpans.length - 1];
+                int usernameStart = builder.getSpanStart(usernameSpan);
+                int usernameEnd = builder.getSpanEnd(usernameSpan);
+                if (usernameStart >= lineStart && usernameEnd <= spanStart && usernameEnd > usernameStart) {
+                    int headerEnd = usernameEnd;
+                    if (headerEnd + 2 <= spanStart
+                            && ": ".contentEquals(builder.subSequence(headerEnd, headerEnd + 2))) {
+                        headerEnd += 2;
+                    }
 
-            SpannableStringBuilder cleaned = new SpannableStringBuilder(original);
-            cleaned.delete(0, delimiter + 2);
-            return SpannedString.valueOf(cleaned);
+                    String fullHeader = builder.subSequence(lineStart, headerEnd).toString();
+                    String originalText = original.toString();
+                    if (!fullHeader.isEmpty() && originalText.startsWith(fullHeader)) {
+                        SpannableStringBuilder cleaned = new SpannableStringBuilder(original);
+                        cleaned.delete(0, fullHeader.length());
+                        return SpannedString.valueOf(cleaned);
+                    }
+
+                    String username = builder.subSequence(usernameStart, usernameEnd).toString();
+                    String usernamePrefix = username + ": ";
+                    if (!username.isEmpty() && originalText.startsWith(usernamePrefix)) {
+                        SpannableStringBuilder cleaned = new SpannableStringBuilder(original);
+                        cleaned.delete(0, usernamePrefix.length());
+                        return SpannedString.valueOf(cleaned);
+                    }
+                }
+            }
+
+            return stripDuplicatePrefix(builder, spanStart, original);
         } catch (Throwable ignored) {
-            return original;
+            return stripDuplicatePrefix(builder, spanStart, original);
         }
     }
 
