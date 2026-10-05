@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-05T00:00:00",
-  "description": "# [1.9.0.13] use dynamic deleted-message formatter registers",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.0.13/patches-1.9.0.13.mpp",
+  "description": "# [1.9.0.14] restore stable deleted-message implementation",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.0.14/patches-1.9.0.14.mpp",
   "signature_download_url": "",
-  "version": "1.9.0.13"
+  "version": "1.9.0.14"
 }
