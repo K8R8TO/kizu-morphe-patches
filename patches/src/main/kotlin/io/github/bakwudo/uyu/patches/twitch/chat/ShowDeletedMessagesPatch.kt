@@ -180,12 +180,6 @@ private fun kizuRegistersUsed(
             instruction.registerG,
         )
     }
-    is com.android.tools.smali.dexlib2.iface.instruction.FourRegisterInstruction -> listOf(
-        instruction.registerA,
-        instruction.registerB,
-        instruction.registerC,
-        instruction.registerD,
-    )
     is com.android.tools.smali.dexlib2.iface.instruction.ThreeRegisterInstruction -> listOf(
         instruction.registerA,
         instruction.registerB,
