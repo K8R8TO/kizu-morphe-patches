@@ -25,25 +25,27 @@ public final class DeletedMessagesSupport {
         }
     }
 
-    public static SpannedString recoverDeletedMessage(
+    public static boolean recoverDeletedMessage(
             SpannedString message,
-            ClickableSpan deletedSpan,
-            SpannedString original
+            ClickableSpan deletedSpan
     ) {
         try {
             if (message == null
                     || deletedSpan == null
-                    || original == null
                     || !Settings.CHAT_DELETED_MESSAGES.get()) {
-                return null;
+                return false;
             }
 
             int spanStart = message.getSpanStart(deletedSpan);
             int spanEnd = message.getSpanEnd(deletedSpan);
             if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) {
-                return null;
+                return false;
             }
-            if (original.length() == 0) return null;
+
+            SpannedString original = findOriginalMessage(deletedSpan);
+            if (original == null || original.length() == 0) {
+                return false;
+            }
 
             SpannableStringBuilder builder = new SpannableStringBuilder(message);
             SpannedString recovered = stripDuplicateChatterHeader(
@@ -52,7 +54,9 @@ public final class DeletedMessagesSupport {
                     spanStart,
                     original
             );
-            if (recovered.length() == 0) return null;
+            if (recovered.length() == 0) {
+                return false;
+            }
 
             builder.replace(spanStart, spanEnd, recovered);
             builder.removeSpan(deletedSpan);
@@ -60,10 +64,32 @@ public final class DeletedMessagesSupport {
             int recoveredEnd = spanStart + recovered.length();
             applyStyle(builder, spanStart, recoveredEnd);
 
-            return SpannedString.valueOf(builder);
+            // Update the existing message object in place. The formatter can then safely
+            // continue using its original register state on the fallback path.
+            message = SpannedString.valueOf(builder);
+            return true;
         } catch (Throwable ignored) {
-            return null;
+            return false;
         }
+    }
+
+    private static SpannedString findOriginalMessage(ClickableSpan deletedSpan) {
+        try {
+            Class<?> type = deletedSpan.getClass();
+            while (type != null) {
+                for (java.lang.reflect.Field field : type.getDeclaredFields()) {
+                    if (field.getType() != SpannedString.class) continue;
+                    field.setAccessible(true);
+                    Object value = field.get(deletedSpan);
+                    if (value instanceof SpannedString) {
+                        return (SpannedString) value;
+                    }
+                }
+                type = type.getSuperclass();
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private static void applyStyle(SpannableStringBuilder builder, int start, int end) {
