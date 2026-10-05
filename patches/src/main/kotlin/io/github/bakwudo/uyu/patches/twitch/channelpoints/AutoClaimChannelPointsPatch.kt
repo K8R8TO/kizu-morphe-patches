@@ -68,7 +68,7 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
                         field.name == modelField.name &&
                         field.type == MODEL &&
                         method.name != "<init>") {
-                        method to index
+                        Triple(type, method, index)
                     } else null
                 } ?: emptyList()
             }
@@ -80,7 +80,15 @@ internal val autoClaimChannelPointsPatch = bytecodePatch {
             )
         }
 
-        val (updateMethod, updateIndex) = modelStores.single()
+        val (updateClass, originalUpdateMethod, updateIndex) = modelStores.single()
+        val updateMethod = mutableClassDefBy(updateClass.type).methods.singleOrNull {
+            it.name == originalUpdateMethod.name &&
+                it.parameterTypes == originalUpdateMethod.parameterTypes &&
+                it.returnType == originalUpdateMethod.returnType
+        } ?: throw PatchException(
+            "Kizu Channel Points: selected CommunityPoints model update method disappeared.",
+        )
+
         val store = updateMethod.implementation?.instructions?.elementAtOrNull(updateIndex)
             as? TwoRegisterInstruction
             ?: throw PatchException(
