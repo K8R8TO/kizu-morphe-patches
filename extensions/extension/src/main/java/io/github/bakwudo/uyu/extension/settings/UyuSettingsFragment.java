@@ -96,10 +96,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
         if (PatchStatus.autoClaimChannelPoints()) {
             addSectionLink(screen, SECTION_GENERAL, "Channel points");
         }
-        if (PatchStatus.hidePromotions()) {
-            addSectionLink(screen, SECTION_APPEARANCE,
-                    "Subscribe and Bits buttons, gift leaderboard, promotions");
-        }
+        addSectionLink(screen, SECTION_APPEARANCE,
+                "Appearance controls, promotions and Go Ad-Free");
         if (PatchStatus.danmakuComments()) {
             addSectionLink(screen, SECTION_DANMAKU, "Chat messages scrolling across the video");
         }
@@ -145,8 +143,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 "Hides the ranking of top gifters and cheerers above chat.");
         addSwitch(screen, Settings.HIDE_SUBSCRIPTION_PROMOTIONS, "Hide subscription promotions",
                 "Hides subscription and gift-discount campaign banners.");
-        addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free promotion",
-                "Hides Twitch's Go Ad-Free/Turbo promotional control.");
+        addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
+                "Hides Twitch's Go Ad-Free/Turbo control in the Following feed and Turbo upsell views.");
 
         Preference note = new Preference(screen.getContext());
         note.setSummary("Items you show again appear the next time you open a stream.");

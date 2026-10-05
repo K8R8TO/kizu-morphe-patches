@@ -2,6 +2,7 @@ package io.github.bakwudo.uyu.extension.appearance;
 
 import android.content.Context;
 import android.view.View;
+import android.view.ViewTreeObserver;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -56,7 +57,8 @@ public final class HidePromotionsPatch {
     };
 
     /** Following feed roots whose Turbo control can be inflated after the delegate is created. */
-    private static final Map<View, Boolean> TURBO_SCANS_SCHEDULED = new WeakHashMap<>();
+    private static final Map<View, ViewTreeObserver.OnGlobalLayoutListener> TURBO_LAYOUT_LISTENERS =
+            new WeakHashMap<>();
 
     private HidePromotionsPatch() {
     }
@@ -89,17 +91,46 @@ public final class HidePromotionsPatch {
      */
     private static void scheduleFollowingTurboScan(View root) {
         if (!isFollowingRoot(root)) return;
-        if (TURBO_SCANS_SCHEDULED.put(root, Boolean.TRUE) != null) return;
+        if (TURBO_LAYOUT_LISTENERS.containsKey(root)) return;
 
         attachFollowingTurboViews(root);
-        root.postDelayed(() -> attachFollowingTurboViews(root), 100);
-        root.postDelayed(() -> attachFollowingTurboViews(root), 500);
-        root.postDelayed(() -> attachFollowingTurboViews(root), 1200);
+        if (hasFollowingTurboTarget(root)) return;
+
+        ViewTreeObserver observer = root.getViewTreeObserver();
+        if (!observer.isAlive()) return;
+
+        ViewTreeObserver.OnGlobalLayoutListener listener = () -> {
+            attachFollowingTurboViews(root);
+            if (hasFollowingTurboTarget(root)) {
+                removeFollowingTurboScan(root);
+            }
+        };
+
+        TURBO_LAYOUT_LISTENERS.put(root, listener);
+        observer.addOnGlobalLayoutListener(listener);
+
+        // Keep the listener bounded so a long-lived feed root cannot retain a scanner forever.
+        root.postDelayed(() -> removeFollowingTurboScan(root), 15000);
     }
 
     private static void attachFollowingTurboViews(View root) {
         attachTarget(root, "following_tab_turbo_button");
         attachTarget(root, "turbo_upsell_container");
+    }
+
+    private static boolean hasFollowingTurboTarget(View root) {
+        return findId(root, "following_tab_turbo_button") != null
+                || findId(root, "turbo_upsell_container") != null;
+    }
+
+    private static void removeFollowingTurboScan(View root) {
+        ViewTreeObserver.OnGlobalLayoutListener listener = TURBO_LAYOUT_LISTENERS.remove(root);
+        if (listener == null) return;
+
+        ViewTreeObserver observer = root.getViewTreeObserver();
+        if (observer.isAlive()) {
+            observer.removeOnGlobalLayoutListener(listener);
+        }
     }
 
     private static void attachTarget(View root, String resourceName) {
