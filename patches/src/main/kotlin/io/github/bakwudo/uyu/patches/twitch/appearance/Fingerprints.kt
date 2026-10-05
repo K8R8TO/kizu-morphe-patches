@@ -1,6 +1,7 @@
 package io.github.bakwudo.uyu.patches.twitch.appearance
 
 import app.morphe.patcher.Fingerprint
+import app.morphe.patcher.extensions.InstructionExtensions.instructionsOrNull
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction
@@ -92,7 +93,7 @@ internal object FollowingGoAdFreeButtonFingerprint : Fingerprint(
     returnType = "Lr4;",
     parameters = listOf("Landroid/view/View;"),
     custom = { method, _ ->
-        method.instructions.any {
+        method.instructionsOrNull?.any {
             it.opcode == Opcode.CONST &&
                 it is NarrowLiteralInstruction &&
                 it.narrowLiteral == 0x7f0b0942
