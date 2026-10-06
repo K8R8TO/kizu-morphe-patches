@@ -317,12 +317,32 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addHomeSettings(PreferenceScreen screen) {
-        addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
+        addHomeSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
                 "Hide Twitch's Go Ad-Free/Turbo control in the Following feed.");
-        addSwitch(screen, Settings.HIDE_RESUME_WATCHING, "Hide Continue Watching",
+        addHomeSwitch(screen, Settings.HIDE_RESUME_WATCHING, "Hide Continue Watching",
                 "Remove the Continue Watching / resume-watching section from the Following feed.");
-        addSwitch(screen, Settings.HIDE_OFFLINE_CHANNELS, "Hide Offline Channels",
+        addHomeSwitch(screen, Settings.HIDE_OFFLINE_CHANNELS, "Hide Offline Channels",
                 "Remove the offline followed-channels section from the Following feed.");
+    }
+
+    private void addHomeSwitch(PreferenceGroup group, BooleanSetting setting, String title, String summary) {
+        SwitchPreference preference =
+                new SwitchPreference(SettingsUi.preferenceContext(group.getContext()));
+        preference.setKey(setting.key);
+        preference.setDefaultValue(setting.defaultValue);
+        preference.setTitle(title);
+        preference.setSummary(summary);
+        preference.setOnPreferenceChangeListener((changed, newValue) -> {
+            boolean value = Boolean.TRUE.equals(newValue);
+            setting.save(value);
+
+            Activity activity = getActivity();
+            if (activity != null) {
+                activity.getWindow().getDecorView().postDelayed(activity::recreate, 100);
+            }
+            return true;
+        });
+        group.addPreference(preference);
     }
 
     private void addPrivacySettings(PreferenceScreen screen) {
