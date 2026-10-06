@@ -6,8 +6,6 @@ import android.view.ViewTreeObserver;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -25,96 +23,17 @@ public final class HidePromotionsPatch {
     /** Exact Twitch 31.3.1 Following-header Go Ad-Free button id, verified from the supplied APKM. */
     private static final int FOLLOWING_GO_AD_FREE_BUTTON_ID = 0x7f0b0942;
 
-    /*
-     * The verified Twitch 31.3.1 builder passes fresh mutable lists into the ResumeWatching and
-     * OfflineChannels section constructors. Keep untouched copies for each list so a settings
-     * change can restore exactly what Twitch supplied.
-     */
-    private static final Map<List<?>, List<?>> RESUME_ORIGINALS = new WeakHashMap<>();
-    private static final Map<List<?>, List<?>> OFFLINE_ORIGINALS = new WeakHashMap<>();
-
-    public static void filterResumeWatchingList(List<?> items) {
-        rememberAndFilter(items, RESUME_ORIGINALS,
-                app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get());
-    }
-
-    public static void filterOfflineChannelsList(List<?> items) {
-        rememberAndFilter(items, OFFLINE_ORIGINALS,
-                app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get());
-    }
-
-    private static void rememberAndFilter(List<?> items, Map<List<?>, List<?>> originals, boolean hide) {
-        if (items == null) return;
-        synchronized (originals) {
-            if (!originals.containsKey(items)) {
-                originals.put(items, new ArrayList<>(items));
-            }
-            if (hide) items.clear();
+    /** Clear the exact freshly-built ResumeWatching list before Twitch constructs its section model. */
+    public static void filterResumeWatchingList(java.util.List<?> items) {
+        if (items != null && app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get()) {
+            items.clear();
         }
     }
 
-    /**
-     * Applies Home & navigation changes to the exact section lists Twitch already built.
-     * No view-tree scan, global-layout listener, or RecyclerView scroll listener is used here.
-     */
-    public static void onHomeSectionSettingChanged() {
-        applyListSetting(
-                RESUME_ORIGINALS,
-                app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get());
-        applyListSetting(
-                OFFLINE_ORIGINALS,
-                app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get());
-        refreshFollowingAdapter();
-    }
-
-    private static void applyListSetting(Map<List<?>, List<?>> originals, boolean hide) {
-        synchronized (originals) {
-            for (Map.Entry<List<?>, List<?>> entry : originals.entrySet()) {
-                List<?> items = entry.getKey();
-                List<?> original = entry.getValue();
-                if (items == null || original == null) continue;
-
-                if (hide) {
-                    items.clear();
-                } else {
-                    try {
-                        @SuppressWarnings("unchecked")
-                        List<Object> mutable = (List<Object>) items;
-                        mutable.clear();
-                        mutable.addAll((List<Object>) original);
-                    } catch (Throwable ignored) {
-                    }
-                }
-            }
-        }
-    }
-
-    private static void refreshFollowingAdapter() {
-        try {
-            android.app.Activity activity = Utils.getCurrentActivity();
-            if (activity == null) return;
-            View recycler = findId(activity.getWindow().getDecorView(), "following_list_recycler_view");
-            if (recycler == null) return;
-
-            Object adapter = null;
-            try {
-                java.lang.reflect.Method getAdapter = recycler.getClass().getMethod("getAdapter");
-                adapter = getAdapter.invoke(recycler);
-            } catch (Throwable ignored) {
-            }
-
-            if (adapter != null) {
-                try {
-                    java.lang.reflect.Method notify = adapter.getClass().getMethod("notifyDataSetChanged");
-                    notify.invoke(adapter);
-                } catch (Throwable ignored) {
-                }
-            }
-
-            recycler.invalidate();
-            recycler.requestLayout();
-        } catch (Throwable t) {
-            Utils.logError("Failed to refresh Following feed after Home setting change", t);
+    /** Clear the exact freshly-built OfflineChannels list before Twitch constructs its section model. */
+    public static void filterOfflineChannelsList(java.util.List<?> items) {
+        if (items != null && app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get()) {
+            items.clear();
         }
     }
 
