@@ -3,9 +3,13 @@ package app.morphe.extension.appearance;
 import android.content.Context;
 import android.view.View;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import app.morphe.extension.Utils;
 import app.morphe.extension.settings.Settings;
@@ -43,6 +47,93 @@ public final class HidePromotionsPatch {
             new Target("stories_shelf",
                     view -> Settings.HIDE_STORIES.get(), true),
     };
+
+    /*
+     * Twitch 31.3.1 builds these two section models from fresh mutable lists. We retain the
+     * original list contents so Kizu can hide or restore the exact same data when the user flips
+     * the Home & navigation switch.
+     */
+    private static final Map<List<?>, List<?>> RESUME_ORIGINALS = new WeakHashMap<>();
+    private static final Map<List<?>, List<?>> OFFLINE_ORIGINALS = new WeakHashMap<>();
+
+    public static void filterResumeWatchingList(List<?> items) {
+        rememberAndFilter(items, RESUME_ORIGINALS,
+                Settings.HIDE_RESUME_WATCHING.get());
+    }
+
+    public static void filterOfflineChannelsList(List<?> items) {
+        rememberAndFilter(items, OFFLINE_ORIGINALS,
+                Settings.HIDE_OFFLINE_CHANNELS.get());
+    }
+
+    private static void rememberAndFilter(
+            List<?> items,
+            Map<List<?>, List<?>> originals,
+            boolean hide
+    ) {
+        if (items == null) return;
+        synchronized (originals) {
+            if (!originals.containsKey(items)) {
+                originals.put(items, new ArrayList<>(items));
+            }
+            if (hide) items.clear();
+        }
+    }
+
+    public static void onHomeSectionSettingChanged() {
+        applyListSetting(RESUME_ORIGINALS, Settings.HIDE_RESUME_WATCHING.get());
+        applyListSetting(OFFLINE_ORIGINALS, Settings.HIDE_OFFLINE_CHANNELS.get());
+        refreshFollowingAdapter();
+    }
+
+    private static void applyListSetting(Map<List<?>, List<?>> originals, boolean hide) {
+        synchronized (originals) {
+            for (Map.Entry<List<?>, List<?>> entry : originals.entrySet()) {
+                List<?> items = entry.getKey();
+                List<?> original = entry.getValue();
+                if (items == null || original == null) continue;
+
+                if (hide) {
+                    items.clear();
+                } else {
+                    @SuppressWarnings("unchecked")
+                    List<Object> mutable = (List<Object>) items;
+                    @SuppressWarnings("unchecked")
+                    List<Object> saved = (List<Object>) original;
+                    mutable.clear();
+                    mutable.addAll(saved);
+                }
+            }
+        }
+    }
+
+    private static void refreshFollowingAdapter() {
+        try {
+            android.app.Activity activity = Utils.getCurrentActivity();
+            if (activity == null) return;
+            View recycler = findId(
+                    activity.getWindow().getDecorView(),
+                    "following_list_recycler_view"
+            );
+            if (recycler == null) return;
+
+            try {
+                java.lang.reflect.Method getAdapter = recycler.getClass().getMethod("getAdapter");
+                Object adapter = getAdapter.invoke(recycler);
+                if (adapter != null) {
+                    java.lang.reflect.Method notify =
+                            adapter.getClass().getMethod("notifyDataSetChanged");
+                    notify.invoke(adapter);
+                }
+            } catch (Throwable ignored) {
+            }
+
+            recycler.invalidate();
+            recycler.requestLayout();
+        } catch (Throwable t) {
+            Utils.logError("Failed to refresh Following feed", t);
+        }
+    }
 
     private HidePromotionsPatch() {}
 
