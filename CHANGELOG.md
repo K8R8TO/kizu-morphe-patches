@@ -1,3 +1,12 @@
+# [1.9.2-beta.16](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.16) (2026-10-06)
+
+### Fixes
+
+* fix the actual beta build source used by apply_kizu.py
+* expose Kizu Home & navigation in the settings root
+* keep Hide Go Ad-Free, Hide Continue Watching, and Hide Offline Channels together
+* no Twitch bytecode fingerprints or runtime hooks changed
+
 # [1.9.2-beta.15](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.15) (2026-10-06)
 
 ### Fixes
