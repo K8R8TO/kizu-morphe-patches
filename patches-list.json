@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-beta.13",
+  "version": "1.9.2-beta.14",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta13 replaces the failed Following collection fingerprint with the exact Lq1e.l2(Lm2i;Z)V method found in the supplied Twitch 31.3.1 APKM; that method directly constructs ResumeWatching and OfflineChannels, and the patch clears their exact fresh lists before construction.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta14 groups Hide Go Ad-Free, Hide Continue Watching, and Hide Offline Channels under Kizu's Home & navigation settings section.",
       "default": true,
       "category": null,
       "dependencies": [
