@@ -333,13 +333,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         preference.setTitle(title);
         preference.setSummary(summary);
         preference.setOnPreferenceChangeListener((changed, newValue) -> {
-            boolean value = Boolean.TRUE.equals(newValue);
-            setting.save(value);
-
-            Activity activity = getActivity();
-            if (activity != null) {
-                activity.getWindow().getDecorView().postDelayed(activity::recreate, 100);
-            }
+            setting.save(Boolean.TRUE.equals(newValue));
             return true;
         });
         group.addPreference(preference);
