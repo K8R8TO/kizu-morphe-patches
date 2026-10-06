@@ -1,3 +1,12 @@
+# [1.9.2-beta.21](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.21) (2026-10-06)
+
+### Fixes
+
+* restore the verified Twitch 31.3.1 Following-feed builder hook
+* apply Hide Continue Watching and Hide Offline Channels at their actual section-model construction point
+* retain the reversible view-level settings so disabled toggles can show the sections again after a feed rebuild
+* keep all other verified Twitch hooks unchanged
+
 # [1.9.2-beta.20](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.20) (2026-10-06)
 
 ### Fixes
