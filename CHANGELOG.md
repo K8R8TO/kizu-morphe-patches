@@ -1,3 +1,13 @@
+# [1.9.2-beta.25](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.25) (2026-10-06)
+
+### Fixes
+
+* restore the verified Twitch 31.3.1 Following section-construction hook
+* make Continue Watching and Offline Channels reversible by preserving their original section lists
+* refresh only the tracked Following adapter when those settings change
+* remove the feed-wide activity/layout/scroll scanning that caused severe stutter
+* keep Go Ad-Free and all other existing hooks unchanged
+
 # [1.9.2-beta.24](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.24) (2026-10-06)
 
 ### Fixes
