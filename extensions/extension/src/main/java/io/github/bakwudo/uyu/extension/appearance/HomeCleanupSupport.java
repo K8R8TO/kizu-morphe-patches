@@ -28,6 +28,7 @@ public final class HomeCleanupSupport {
     private static final Map<View, Boolean> FORCED_VISIBLE = new WeakHashMap<>();
     private static final Map<View, Boolean> ROOTS_WATCHED = new WeakHashMap<>();
     private static final Map<ViewGroup, Boolean> SCROLL_WATCHED = new WeakHashMap<>();
+    private static final Map<View, Boolean> ACTIVITY_WATCHED = new WeakHashMap<>();
 
     private HomeCleanupSupport() {
     }
@@ -66,6 +67,43 @@ public final class HomeCleanupSupport {
             watchForFollowingFeed(root);
         } catch (Throwable t) {
             Utils.logError("Failed to prepare Home tier-1 controls", t);
+        }
+    }
+
+    public static void onActivityResumed(android.app.Activity activity) {
+        if (activity == null) return;
+        final View decor = activity.getWindow().getDecorView();
+        if (decor == null) return;
+
+        if (ACTIVITY_WATCHED.put(decor, Boolean.TRUE) == null) {
+            ViewTreeObserver observer = decor.getViewTreeObserver();
+            if (observer.isAlive()) {
+                ViewTreeObserver.OnGlobalLayoutListener listener = () -> {
+                    scanActivityForFollowing(decor);
+                };
+                observer.addOnGlobalLayoutListener(listener);
+                decor.postDelayed(() -> {
+                    ViewTreeObserver current = decor.getViewTreeObserver();
+                    if (current.isAlive()) current.removeOnGlobalLayoutListener(listener);
+                }, 20000);
+            }
+        }
+
+        scanActivityForFollowing(decor);
+        long[] delays = {100, 300, 750, 1500, 3000, 6000, 12000};
+        for (long delay : delays) {
+            MAIN.postDelayed(() -> scanActivityForFollowing(decor), delay);
+        }
+    }
+
+    private static void scanActivityForFollowing(View root) {
+        try {
+            ViewGroup recycler = findFollowingRecycler(root);
+            if (recycler != null) {
+                prepareFollowingRecycler(recycler);
+            }
+        } catch (Throwable t) {
+            Utils.logError("Following activity scan failed", t);
         }
     }
 
