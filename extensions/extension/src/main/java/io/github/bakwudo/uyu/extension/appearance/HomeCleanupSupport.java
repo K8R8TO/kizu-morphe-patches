@@ -208,21 +208,39 @@ public final class HomeCleanupSupport {
 
     private static void scanFollowingRecycler(ViewGroup recycler) {
         for (int i = 0; i < recycler.getChildCount(); i++) {
-            View child = recycler.getChildAt(i);
-            String text = collectText(child, 0).trim().toLowerCase(java.util.Locale.ROOT);
-            if (text.isEmpty()) continue;
+            View section = recycler.getChildAt(i);
+            View header = findFollowingSectionHeader(section);
+            if (header == null) continue;
 
+            String title = collectText(header, 0).trim().toLowerCase(java.util.Locale.ROOT);
             HiddenView.Condition condition = null;
-            if (containsAny(text, "resume watching", "continue watching")) {
+
+            if (containsAny(title, "resume watching", "continue watching")) {
                 condition = v -> app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get();
-            } else if (containsAny(text, "offline channels")) {
+            } else if (containsAny(title, "offline channels")) {
                 condition = v -> app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get();
             }
 
             if (condition != null) {
-                hideFollowingSection(recycler, i, condition);
+                // Hide/restore the complete RecyclerView section item, not its individual
+                // descendants. This makes RecyclerView relayout the feed as one unit and
+                // prevents partial offline rows or retained section-sized gaps.
+                HiddenView.attach(section, condition, true);
             }
         }
+    }
+
+    private static View findFollowingSectionHeader(View root) {
+        View header = findId(root, "following_tab_section_header");
+        if (header != null) return header;
+        if (!(root instanceof ViewGroup)) return null;
+
+        ViewGroup group = (ViewGroup) root;
+        for (int i = 0; i < group.getChildCount(); i++) {
+            View child = findFollowingSectionHeader(group.getChildAt(i));
+            if (child != null) return child;
+        }
+        return null;
     }
 
     private static String collectText(View view, int depth) {
@@ -243,17 +261,6 @@ public final class HomeCleanupSupport {
             }
         }
         return text.toString();
-    }
-
-    private static void hideFollowingSection(
-            ViewGroup recycler,
-            int start,
-            HiddenView.Condition condition) {
-        for (int i = start; i < recycler.getChildCount(); i++) {
-            View child = recycler.getChildAt(i);
-            if (i > start && isFollowingSectionHeader(child)) break;
-            HiddenView.attach(child, condition, true);
-        }
     }
 
     private static boolean isFollowingSectionHeader(View view) {
