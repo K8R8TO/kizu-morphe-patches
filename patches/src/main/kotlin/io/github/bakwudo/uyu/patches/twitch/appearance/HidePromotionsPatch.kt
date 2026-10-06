@@ -72,7 +72,7 @@ private fun BytecodePatchContext.hookFollowingContentSections() {
         offline to "filterOfflineChannelsList",
     ).sortedByDescending { it.first.first }.forEach { (match, helper) ->
         val register = match.second.registerD
-        addInstructions(
+        FollowingContentBuilderFingerprint.method.addInstructions(
             match.first,
             "invoke-static { v$register }, $EXTENSION_CLASS->$helper(Ljava/util/List;)V",
         )
