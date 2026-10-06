@@ -212,7 +212,7 @@ public final class HomeCleanupSupport {
             View header = findFollowingSectionHeader(section);
             if (header == null) continue;
 
-            String title = collectText(header, 0).trim().toLowerCase(java.util.Locale.ROOT);
+            String title = collectText(section, 0).trim().toLowerCase(java.util.Locale.ROOT);
             HiddenView.Condition condition = null;
 
             if (containsAny(title, "resume watching", "continue watching")) {
