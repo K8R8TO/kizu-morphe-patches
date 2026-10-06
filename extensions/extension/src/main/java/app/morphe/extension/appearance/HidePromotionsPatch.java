@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.lang.ref.WeakReference;
 
 import app.morphe.extension.Utils;
 import app.morphe.extension.settings.Settings;
@@ -53,8 +54,10 @@ public final class HidePromotionsPatch {
      * original list contents so Kizu can hide or restore the exact same data when the user flips
      * the Home & navigation switch.
      */
-    private static final Map<List<?>, List<?>> RESUME_ORIGINALS = new WeakHashMap<>();
-    private static final Map<List<?>, List<?>> OFFLINE_ORIGINALS = new WeakHashMap<>();
+    private static final Map<List<?>, List<?>> RESUME_ORIGINALS = new java.util.IdentityHashMap<>();
+    private static final Map<List<?>, List<?>> OFFLINE_ORIGINALS = new java.util.IdentityHashMap<>();
+    private static WeakReference<View> FOLLOWING_RECYCLER =
+            new WeakReference<>(null);
 
     public static void filterResumeWatchingList(List<?> items) {
         rememberAndFilter(items, RESUME_ORIGINALS,
@@ -109,16 +112,12 @@ public final class HidePromotionsPatch {
 
     private static void refreshFollowingAdapter() {
         try {
-            android.app.Activity activity = Utils.getCurrentActivity();
-            if (activity == null) return;
-            View recycler = findId(
-                    activity.getWindow().getDecorView(),
-                    "following_list_recycler_view"
-            );
-            if (recycler == null) return;
+            View recycler = FOLLOWING_RECYCLER.get();
+            if (recycler == null || !recycler.isAttachedToWindow()) return;
 
             try {
-                java.lang.reflect.Method getAdapter = recycler.getClass().getMethod("getAdapter");
+                java.lang.reflect.Method getAdapter =
+                        recycler.getClass().getMethod("getAdapter");
                 Object adapter = getAdapter.invoke(recycler);
                 if (adapter != null) {
                     java.lang.reflect.Method notify =
@@ -135,13 +134,6 @@ public final class HidePromotionsPatch {
         }
     }
 
-    private HidePromotionsPatch() {}
-
-    /**
-     * Binds Twitch 31.3.1's actual Following Go Ad-Free button to the Kizu setting.
-     * The call comes from the exact Lmx5.a(View):Lr4; binder, so the search is scoped to
-     * the header view Twitch is already constructing rather than scanning the whole feed.
-     */
     public static void bindGoAdFree(View root) {
         if (root == null) return;
         try {
@@ -167,6 +159,12 @@ public final class HidePromotionsPatch {
     public static void onViewCreated(View root) {
         try {
             Context context = root.getContext();
+            try {
+                int recyclerId = Utils.getResourceId(context, "following_list_recycler_view", "id");
+                View recycler = recyclerId == 0 ? null : root.findViewById(recyclerId);
+                if (recycler != null) FOLLOWING_RECYCLER = new WeakReference<>(recycler);
+            } catch (Throwable ignored) {
+            }
             for (Target target : TARGETS) {
                 int id = target.id(context);
                 if (id == 0) continue;
