@@ -1,3 +1,13 @@
+# [1.9.2-beta.19](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.19) (2026-10-06)
+
+### Fixes
+
+* stop clearing Continue Watching and Offline Channels data at construction time, which made the settings one-way
+* make the Following-feed section visibility follow the settings dynamically
+* discover the Following recycler after Twitch finishes inflating it instead of requiring it during delegate construction
+* restore section visibility when either toggle is turned off
+* keep the verified Twitch 31.3.1 bytecode fingerprints unchanged
+
 # [1.9.2-beta.17](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.17) (2026-10-06)
 
 ### Fixes
