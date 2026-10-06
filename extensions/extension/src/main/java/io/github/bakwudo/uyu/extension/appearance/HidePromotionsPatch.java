@@ -32,6 +32,39 @@ public final class HidePromotionsPatch {
     /** Exact Twitch 31.3.1 Following-header Go Ad-Free button id, verified from the supplied APKM. */
     private static final int FOLLOWING_GO_AD_FREE_BUTTON_ID = 0x7f0b0942;
 
+    /**
+     * Removes the two section types before Twitch's Following adapter renders them.
+     * The concrete model classes are obfuscated, but their Kotlin simple names are preserved
+     * by the generated data-class toString implementations in Twitch 31.3.1.
+     */
+    public static java.util.List<?> filterFollowingCollections(java.util.List<?> itemCollections) {
+        if (itemCollections == null) return null;
+        if (!Settings.HIDE_OFFLINE_CHANNELS.get() && !Settings.HIDE_RESUME_WATCHING.get()) {
+            return itemCollections;
+        }
+        try {
+            java.util.ArrayList<Object> filtered = new java.util.ArrayList<>(itemCollections.size());
+            for (Object item : itemCollections) {
+                if (item == null) {
+                    filtered.add(null);
+                    continue;
+                }
+                String simpleName = item.getClass().getSimpleName();
+                if (Settings.HIDE_OFFLINE_CHANNELS.get() && "OfflineChannels".equals(simpleName)) {
+                    continue;
+                }
+                if (Settings.HIDE_RESUME_WATCHING.get() && "ResumeWatching".equals(simpleName)) {
+                    continue;
+                }
+                filtered.add(item);
+            }
+            return filtered;
+        } catch (Exception ex) {
+            Utils.logError("Failed to filter Following sections", ex);
+            return itemCollections;
+        }
+    }
+
     /** Called from the exact Following-header binder after its item view has been inflated. */
     public static void bindGoAdFree(View root) {
         try {
