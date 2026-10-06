@@ -4,12 +4,9 @@ import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.instructionsOrNull
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
-import com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
-/**
- * The base class of every view delegate (a part of a screen with its root view). The class
- * name is not obfuscated.
- */
 internal object BaseViewDelegateConstructorFingerprint : Fingerprint(
     definingClass = "Ltv/twitch/android/core/mvp/viewdelegate/BaseViewDelegate;",
     name = "<init>",
@@ -17,15 +14,10 @@ internal object BaseViewDelegateConstructorFingerprint : Fingerprint(
     parameters = listOf("Landroid/content/Context;", "Landroid/view/View;"),
 )
 
-/**
- * Twitch's presenter of community highlights, the banners above chat (predictions, hype trains,
- * pinned messages, promotions). Its Kotlin method signature strings are not obfuscated.
- */
 internal object CommunityHighlightPresenterFingerprint : Fingerprint(
     strings = listOf("CommunityHighlightPresenter\$UpdateEvent"),
 )
 
-/** toString of the event that adds a community highlight. */
 internal object AddCommunityHighlightToStringFingerprint : Fingerprint(
     name = "toString",
     returnType = "Ljava/lang/String;",
@@ -33,10 +25,6 @@ internal object AddCommunityHighlightToStringFingerprint : Fingerprint(
     strings = listOf("AddCommunityHighlight(model="),
 )
 
-/**
- * The type of the SUBtember community highlight: a singleton created with the id "subtember".
- * Its superclass is the base class of all highlight types, which holds the id.
- */
 internal object SubtemberHighlightTypeFingerprint : Fingerprint(
     name = "<clinit>",
     strings = listOf("subtember"),
@@ -46,10 +34,6 @@ internal object SubtemberHighlightTypeFingerprint : Fingerprint(
     },
 )
 
-/**
- * Exact Twitch 31.3.1 player overlay constructor. Its fields are populated from:
- * create_clip_button_compose_view -> j, share_button -> k, media_route_button -> q.
- */
 internal object PlayerOverlayConstructorFingerprint : Fingerprint(
     definingClass = "Lout;",
     name = "<init>",
@@ -64,10 +48,6 @@ internal object PlayerOverlayConstructorFingerprint : Fingerprint(
     ),
 )
 
-/**
- * Exact external-link disclaimer method verified in Twitch 31.3.1.
- * Loy3.d(Fragment, Uri, boolean, callback, boolean) constructs the Twitch warning.
- */
 internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
     definingClass = "Loy3;",
     name = "d",
@@ -82,28 +62,36 @@ internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
     strings = listOf("twitch.tv", "twitch.a2z.com", "targetUrl"),
 )
 
-
 /**
- * Exact Twitch 31.3.1 Following-feed collection binder. The method is identified by the
- * unique unsupported-item diagnostic emitted by DiscoveryFeedFollowingPageListAdapter and
- * its List,Boolean,Boolean signature. It receives the complete Following section collection
- * before the adapter renders it, which lets the extension remove OfflineChannels and ResumeWatching
- * without touching individual channel cards.
+ * Exact Twitch 31.3.1 Following-feed builder method found in the supplied APKM.
+ *
+ * The verified method is Lq1e.l2(Lm2i;Z)V. Its bytecode directly constructs:
+ * - Ll2i.<init>(List) -> ResumeWatching
+ * - Lj2i.<init>(List) -> OfflineChannels
+ *
+ * The custom check requires both constructor calls, in addition to the exact method signature.
  */
-internal object FollowingContentCollectionsBinderFingerprint : Fingerprint(
+internal object FollowingContentBuilderFingerprint : Fingerprint(
+    definingClass = "Lq1e;",
+    name = "l2",
+    accessFlags = listOf(AccessFlags.PUBLIC, AccessFlags.FINAL),
     returnType = "V",
-    parameters = listOf(
-        "Ljava/util/List;",
-        "Z",
-        "Z",
-    ),
-    strings = listOf("Unsupported item javaClass in DiscoveryFeedFollowingPageListAdapter"),
+    parameters = listOf("Lm2i;", "Z"),
+    custom = { method, _ ->
+        fun hasConstructor(type: String) =
+            method.instructionsOrNull?.any { instruction ->
+                if (instruction.opcode != Opcode.INVOKE_DIRECT) return@any false
+                val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+                reference?.definingClass == type &&
+                    reference.name == "<init>" &&
+                    reference.returnType == "V" &&
+                    reference.parameterTypes.map { it.toString() } == listOf("Ljava/util/List;")
+            } == true
+
+        hasConstructor("Ll2i;") && hasConstructor("Lj2i;")
+    },
 )
-/**
- * Exact Twitch 31.3.1 Following-tab header binder. The supplied APKM contains one occurrence
- * of the Go Ad-Free button resource id (0x7f0b0942 = following_tab_turbo_button)
- * in Lmx5.a(View):Lr4;. The method is public final (access flags 0x11).
- */
+
 internal object FollowingGoAdFreeButtonFingerprint : Fingerprint(
     definingClass = "Lmx5;",
     name = "a",
@@ -113,7 +101,7 @@ internal object FollowingGoAdFreeButtonFingerprint : Fingerprint(
     custom = { method, _ ->
         method.instructionsOrNull?.any {
             it.opcode == Opcode.CONST &&
-                it is NarrowLiteralInstruction &&
+                it is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
                 it.narrowLiteral == 0x7f0b0942
         } == true
     },
