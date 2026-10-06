@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-beta.16",
+  "version": "1.9.2-beta.17",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta16 fixes the actual beta build source so Kizu Home & navigation is present with Hide Go Ad-Free, Hide Continue Watching, and Hide Offline Channels.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta17 fixes the active Kizu settings implementation so Home & navigation exposes the three requested controls.",
       "default": true,
       "category": null,
       "dependencies": [
