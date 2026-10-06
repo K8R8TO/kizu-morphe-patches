@@ -1,4 +1,5 @@
 name: Pre-release
+# Beta release workflow
 on:
   push:
     branches:
