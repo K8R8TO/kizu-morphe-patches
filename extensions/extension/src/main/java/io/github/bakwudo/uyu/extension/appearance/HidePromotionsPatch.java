@@ -13,59 +13,30 @@ import java.util.WeakHashMap;
 import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
-/**
- * Hides the subscribe and Bits buttons, the gift leaderboard and subscription promotions.
- * The views are found by their resource names, which change far less often between Twitch
- * versions than the obfuscated code that shows them. Promotions shown as community highlights
- * share their view with other highlights, so they are dropped before they are added instead.
- */
 @SuppressWarnings("unused")
 public final class HidePromotionsPatch {
-    /** Type ids of community highlights that advertise subscriptions. */
     private static final Set<String> PROMOTION_HIGHLIGHTS = new HashSet<>(Arrays.asList(
-            // "Happy SUBtember!"
             "subtember",
-            // Discounted gift sub bundles.
             "gift_promotion"
     ));
 
     /** Exact Twitch 31.3.1 Following-header Go Ad-Free button id, verified from the supplied APKM. */
     private static final int FOLLOWING_GO_AD_FREE_BUTTON_ID = 0x7f0b0942;
 
-    /**
-     * Removes the two section types before Twitch's Following adapter renders them.
-     * The concrete model classes are obfuscated, but their Kotlin simple names are preserved
-     * by the generated data-class toString implementations in Twitch 31.3.1.
-     */
-    public static java.util.List<?> filterFollowingCollections(java.util.List<?> itemCollections) {
-        if (itemCollections == null) return null;
-        if (!Settings.HIDE_OFFLINE_CHANNELS.get() && !Settings.HIDE_RESUME_WATCHING.get()) {
-            return itemCollections;
-        }
-        try {
-            java.util.ArrayList<Object> filtered = new java.util.ArrayList<>(itemCollections.size());
-            for (Object item : itemCollections) {
-                if (item == null) {
-                    filtered.add(null);
-                    continue;
-                }
-                String simpleName = item.getClass().getSimpleName();
-                if (Settings.HIDE_OFFLINE_CHANNELS.get() && "OfflineChannels".equals(simpleName)) {
-                    continue;
-                }
-                if (Settings.HIDE_RESUME_WATCHING.get() && "ResumeWatching".equals(simpleName)) {
-                    continue;
-                }
-                filtered.add(item);
-            }
-            return filtered;
-        } catch (Exception ex) {
-            Utils.logError("Failed to filter Following sections", ex);
-            return itemCollections;
+    /** Clear the exact freshly-built ResumeWatching list before Twitch constructs its section model. */
+    public static void filterResumeWatchingList(java.util.List<?> items) {
+        if (items != null && Settings.HIDE_RESUME_WATCHING.get()) {
+            items.clear();
         }
     }
 
-    /** Called from the exact Following-header binder after its item view has been inflated. */
+    /** Clear the exact freshly-built OfflineChannels list before Twitch constructs its section model. */
+    public static void filterOfflineChannelsList(java.util.List<?> items) {
+        if (items != null && Settings.HIDE_OFFLINE_CHANNELS.get()) {
+            items.clear();
+        }
+    }
+
     public static void bindGoAdFree(View root) {
         try {
             if (root == null) return;
@@ -80,7 +51,6 @@ public final class HidePromotionsPatch {
 
     private static final Target LEADERBOARD_BUTTON =
             new Target("leaderboards_icon", view -> Settings.HIDE_GIFT_LEADERBOARD.get(), false);
-    /** Items of the chat header row besides the subscribe buttons. Only their ids are used. */
     private static final Target[] OTHER_CHAT_HEADER_ITEMS = {
             new Target("chat_name", null, false),
             LEADERBOARD_BUTTON,
@@ -88,15 +58,12 @@ public final class HidePromotionsPatch {
     };
 
     private static final Target[] TARGETS = {
-            // The Bits, gift a sub and subscribe buttons above chat.
             new Target("chat_header_buttons_container",
                     view -> Settings.HIDE_SUBSCRIBE_BUTTONS.get(), false),
-            // Twitch does not hide the row itself when only the buttons were in it.
             new Target("chat_header_container", HidePromotionsPatch::isChatHeaderEmpty, true),
             new Target("bit_picker", view -> Settings.HIDE_CHAT_BITS_BUTTON.get(), false),
             new Target("leaderboards_container", view -> Settings.HIDE_GIFT_LEADERBOARD.get(), false),
             LEADERBOARD_BUTTON,
-            // Subscription and gift discounts, SUBtember and similar campaigns.
             new Target("promo_banner_container",
                     view -> Settings.HIDE_SUBSCRIPTION_PROMOTIONS.get(), false),
             new Target("turbo_upsell_container",
@@ -105,19 +72,12 @@ public final class HidePromotionsPatch {
                     view -> Settings.HIDE_TURBO_UPSELL.get(), false),
     };
 
-    /** Following feed roots whose Turbo control can be inflated after the delegate is created. */
     private static final Map<View, ViewTreeObserver.OnGlobalLayoutListener> TURBO_LAYOUT_LISTENERS =
             new WeakHashMap<>();
 
     private HidePromotionsPatch() {
     }
 
-    /**
-     * Injection point: end of the BaseViewDelegate constructor. Every screen part of Twitch's
-     * native UI, including the player, chat and chat box, is a view delegate.
-     *
-     * @param root The view the delegate was created with.
-     */
     public static void onViewCreated(View root) {
         try {
             Context context = root.getContext();
@@ -133,32 +93,19 @@ public final class HidePromotionsPatch {
         }
     }
 
-    /**
-     * The Following feed's Turbo controls can be inflated into the recycler after the
-     * BaseViewDelegate constructor returns. Re-scan the same verified resource IDs after the
-     * first layout and while the initial feed is settling, without adding another bytecode hook.
-     */
     private static void scheduleFollowingTurboScan(View root) {
         if (!isFollowingRoot(root)) return;
         if (TURBO_LAYOUT_LISTENERS.containsKey(root)) return;
-
         attachFollowingTurboViews(root);
         if (hasFollowingTurboTarget(root)) return;
-
         ViewTreeObserver observer = root.getViewTreeObserver();
         if (!observer.isAlive()) return;
-
         ViewTreeObserver.OnGlobalLayoutListener listener = () -> {
             attachFollowingTurboViews(root);
-            if (hasFollowingTurboTarget(root)) {
-                removeFollowingTurboScan(root);
-            }
+            if (hasFollowingTurboTarget(root)) removeFollowingTurboScan(root);
         };
-
         TURBO_LAYOUT_LISTENERS.put(root, listener);
         observer.addOnGlobalLayoutListener(listener);
-
-        // Keep the listener bounded so a long-lived feed root cannot retain a scanner forever.
         root.postDelayed(() -> removeFollowingTurboScan(root), 15000);
     }
 
@@ -175,11 +122,8 @@ public final class HidePromotionsPatch {
     private static void removeFollowingTurboScan(View root) {
         ViewTreeObserver.OnGlobalLayoutListener listener = TURBO_LAYOUT_LISTENERS.remove(root);
         if (listener == null) return;
-
         ViewTreeObserver observer = root.getViewTreeObserver();
-        if (observer.isAlive()) {
-            observer.removeOnGlobalLayoutListener(listener);
-        }
+        if (observer.isAlive()) observer.removeOnGlobalLayoutListener(listener);
     }
 
     private static void attachTarget(View root, String resourceName) {
@@ -187,9 +131,7 @@ public final class HidePromotionsPatch {
         int id = Utils.getResourceId(context, resourceName, "id");
         if (id == 0) return;
         View view = root.findViewById(id);
-        if (view != null) {
-            HiddenView.attach(view, v -> Settings.HIDE_TURBO_UPSELL.get(), false);
-        }
+        if (view != null) HiddenView.attach(view, v -> Settings.HIDE_TURBO_UPSELL.get(), false);
     }
 
     private static boolean isFollowingRoot(View root) {
@@ -203,13 +145,6 @@ public final class HidePromotionsPatch {
         return id == 0 ? null : root.findViewById(id);
     }
 
-    /**
-     * Injection point: start of the method that takes the events of Twitch's community
-     * highlights, the banners above chat.
-     *
-     * @param event The event. Only events that add a highlight are hidden.
-     * @return Whether to drop the event, so the highlight is never added.
-     */
     public static boolean hideCommunityHighlight(Object event) {
         try {
             String type = highlightType(event);
@@ -225,12 +160,6 @@ public final class HidePromotionsPatch {
         }
     }
 
-    /**
-     * Replaced by the patch with code that reads the obfuscated classes.
-     *
-     * @return The type id of the highlight an "add highlight" event adds, or null for other
-     * events.
-     */
     private static String highlightType(Object event) {
         return null;
     }
@@ -251,7 +180,6 @@ public final class HidePromotionsPatch {
         final String name;
         final HiddenView.Condition condition;
         final boolean restore;
-        /** The resource id, or -1 until it is looked up. */
         private int id = -1;
 
         Target(String name, HiddenView.Condition condition, boolean restore) {
@@ -260,9 +188,6 @@ public final class HidePromotionsPatch {
             this.restore = restore;
         }
 
-        /**
-         * @return The resource id, or 0 if this Twitch version has no such view.
-         */
         int id(Context context) {
             if (id == -1) {
                 id = Utils.getResourceId(context, name, "id");
