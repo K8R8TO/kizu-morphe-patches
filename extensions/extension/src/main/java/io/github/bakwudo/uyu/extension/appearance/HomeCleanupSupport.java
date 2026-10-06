@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import io.github.bakwudo.uyu.extension.Utils;
-import io.github.bakwudo.uyu.extension.settings.Settings;
+import app.morphe.extension.settings.Settings;
 
 /**
  * Tier-1 Home/navigation controls for Twitch 31.3.1.
