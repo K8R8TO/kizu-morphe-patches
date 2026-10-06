@@ -1,3 +1,12 @@
+# [1.9.2-beta.22](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.22) (2026-10-06)
+
+### Fixes
+
+* make Home & navigation switches explicitly persist their Boolean values
+* rebuild the Twitch activity after changing Continue Watching or Offline Channels so the feed is reconstructed with the new setting
+* preserve the verified Twitch 31.3.1 section-construction hook
+* keep Go Ad-Free behavior unchanged
+
 # [1.9.2-beta.21](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.21) (2026-10-06)
 
 ### Fixes
