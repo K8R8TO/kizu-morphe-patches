@@ -48,8 +48,10 @@ private fun BytecodePatchContext.hookFollowingContentCollections() {
     FollowingContentCollectionsBinderFingerprint.method.apply {
         addInstructions(
             0,
-            "invoke-static { p1 }, $EXTENSION_CLASS->filterFollowingCollections(Ljava/util/List;)Ljava/util/List;",
-            "move-result-object p1",
+            """
+                invoke-static { p1 }, $EXTENSION_CLASS->filterFollowingCollections(Ljava/util/List;)Ljava/util/List;
+                move-result-object p1
+            """,
         )
     }
 }
