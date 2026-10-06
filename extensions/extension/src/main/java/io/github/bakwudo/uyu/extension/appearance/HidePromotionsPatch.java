@@ -27,60 +27,66 @@ public final class HidePromotionsPatch {
 
     /*
      * The verified Twitch 31.3.1 builder passes fresh mutable lists into the ResumeWatching and
-     * OfflineChannels section constructors. Keep an untouched copy for each list so a settings
-     * change can put the exact original contents back into the existing model list.
-     *
-     * This replaces the old one-way clear-only behavior: hiding is still done before section
-     * construction, but toggling the setting can now restore the same list without scanning the
-     * whole Following feed.
+     * OfflineChannels section constructors. Keep untouched copies for each list so a settings
+     * change can restore exactly what Twitch supplied.
      */
-    private static final Map<List<?>, List<?>> HOME_SECTION_ORIGINALS =
-            new WeakHashMap<>();
+    private static final Map<List<?>, List<?>> RESUME_ORIGINALS = new WeakHashMap<>();
+    private static final Map<List<?>, List<?>> OFFLINE_ORIGINALS = new WeakHashMap<>();
 
     public static void filterResumeWatchingList(List<?> items) {
-        conditionallyFilterList(items, app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get());
+        rememberAndFilter(items, RESUME_ORIGINALS,
+                app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get());
     }
 
     public static void filterOfflineChannelsList(List<?> items) {
-        conditionallyFilterList(items, app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get());
+        rememberAndFilter(items, OFFLINE_ORIGINALS,
+                app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get());
     }
 
-    private static void conditionallyFilterList(List<?> items, boolean hide) {
+    private static void rememberAndFilter(List<?> items, Map<List<?>, List<?>> originals, boolean hide) {
         if (items == null) return;
-
-        synchronized (HOME_SECTION_ORIGINALS) {
-            if (!HOME_SECTION_ORIGINALS.containsKey(items)) {
-                HOME_SECTION_ORIGINALS.put(items, new ArrayList<>(items));
+        synchronized (originals) {
+            if (!originals.containsKey(items)) {
+                originals.put(items, new ArrayList<>(items));
             }
-            if (hide) {
-                items.clear();
-            }
+            if (hide) items.clear();
         }
     }
 
     /**
-     * Applies a Home & navigation setting change directly to the mutable section lists that
-     * Twitch's verified Following builder handed to us. No RecyclerView-wide scan is performed.
+     * Applies Home & navigation changes to the exact section lists Twitch already built.
+     * No view-tree scan, global-layout listener, or RecyclerView scroll listener is used here.
      */
     public static void onHomeSectionSettingChanged() {
-        final boolean hideResume =
-                app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get();
-        final boolean hideOffline =
-                app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get();
+        applyListSetting(
+                RESUME_ORIGINALS,
+                app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get());
+        applyListSetting(
+                OFFLINE_ORIGINALS,
+                app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get());
+        refreshFollowingAdapter();
+    }
 
-        synchronized (HOME_SECTION_ORIGINALS) {
-            for (Map.Entry<List<?>, List<?>> entry : HOME_SECTION_ORIGINALS.entrySet()) {
+    private static void applyListSetting(Map<List<?>, List<?>> originals, boolean hide) {
+        synchronized (originals) {
+            for (Map.Entry<List<?>, List<?>> entry : originals.entrySet()) {
                 List<?> items = entry.getKey();
                 List<?> original = entry.getValue();
                 if (items == null || original == null) continue;
 
-                boolean isResume = items.toString().isEmpty() ? false : false;
-                // Section type is not available from the list itself. Apply the correct
-                // value based on the lists' tracked setting state below.
+                if (hide) {
+                    items.clear();
+                } else {
+                    try {
+                        @SuppressWarnings("unchecked")
+                        List<Object> mutable = (List<Object>) items;
+                        mutable.clear();
+                        mutable.addAll((List<Object>) original);
+                    } catch (Throwable ignored) {
+                    }
+                }
             }
         }
-
-        refreshFollowingAdapter();
     }
 
     private static void refreshFollowingAdapter() {
