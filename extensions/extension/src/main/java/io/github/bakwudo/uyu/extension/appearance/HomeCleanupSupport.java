@@ -70,8 +70,41 @@ public final class HomeCleanupSupport {
     }
 
     private static void watchForFollowingFeed(final View root) {
+        if (ROOTS_WATCHED.put(root, Boolean.TRUE) != null) return;
+
+        final View.OnAttachStateChangeListener attachListener = new View.OnAttachStateChangeListener() {
+            @Override
+            public void onViewAttachedToWindow(View attached) {
+                attached.removeOnAttachStateChangeListener(this);
+                watchFollowingWindow(attached);
+                probeFollowingFeed(attached);
+            }
+
+            @Override
+            public void onViewDetachedFromWindow(View detached) {
+            }
+        };
+        root.addOnAttachStateChangeListener(attachListener);
+
+        if (root.isAttachedToWindow()) {
+            root.removeOnAttachStateChangeListener(attachListener);
+            watchFollowingWindow(root);
+        }
+
+        scheduleFollowingProbe(root, 100);
+        scheduleFollowingProbe(root, 500);
+        scheduleFollowingProbe(root, 1200);
+        scheduleFollowingProbe(root, 3000);
+        scheduleFollowingProbe(root, 7000);
+        scheduleFollowingProbe(root, 12000);
+    }
+
+    private static void watchFollowingWindow(final View root) {
         final View windowRoot = root.getRootView();
-        if (ROOTS_WATCHED.put(windowRoot, Boolean.TRUE) != null) return;
+        if (ROOTS_WATCHED.put(windowRoot, Boolean.TRUE) != null) {
+            probeFollowingFeed(root);
+            return;
+        }
 
         final ViewTreeObserver observer = windowRoot.getViewTreeObserver();
         if (!observer.isAlive()) return;
@@ -79,12 +112,7 @@ public final class HomeCleanupSupport {
         final ViewTreeObserver.OnGlobalLayoutListener listener = new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                try {
-                    ViewGroup recycler = findFollowingRecycler(windowRoot);
-                    if (recycler != null) prepareFollowingRecycler(recycler);
-                } catch (Throwable t) {
-                    Utils.logError("Following feed discovery failed", t);
-                }
+                probeFollowingFeed(windowRoot);
             }
         };
         observer.addOnGlobalLayoutListener(listener);
@@ -93,6 +121,20 @@ public final class HomeCleanupSupport {
             ViewTreeObserver current = windowRoot.getViewTreeObserver();
             if (current.isAlive()) current.removeOnGlobalLayoutListener(listener);
         }, 15000);
+    }
+
+    private static void scheduleFollowingProbe(final View root, long delay) {
+        MAIN.postDelayed(() -> probeFollowingFeed(root), delay);
+    }
+
+    private static void probeFollowingFeed(View root) {
+        try {
+            View windowRoot = root.getRootView();
+            ViewGroup recycler = findFollowingRecycler(windowRoot);
+            if (recycler != null) prepareFollowingRecycler(recycler);
+        } catch (Throwable t) {
+            Utils.logError("Following feed probe failed", t);
+        }
     }
 
     private static void prepareFollowingRecycler(ViewGroup recycler) {
