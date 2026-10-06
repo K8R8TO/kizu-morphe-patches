@@ -1,6 +1,7 @@
 package io.github.bakwudo.uyu.extension.settings;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.preference.Preference;
@@ -36,6 +37,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     static final String SECTION_EMOTES = "emotes";
     static final String SECTION_CHAT = "chat";
     static final String SECTION_PRIVACY = "privacy";
+    static final String SECTION_HOME = "home";
 
     private static final String ARG_SECTION = "section";
 
@@ -85,6 +87,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
             addChatSettings(screen);
         } else if (section.equals(SECTION_PRIVACY)) {
             addPrivacySettings(screen);
+        } else if (section.equals(SECTION_HOME)) {
+            addHomeSettings(screen);
         }
     }
 
@@ -92,10 +96,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
         if (PatchStatus.autoClaimChannelPoints()) {
             addSectionLink(screen, SECTION_GENERAL, "Channel points");
         }
-        if (PatchStatus.hidePromotions()) {
-            addSectionLink(screen, SECTION_APPEARANCE,
-                    "Subscribe and Bits buttons, gift leaderboard, promotions");
-        }
+        addSectionLink(screen, SECTION_APPEARANCE,
+                "Appearance controls, promotions and Go Ad-Free");
         if (PatchStatus.danmakuComments()) {
             addSectionLink(screen, SECTION_DANMAKU, "Chat messages scrolling across the video");
         }
@@ -104,6 +106,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         }
         addSectionLink(screen, SECTION_EMOTES, "7TV, BTTV, FFZ and animated emotes");
         addSectionLink(screen, SECTION_CHAT, "Chat controls");
+        addSectionLink(screen, SECTION_HOME, "Home & navigation controls");
         addSectionLink(screen, SECTION_PRIVACY, "Privacy");
     }
 
@@ -130,18 +133,15 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addAppearanceSettings(PreferenceScreen screen) {
-                addSwitch(screen, Settings.HIDE_SUBSCRIBE_BUTTONS, "Hide the subscribe and Bits buttons",
+        addSwitch(screen, Settings.HIDE_SUBSCRIBE_BUTTONS, "Hide the subscribe and Bits buttons",
                 "Hides the row above chat with the Bits, gift a sub and subscribe buttons.");
         addSwitch(screen, Settings.HIDE_CHAT_BITS_BUTTON, "Hide the Bits button in the chat box",
                 "Hides the Bits button next to the emote button.");
         addSwitch(screen, Settings.HIDE_GIFT_LEADERBOARD, "Hide the gift leaderboard",
                 "Hides the ranking of top gifters and cheerers above chat.");
         addSwitch(screen, Settings.HIDE_SUBSCRIPTION_PROMOTIONS, "Hide subscription promotions",
-                "Hides the banners that advertise subscription and gift discounts and "
-                        + "SUBtember, above the player and above chat, and the banner that "
-                        + "advertises Turbo.");
-
-        Preference note = new Preference(SettingsUi.preferenceContext(screen.getContext()));
+                "Hides subscription and gift-discount campaign banners.");
+        Preference note = new Preference(screen.getContext());
         note.setSummary("Items you show again appear the next time you open a stream.");
         note.setSelectable(false);
         screen.addPreference(note);
@@ -196,7 +196,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         proxy.setTitle("Proxy URL");
         screen.addPreference(proxy);
 
-        Preference note = new Preference(SettingsUi.preferenceContext(screen.getContext()));
+        Preference note = new Preference(screen.getContext());
         note.setSummary("Optional. Live streams are loaded through this proxy, which can remove "
                 + "the ads that are part of the stream. {channel} is replaced with the channel "
                 + "name; without it, the name is added to the end.\n\n"
@@ -223,7 +223,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private void addChatSettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.CHAT_DELETED_MESSAGES, "Deleted messages",
                 "Control whether deleted chat messages remain visible locally.");        
-        Preference deletedMessageStyle = new Preference(SettingsUi.preferenceContext(screen.getContext()));
+        Preference deletedMessageStyle = new Preference(screen.getContext());
         deletedMessageStyle.setTitle("Deleted message style");
         deletedMessageStyle.setSummary(deletedMessageStyleName(Settings.CHAT_DELETED_MESSAGES_STYLE.get()));
         deletedMessageStyle.setOnPreferenceClickListener(clicked -> {
@@ -247,6 +247,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
         addSwitch(screen, Settings.CHAT_TIMESTAMPS, "Chat timestamps",
                 "Show timestamps on chat messages.");
+        addSwitch(screen, Settings.CHAT_MENTION_HIGHLIGHT, "Highlight mentions",
+                "Highlight chat messages that directly mention your account.");
         addSwitch(screen, Settings.LANDSCAPE_CHAT_SIZE_ENABLED, "Landscape chat size",
                 "Use the custom landscape chat width.");
         addSlider(screen, Settings.LANDSCAPE_CHAT_SIZE, 5, "Landscape chat width",
@@ -271,11 +273,22 @@ public class UyuSettingsFragment extends PreferenceFragment {
         return "Mod";
     }
 
+    private void addHomeSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
+                "Hide Twitch's Go Ad-Free/Turbo control in the Following feed.");
+        addSwitch(screen, Settings.HIDE_RESUME_WATCHING, "Hide Continue Watching",
+                "Remove the Continue Watching / resume-watching section from the Following feed.");
+        addSwitch(screen, Settings.HIDE_OFFLINE_CHANNELS, "Hide Offline Channels",
+                "Remove the offline followed-channels section from the Following feed.");
+    }
+
     private void addPrivacySettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.DISABLE_COMSCORE, "Disable Comscore",
                 "Prevent Twitch's Comscore measurement component from starting.");
         addSwitch(screen, Settings.DISABLE_BUGSNAG, "Disable crash reporting",
                 "Prevent Twitch's crash-reporting component from collecting reports.");
+        addSwitch(screen, Settings.DISABLE_LINK_DISCLAIMER, "Disable link disclaimer",
+                "Skip Twitch's external-link disclaimer before opening links.");
     }
 
     @Override
@@ -348,6 +361,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 return "Chat";
             case SECTION_PRIVACY:
                 return "Privacy";
+            case SECTION_HOME:
+                return "Home & navigation";
             default:
                 return SettingsPatch.TITLE;
         }
