@@ -1,3 +1,12 @@
+# [1.9.2-beta.14](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.14) (2026-10-06)
+
+### Changes
+
+* add a visible Kizu Home & navigation settings section whenever the Twitch Enhancement patch is applied
+* move Hide Go Ad-Free from Appearance into Home & navigation
+* expose Hide Continue Watching and Hide Offline Channels in the same section
+
+
 # [1.9.2-beta.13](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.13) (2026-10-06)
 
 ### Fixes
