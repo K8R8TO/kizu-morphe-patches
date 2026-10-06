@@ -67,6 +67,7 @@ public final class Utils {
 
                 @Override public void onActivityStarted(Activity activity) {
                     currentActivity = activity;
+                    try { io.github.bakwudo.uyu.extension.appearance.HomeCleanupSupport.onActivityResumed(activity); } catch (Throwable ignored) {}
                     try { DefaultFollowing.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { LandscapeChatPatch.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
@@ -74,6 +75,7 @@ public final class Utils {
 
                 @Override public void onActivityResumed(Activity activity) {
                     currentActivity = activity;
+                    try { io.github.bakwudo.uyu.extension.appearance.HomeCleanupSupport.onActivityResumed(activity); } catch (Throwable ignored) {}
                     try { DefaultFollowing.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { LandscapeChatPatch.onActivityStarted(activity); } catch (Throwable ignored) {}
                     try { EmotePickerBridge.ensureComposerButton(); } catch (Throwable ignored) {}
