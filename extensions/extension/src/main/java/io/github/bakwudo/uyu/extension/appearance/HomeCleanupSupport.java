@@ -26,6 +26,7 @@ public final class HomeCleanupSupport {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static final int MAX_DEPTH = 16;
     private static final Map<View, Boolean> FORCED_VISIBLE = new WeakHashMap<>();
+    private static final Map<View, Boolean> ROOTS_WATCHED = new WeakHashMap<>();
     private static final Map<ViewGroup, Boolean> SCROLL_WATCHED = new WeakHashMap<>();
 
     private HomeCleanupSupport() {
@@ -62,26 +63,50 @@ public final class HomeCleanupSupport {
             attachId(root, "resume_auto_scroll_root",
                     v -> app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get(), false);
 
-            if (!isFollowingRoot(root)) return;
-
-            ViewGroup recycler = findFollowingRecycler(root);
-            if (recycler == null) return;
-
-            attachId(recycler, "leaderboards_container",
-                    v -> Settings.HIDE_HOME_LEADERBOARDS.get(), false);
-            attachId(recycler, "following_tab_turbo_button",
-                    v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
-            attachId(recycler, "turbo_upsell_container",
-                    v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
-
-            watchFollowingScroll(recycler);
-            scanFollowingRecycler(recycler);
-            scheduleRecyclerScan(recycler, 100);
-            scheduleRecyclerScan(recycler, 500);
-            scheduleRecyclerScan(recycler, 1200);
+            watchForFollowingFeed(root);
         } catch (Throwable t) {
             Utils.logError("Failed to prepare Home tier-1 controls", t);
         }
+    }
+
+    private static void watchForFollowingFeed(final View root) {
+        final View windowRoot = root.getRootView();
+        if (ROOTS_WATCHED.put(windowRoot, Boolean.TRUE) != null) return;
+
+        final ViewTreeObserver observer = windowRoot.getViewTreeObserver();
+        if (!observer.isAlive()) return;
+
+        final ViewTreeObserver.OnGlobalLayoutListener listener = new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                try {
+                    ViewGroup recycler = findFollowingRecycler(windowRoot);
+                    if (recycler != null) prepareFollowingRecycler(recycler);
+                } catch (Throwable t) {
+                    Utils.logError("Following feed discovery failed", t);
+                }
+            }
+        };
+        observer.addOnGlobalLayoutListener(listener);
+        listener.onGlobalLayout();
+        MAIN.postDelayed(() -> {
+            ViewTreeObserver current = windowRoot.getViewTreeObserver();
+            if (current.isAlive()) current.removeOnGlobalLayoutListener(listener);
+        }, 15000);
+    }
+
+    private static void prepareFollowingRecycler(ViewGroup recycler) {
+        attachId(recycler, "leaderboards_container",
+                v -> Settings.HIDE_HOME_LEADERBOARDS.get(), false);
+        attachId(recycler, "following_tab_turbo_button",
+                v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
+        attachId(recycler, "turbo_upsell_container",
+                v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
+        watchFollowingScroll(recycler);
+        scanFollowingRecycler(recycler);
+        scheduleRecyclerScan(recycler, 100);
+        scheduleRecyclerScan(recycler, 500);
+        scheduleRecyclerScan(recycler, 1200);
     }
 
     private static void watchFollowingScroll(final ViewGroup recycler) {
@@ -115,30 +140,30 @@ public final class HomeCleanupSupport {
                     .trim().toLowerCase(java.util.Locale.ROOT);
 
             if (!text.isEmpty()) {
+                HiddenView.Condition condition = null;
                 if (Settings.HIDE_FEATURED_CLIPS.get()
                         && containsAny(text, "featured clips")) {
-                    hideSectionItem(view);
+                    condition = v -> Settings.HIDE_FEATURED_CLIPS.get();
                 } else if (Settings.HIDE_RECOMMENDATIONS.get()
                         && containsAny(text, "recommended for you",
                         "recommended channels", "recommended live channels",
                         "recommendations")) {
-                    hideSectionItem(view);
-                } else if (app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get()
-                        && containsAny(text, "resume watching", "continue watching")) {
-                    hideSectionItem(view);
-                } else if (app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get()
-                        && containsAny(text, "offline channels")) {
-                    hideSectionItem(view);
+                    condition = v -> Settings.HIDE_RECOMMENDATIONS.get();
+                } else if (containsAny(text, "resume watching", "continue watching")) {
+                    condition = v -> app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get();
+                } else if (containsAny(text, "offline channels")) {
+                    condition = v -> app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get();
                 } else if (Settings.HIDE_UPCOMING_STREAMS.get()
                         && containsAny(text, "upcoming streams", "upcoming events")) {
-                    hideSectionItem(view);
+                    condition = v -> Settings.HIDE_UPCOMING_STREAMS.get();
                 } else if (Settings.HIDE_GAME_SECTION.get()
                         && isGameHeading(text)) {
-                    hideSectionItem(view);
+                    condition = v -> Settings.HIDE_GAME_SECTION.get();
                 } else if (Settings.HIDE_HOME_LEADERBOARDS.get()
                         && containsAny(text, "leaderboards")) {
-                    hideSectionItem(view);
+                    condition = v -> Settings.HIDE_HOME_LEADERBOARDS.get();
                 }
+                if (condition != null) hideSectionItem(view, condition);
             }
         }
 
@@ -150,29 +175,29 @@ public final class HomeCleanupSupport {
         }
     }
 
-    private static void hideSectionItem(View title) {
+    private static void hideSectionItem(View title, HiddenView.Condition condition) {
         ViewGroup recycler = findRecyclerAncestor(title);
         if (recycler == null) {
-            HiddenView.attach(title, v -> true, true);
+            HiddenView.attach(title, condition, true);
             return;
         }
 
         View sectionItem = findDirectRecyclerChild(title, recycler);
         if (sectionItem == null) {
-            HiddenView.attach(title, v -> true, true);
+            HiddenView.attach(title, condition, true);
             return;
         }
 
         int start = recycler.indexOfChild(sectionItem);
         if (start < 0) {
-            HiddenView.attach(title, v -> true, true);
+            HiddenView.attach(title, condition, true);
             return;
         }
 
         for (int i = start; i < recycler.getChildCount(); i++) {
             View child = recycler.getChildAt(i);
             if (i > start && isFollowingSectionHeader(child)) break;
-            HiddenView.attach(child, v -> true, true);
+            HiddenView.attach(child, condition, true);
         }
     }
 
