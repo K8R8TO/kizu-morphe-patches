@@ -1,3 +1,12 @@
+# [1.9.2-beta.24](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.24) (2026-10-06)
+
+### Fixes
+
+* treat Continue Watching and Offline Channels as whole Following RecyclerView section items
+* hide or restore the complete Offline Channels section instead of individual rendered channel rows
+* remove the partial-channel behavior and retained section spacing caused by child-level RecyclerView hiding
+* keep the existing verified Twitch 31.3.1 bytecode fingerprints unchanged
+
 # [1.9.2-beta.23](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.23) (2026-10-06)
 
 ### Fixes
