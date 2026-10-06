@@ -25,14 +25,14 @@ public final class HidePromotionsPatch {
 
     /** Clear the exact freshly-built ResumeWatching list before Twitch constructs its section model. */
     public static void filterResumeWatchingList(java.util.List<?> items) {
-        if (items != null && Settings.HIDE_RESUME_WATCHING.get()) {
+        if (items != null && app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get()) {
             items.clear();
         }
     }
 
     /** Clear the exact freshly-built OfflineChannels list before Twitch constructs its section model. */
     public static void filterOfflineChannelsList(java.util.List<?> items) {
-        if (items != null && Settings.HIDE_OFFLINE_CHANNELS.get()) {
+        if (items != null && app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get()) {
             items.clear();
         }
     }
@@ -42,7 +42,7 @@ public final class HidePromotionsPatch {
             if (root == null) return;
             View button = root.findViewById(FOLLOWING_GO_AD_FREE_BUTTON_ID);
             if (button != null) {
-                HiddenView.attach(button, v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+                HiddenView.attach(button, v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
             }
         } catch (Exception ex) {
             Utils.logError("Failed to bind Go Ad-Free hiding", ex);
@@ -67,9 +67,9 @@ public final class HidePromotionsPatch {
             new Target("promo_banner_container",
                     view -> Settings.HIDE_SUBSCRIPTION_PROMOTIONS.get(), false),
             new Target("turbo_upsell_container",
-                    view -> Settings.HIDE_TURBO_UPSELL.get(), false),
+                    view -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false),
             new Target("following_tab_turbo_button",
-                    view -> Settings.HIDE_TURBO_UPSELL.get(), false),
+                    view -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false),
     };
 
     private static final Map<View, ViewTreeObserver.OnGlobalLayoutListener> TURBO_LAYOUT_LISTENERS =
@@ -131,7 +131,7 @@ public final class HidePromotionsPatch {
         int id = Utils.getResourceId(context, resourceName, "id");
         if (id == 0) return;
         View view = root.findViewById(id);
-        if (view != null) HiddenView.attach(view, v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+        if (view != null) HiddenView.attach(view, v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
     }
 
     private static boolean isFollowingRoot(View root) {
