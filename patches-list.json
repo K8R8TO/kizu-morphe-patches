@@ -1,28 +1,34 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-rc.1",
+  "version": "1.9.2",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. RC1 promotes the verified Beta25 Home & navigation implementation with reversible section-list state and no feed-wide scanner.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1, including third-party emotes, animated emotes, appearance and privacy controls, deleted-message controls, automatic Channel Points claiming, and reversible Home & navigation controls.",
       "default": true,
       "category": null,
-      "dependencies": ["BytecodePatch"],
-      "compatiblePackages": [{
-        "packageName": "tv.twitch.android.app",
-        "name": "Twitch",
-        "description": null,
-        "appIconColor": "#9147FF",
-        "apkFileType": "APKM",
-        "signatures": null,
-        "targets": [{
-          "version": "31.3.1",
-          "versionCodes": null,
-          "isExperimental": false,
-          "minSdk": null,
-          "description": null
-        }]
-      }],
+      "dependencies": [
+        "BytecodePatch"
+      ],
+      "compatiblePackages": [
+        {
+          "packageName": "tv.twitch.android.app",
+          "name": "Twitch",
+          "description": null,
+          "appIconColor": "#9147FF",
+          "apkFileType": "APKM",
+          "signatures": null,
+          "targets": [
+            {
+              "version": "31.3.1",
+              "versionCodes": null,
+              "isExperimental": false,
+              "minSdk": null,
+              "description": null
+            }
+          ]
+        }
+      ],
       "options": []
     }
   ]
