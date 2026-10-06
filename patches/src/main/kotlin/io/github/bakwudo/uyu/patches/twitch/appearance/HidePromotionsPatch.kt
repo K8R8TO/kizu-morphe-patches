@@ -29,6 +29,7 @@ internal val hidePromotionsPatch = bytecodePatch {
     execute {
         setPatchIncluded("hidePromotions")
         hookViewDelegates()
+        hookFollowingContentCollections()
         hookFollowingGoAdFreeButton()
         hookCommunityHighlights()
     }
@@ -38,6 +39,21 @@ internal val hidePromotionsPatch = bytecodePatch {
  * Hooks the exact Twitch 31.3.1 Following-header binder that inflates the Go Ad-Free button.
  * The fingerprint is anchored to the actual resource constant found in the supplied APKM.
  */
+/**
+ * Filters the Following feed's section collection before the adapter renders it.
+ * No obfuscated class names are hard-coded: the extension identifies the two sealed-item
+ * variants by their stable Kotlin simple names (OfflineChannels / ResumeWatching).
+ */
+private fun BytecodePatchContext.hookFollowingContentCollections() {
+    FollowingContentCollectionsBinderFingerprint.method.apply {
+        addInstructions(
+            0,
+            "invoke-static { p1 }, $EXTENSION_CLASS->filterFollowingCollections(Ljava/util/List;)Ljava/util/List;",
+            "move-result-object p1",
+        )
+    }
+}
+
 private fun BytecodePatchContext.hookFollowingGoAdFreeButton() {
     FollowingGoAdFreeButtonFingerprint.method.apply {
         addInstructions(
