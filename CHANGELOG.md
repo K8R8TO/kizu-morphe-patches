@@ -1,3 +1,14 @@
+# [1.9.2-beta.12](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.12) (2026-10-06)
+
+### Features
+
+* filter Twitch 31.3.1 Following feed collections before rendering
+* hide Offline Channels by default
+* hide Continue Watching by default
+* keep the filtering isolated from the existing Go Ad-Free implementation
+* use the exact Following-feed binder diagnostic from the supplied Twitch 31.3.1 APKM rather than guessing an obfuscated class name
+
+
 # [1.9.2-beta.11](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.11) (2026-10-05)
 
 ### Fixes
