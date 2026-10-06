@@ -106,8 +106,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
         }
         addSectionLink(screen, SECTION_EMOTES, "7TV, BTTV, FFZ and animated emotes");
         addSectionLink(screen, SECTION_CHAT, "Chat controls");
-        if (PatchStatus.homeCleanup()) {
-            addSectionLink(screen, SECTION_HOME, "Home and navigation cleanup");
+        if (PatchStatus.homeCleanup() || PatchStatus.hidePromotions()) {
+            addSectionLink(screen, SECTION_HOME, "Home & navigation controls");
         }
         addSectionLink(screen, SECTION_PRIVACY, "Privacy");
     }
@@ -143,9 +143,6 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 "Hides the ranking of top gifters and cheerers above chat.");
         addSwitch(screen, Settings.HIDE_SUBSCRIPTION_PROMOTIONS, "Hide subscription promotions",
                 "Hides subscription and gift-discount campaign banners.");
-        addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
-                "Hides Twitch's Go Ad-Free/Turbo control in the Following feed and Turbo upsell views.");
-
         Preference note = new Preference(screen.getContext());
         note.setSummary("Items you show again appear the next time you open a stream.");
         note.setSelectable(false);
@@ -279,6 +276,13 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addHomeSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
+                "Hide Twitch's Go Ad-Free/Turbo control in the Following feed and Turbo upsell views.");
+        addSwitch(screen, Settings.HIDE_RESUME_WATCHING, "Hide Continue Watching",
+                "Remove the Continue Watching / resume-watching section from the Following feed.");
+        addSwitch(screen, Settings.HIDE_OFFLINE_CHANNELS, "Hide Offline Channels",
+                "Remove the offline followed-channels section from the Following feed.");
+
         addSwitch(screen, Settings.HIDE_FEATURED_CLIPS, "Hide featured clips",
                 "Remove the featured clips section from the Following feed.");
         addSwitch(screen, Settings.HIDE_RECOMMENDATIONS, "Hide recommendations",
