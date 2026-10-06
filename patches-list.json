@@ -1,35 +1,29 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-beta.24",
+  "version": "1.9.2-beta.25",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta24 treats Continue Watching and Offline Channels as whole Following RecyclerView section items for reversible, gap-free visibility.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta25 restores the verified Following builder hook with reversible section-list state and removes the feed-wide scanner.",
       "default": true,
       "category": null,
-      "dependencies": [
-        "BytecodePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "tv.twitch.android.app",
-          "name": "Twitch",
-          "description": null,
-          "appIconColor": "#9147FF",
-          "apkFileType": "APKM",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "31.3.1",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ],
-          "options": []
-        }
-      ]
+      "dependencies": ["BytecodePatch"],
+      "compatiblePackages": [{
+        "packageName": "tv.twitch.android.app",
+        "name": "Twitch",
+        "description": null,
+        "appIconColor": "#9147FF",
+        "apkFileType": "APKM",
+        "signatures": null,
+        "targets": [{
+          "version": "31.3.1",
+          "versionCodes": null,
+          "isExperimental": false,
+          "minSdk": null,
+          "description": null
+        }],
+        "options": []
+      }]
     }
   ]
 }
