@@ -82,6 +82,23 @@ internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
     strings = listOf("twitch.tv", "twitch.a2z.com", "targetUrl"),
 )
 
+
+/**
+ * Exact Twitch 31.3.1 Following-feed collection binder. The method is identified by the
+ * unique unsupported-item diagnostic emitted by DiscoveryFeedFollowingPageListAdapter and
+ * its List,Boolean,Boolean signature. It receives the complete Following section collection
+ * before the adapter renders it, which lets the extension remove OfflineChannels and ResumeWatching
+ * without touching individual channel cards.
+ */
+internal object FollowingContentCollectionsBinderFingerprint : Fingerprint(
+    returnType = "V",
+    parameters = listOf(
+        "Ljava/util/List;",
+        "Z",
+        "Z",
+    ),
+    strings = listOf("Unsupported item javaClass in DiscoveryFeedFollowingPageListAdapter"),
+)
 /**
  * Exact Twitch 31.3.1 Following-tab header binder. The supplied APKM contains one occurrence
  * of the Go Ad-Free button resource id (0x7f0b0942 = following_tab_turbo_button)
