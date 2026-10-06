@@ -334,6 +334,11 @@ public class UyuSettingsFragment extends PreferenceFragment {
         preference.setSummary(summary);
         preference.setOnPreferenceChangeListener((changed, newValue) -> {
             setting.save(Boolean.TRUE.equals(newValue));
+            if (setting == Settings.HIDE_RESUME_WATCHING
+                    || setting == Settings.HIDE_OFFLINE_CHANNELS) {
+                io.github.bakwudo.uyu.extension.appearance.HidePromotionsPatch
+                        .onHomeSectionSettingChanged();
+            }
             return true;
         });
         group.addPreference(preference);
