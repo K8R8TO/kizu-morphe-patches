@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import io.github.bakwudo.uyu.extension.Utils;
-import app.morphe.extension.settings.Settings;
+import io.github.bakwudo.uyu.extension.settings.Settings;
 
 /**
  * Tier-1 Home/navigation controls for Twitch 31.3.1.
@@ -60,7 +60,7 @@ public final class HomeCleanupSupport {
             attachId(root, "recommended_channels_list_title",
                     v -> Settings.HIDE_RECOMMENDATIONS.get(), false);
             attachId(root, "resume_auto_scroll_root",
-                    v -> Settings.HIDE_RESUME_WATCHING.get(), false);
+                    v -> app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get(), false);
 
             if (!isFollowingRoot(root)) return;
 
@@ -70,9 +70,9 @@ public final class HomeCleanupSupport {
             attachId(recycler, "leaderboards_container",
                     v -> Settings.HIDE_HOME_LEADERBOARDS.get(), false);
             attachId(recycler, "following_tab_turbo_button",
-                    v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+                    v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
             attachId(recycler, "turbo_upsell_container",
-                    v -> Settings.HIDE_TURBO_UPSELL.get(), false);
+                    v -> app.morphe.extension.settings.Settings.HIDE_TURBO_UPSELL.get(), false);
 
             watchFollowingScroll(recycler);
             scanFollowingRecycler(recycler);
@@ -123,10 +123,10 @@ public final class HomeCleanupSupport {
                         "recommended channels", "recommended live channels",
                         "recommendations")) {
                     hideSectionItem(view);
-                } else if (Settings.HIDE_RESUME_WATCHING.get()
+                } else if (app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get()
                         && containsAny(text, "resume watching", "continue watching")) {
                     hideSectionItem(view);
-                } else if (Settings.HIDE_OFFLINE_CHANNELS.get()
+                } else if (app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get()
                         && containsAny(text, "offline channels")) {
                     hideSectionItem(view);
                 } else if (Settings.HIDE_UPCOMING_STREAMS.get()
