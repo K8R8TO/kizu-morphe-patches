@@ -1,9 +1,7 @@
-# [1.9.2-rc.1](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-rc.1) (2026-10-06)
+# [1.9.2](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2) (2026-10-06)
 
-### Release candidate
+### Stable release
 
-* promote the verified Beta25 build to the 1.9.2 release candidate
-* keep Hide Go Ad-Free, Hide Continue Watching, and Hide Offline Channels reversible and working
-* preserve the stable Twitch 31.3.1 emote, Channel Points, chat, deleted-message, and other existing features
-* no new unverified Twitch fingerprints introduced
+* promote the tested 1.9.2-rc.1 build to stable
+* no patch implementation changes from the release candidate
 
