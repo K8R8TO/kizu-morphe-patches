@@ -170,72 +170,47 @@ public final class HomeCleanupSupport {
 
     private static void scanFollowingRecycler(ViewGroup recycler) {
         for (int i = 0; i < recycler.getChildCount(); i++) {
-            scanSectionText(recycler.getChildAt(i), 0);
+            View child = recycler.getChildAt(i);
+            String text = collectText(child, 0).trim().toLowerCase(java.util.Locale.ROOT);
+            if (text.isEmpty()) continue;
+
+            HiddenView.Condition condition = null;
+            if (containsAny(text, "resume watching", "continue watching")) {
+                condition = v -> app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get();
+            } else if (containsAny(text, "offline channels")) {
+                condition = v -> app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get();
+            }
+
+            if (condition != null) {
+                hideFollowingSection(recycler, i, condition);
+            }
         }
     }
 
-    private static void scanSectionText(View view, int depth) {
-        if (depth > MAX_DEPTH) return;
+    private static String collectText(View view, int depth) {
+        if (view == null || depth > MAX_DEPTH) return "";
+        StringBuilder text = new StringBuilder();
 
         if (view instanceof TextView) {
-            String text = String.valueOf(((TextView) view).getText())
-                    .trim().toLowerCase(java.util.Locale.ROOT);
-
-            if (!text.isEmpty()) {
-                HiddenView.Condition condition = null;
-                if (Settings.HIDE_FEATURED_CLIPS.get()
-                        && containsAny(text, "featured clips")) {
-                    condition = v -> Settings.HIDE_FEATURED_CLIPS.get();
-                } else if (Settings.HIDE_RECOMMENDATIONS.get()
-                        && containsAny(text, "recommended for you",
-                        "recommended channels", "recommended live channels",
-                        "recommendations")) {
-                    condition = v -> Settings.HIDE_RECOMMENDATIONS.get();
-                } else if (containsAny(text, "resume watching", "continue watching")) {
-                    condition = v -> app.morphe.extension.settings.Settings.HIDE_RESUME_WATCHING.get();
-                } else if (containsAny(text, "offline channels")) {
-                    condition = v -> app.morphe.extension.settings.Settings.HIDE_OFFLINE_CHANNELS.get();
-                } else if (Settings.HIDE_UPCOMING_STREAMS.get()
-                        && containsAny(text, "upcoming streams", "upcoming events")) {
-                    condition = v -> Settings.HIDE_UPCOMING_STREAMS.get();
-                } else if (Settings.HIDE_GAME_SECTION.get()
-                        && isGameHeading(text)) {
-                    condition = v -> Settings.HIDE_GAME_SECTION.get();
-                } else if (Settings.HIDE_HOME_LEADERBOARDS.get()
-                        && containsAny(text, "leaderboards")) {
-                    condition = v -> Settings.HIDE_HOME_LEADERBOARDS.get();
-                }
-                if (condition != null) hideSectionItem(view, condition);
-            }
+            CharSequence value = ((TextView) view).getText();
+            if (value != null) text.append(value).append(' ');
         }
+        CharSequence description = view.getContentDescription();
+        if (description != null) text.append(description).append(' ');
 
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
-                scanSectionText(group.getChildAt(i), depth + 1);
+                text.append(collectText(group.getChildAt(i), depth + 1));
             }
         }
+        return text.toString();
     }
 
-    private static void hideSectionItem(View title, HiddenView.Condition condition) {
-        ViewGroup recycler = findRecyclerAncestor(title);
-        if (recycler == null) {
-            HiddenView.attach(title, condition, true);
-            return;
-        }
-
-        View sectionItem = findDirectRecyclerChild(title, recycler);
-        if (sectionItem == null) {
-            HiddenView.attach(title, condition, true);
-            return;
-        }
-
-        int start = recycler.indexOfChild(sectionItem);
-        if (start < 0) {
-            HiddenView.attach(title, condition, true);
-            return;
-        }
-
+    private static void hideFollowingSection(
+            ViewGroup recycler,
+            int start,
+            HiddenView.Condition condition) {
         for (int i = start; i < recycler.getChildCount(); i++) {
             View child = recycler.getChildAt(i);
             if (i > start && isFollowingSectionHeader(child)) break;
