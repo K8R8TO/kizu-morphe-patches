@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.2-beta.22",
+  "version": "1.9.2-beta.23",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta20 fixes Following-feed discovery timing so the live section controls are actually attached after Twitch finishes inflating the feed.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta23 uses reversible Following-view visibility instead of destructive section filtering.",
       "default": true,
       "category": null,
       "dependencies": [
