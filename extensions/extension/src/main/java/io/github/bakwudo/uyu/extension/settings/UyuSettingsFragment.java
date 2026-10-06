@@ -275,38 +275,11 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     private void addHomeSettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
-                "Hide Twitch's Go Ad-Free/Turbo control in the Following feed and Turbo upsell views.");
+                "Hide Twitch's Go Ad-Free/Turbo control in the Following feed.");
         addSwitch(screen, Settings.HIDE_RESUME_WATCHING, "Hide Continue Watching",
                 "Remove the Continue Watching / resume-watching section from the Following feed.");
         addSwitch(screen, Settings.HIDE_OFFLINE_CHANNELS, "Hide Offline Channels",
                 "Remove the offline followed-channels section from the Following feed.");
-
-        addSwitch(screen, Settings.HIDE_FEATURED_CLIPS, "Hide featured clips",
-                "Remove the featured clips section from the Following feed.");
-        addSwitch(screen, Settings.HIDE_RECOMMENDATIONS, "Hide recommendations",
-                "Remove recommendation sections from the Following feed.");
-        addSwitch(screen, Settings.HIDE_RESUME_WATCHING, "Hide resume watching",
-                "Remove the resume-watching section.");
-        addSwitch(screen, Settings.HIDE_OFFLINE_CHANNELS, "Hide offline channels",
-                "Remove the offline followed-channels section.");
-        addSwitch(screen, Settings.HIDE_UPCOMING_STREAMS, "Hide upcoming streams",
-                "Remove the upcoming streams section.");
-        addSwitch(screen, Settings.HIDE_GAME_SECTION, "Hide game section",
-                "Remove the game section from the Following feed.");
-        addSwitch(screen, Settings.HIDE_HOME_LEADERBOARDS, "Hide leaderboards",
-                "Remove leaderboard UI from the feed.");
-        addSwitch(screen, Settings.FULL_FOLLOWED_CARDS, "Full followed cards",
-                "Use larger followed-channel cards instead of the compact presentation.");
-        addSwitch(screen, Settings.HIDE_CREATE_BUTTON, "Hide Create button",
-                "Remove the Create control from navigation.");
-        addSwitch(screen, Settings.FORCE_SEARCH_BUTTON, "Force toolbar Search button",
-                "Keep the Search control available in the toolbar.");
-        addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide player Create Clip button",
-                "Remove the Create Clip control from the player.");
-        addSwitch(screen, Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON, "Hide player Live Share button",
-                "Remove the Live Share control from the player.");
-        addSwitch(screen, Settings.HIDE_CAST_BUTTON, "Hide Cast button",
-                "Remove the Cast control.");
     }
 
     private void addPrivacySettings(PreferenceScreen screen) {
