@@ -1,3 +1,13 @@
+# [1.9.2-beta.23](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.23) (2026-10-06)
+
+### Fixes
+
+* remove the destructive Following section-construction filter
+* scan the actual Twitch activity and Following RecyclerView after the feed is attached
+* hide Continue Watching and Offline Channels with live conditions that restore them when toggled off
+* remove the settings-screen activity recreation that caused visual glitches
+* leave Go Ad-Free and all other existing Twitch hooks unchanged
+
 # [1.9.2-beta.22](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.22) (2026-10-06)
 
 ### Fixes
