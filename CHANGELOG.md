@@ -1,3 +1,13 @@
+# [1.9.2-beta.17](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.17) (2026-10-06)
+
+### Fixes
+
+* fix the active `app.morphe.extension` settings implementation used by the Twitch patch
+* expose Kizu Home & navigation at the settings root
+* add Hide Go Ad-Free, Hide Continue Watching, and Hide Offline Channels to that section
+* bind those three controls to the same runtime settings used by the existing Home cleanup hooks
+* keep the verified Twitch 31.3.1 bytecode hooks unchanged
+
 # [1.9.2-beta.16](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.16) (2026-10-06)
 
 ### Fixes
