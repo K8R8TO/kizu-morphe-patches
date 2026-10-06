@@ -28,8 +28,45 @@ internal val hidePromotionsPatch = bytecodePatch {
     execute {
         setPatchIncluded("hidePromotions")
         hookViewDelegates()
+        hookFollowingContentSections()
         hookFollowingGoAdFreeButton()
         hookCommunityHighlights()
+    }
+}
+
+private fun BytecodePatchContext.hookFollowingContentSections() {
+    val instructions = FollowingContentBuilderFingerprint.method.instructions
+
+    fun findConstructor(type: String): Pair<Int, FiveRegisterInstruction> {
+        val index = instructions.indexOfFirst { instruction ->
+            if (instruction.opcode != Opcode.INVOKE_DIRECT) return@indexOfFirst false
+            val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+            reference?.definingClass == type &&
+                reference.name == "<init>" &&
+                reference.returnType == "V" &&
+                reference.parameterTypes.map { it.toString() } == listOf("Ljava/util/List;")
+        }
+        if (index < 0) throw PatchException("Following $type constructor call not found.")
+        val invoke = instructions[index] as? FiveRegisterInstruction
+            ?: throw PatchException("Following $type constructor call is not a five-register invoke.")
+        if (invoke.registerCount != 2) {
+            throw PatchException("Following $type constructor call does not take exactly two registers.")
+        }
+        return index to invoke
+    }
+
+    val resume = findConstructor("Ll2i;")
+    val offline = findConstructor("Lj2i;")
+
+    listOf(
+        resume to "filterResumeWatchingList",
+        offline to "filterOfflineChannelsList",
+    ).sortedByDescending { it.first.first }.forEach { (match, helper) ->
+        val register = match.second.registerD
+        FollowingContentBuilderFingerprint.method.addInstructions(
+            match.first,
+            "invoke-static { v$register }, $EXTENSION_CLASS->$helper(Ljava/util/List;)V",
+        )
     }
 }
 
