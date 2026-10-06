@@ -1,3 +1,14 @@
+# [1.9.2-beta.13](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.13) (2026-10-06)
+
+### Fixes
+
+* remove the failed FollowingContentCollectionsBinderFingerprint from Beta12
+* use the exact Twitch 31.3.1 Lq1e.l2(Lm2i;Z)V builder method from the supplied APKM
+* anchor the builder fingerprint to its verified ResumeWatching and OfflineChannels constructor calls
+* clear the exact fresh section lists immediately before those constructors run
+* keep the existing Beta11 Go Ad-Free implementation unchanged
+
+
 # [1.9.2-beta.12](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2-beta.12) (2026-10-06)
 
 ### Features
