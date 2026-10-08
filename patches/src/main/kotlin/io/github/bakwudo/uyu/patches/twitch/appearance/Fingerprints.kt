@@ -119,8 +119,7 @@ internal object PlayerClipTextButtonFingerprint : Fingerprint(
                 false
             } else {
                 val constantIndex = constants.single().index
-                instructions.drop(constantIndex + 1).take(16).any { relative ->
-                    val index = constantIndex + 1 + relative
+                (constantIndex + 1 until minOf(constantIndex + 17, instructions.size)).any { index ->
                     val instruction = instructions[index]
                     if (instruction.opcode != Opcode.CHECK_CAST ||
                         instruction !is ReferenceInstruction ||
