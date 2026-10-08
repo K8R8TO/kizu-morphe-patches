@@ -5,6 +5,7 @@ import io.github.bakwudo.uyu.patches.twitch.ads.blockAdsPatch
 import io.github.bakwudo.uyu.patches.twitch.channelpoints.autoClaimChannelPointsPatch
 import io.github.bakwudo.uyu.patches.twitch.appearance.hidePromotionsPatch
 import io.github.bakwudo.uyu.patches.twitch.appearance.playerOverlayUiPatch
+import io.github.bakwudo.uyu.patches.twitch.reload.reloadStreamPatch
 import io.github.bakwudo.uyu.patches.twitch.chat.showDeletedMessagesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerPatch
@@ -31,6 +32,7 @@ val twitchEnhancementPatch = bytecodePatch(
         autoClaimChannelPointsPatch,
         hidePromotionsPatch,
         playerOverlayUiPatch,
+        reloadStreamPatch,
         showDeletedMessagesPatch,
         thirdPartyEmotesPatch,
         thirdPartyEmotePickerPatch,
