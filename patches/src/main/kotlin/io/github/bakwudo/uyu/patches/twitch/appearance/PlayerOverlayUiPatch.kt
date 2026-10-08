@@ -77,11 +77,11 @@ internal val playerOverlayUiPatch = bytecodePatch {
                 addInstructions(
                     returnIndex,
                     """
-                        iget-object v0, p0, Llrx;->d:Lqot;
-                        iget-object v1, v0, Lqot;->r:Landroid/widget/ImageView;
-                        invoke-static {v1}, $SUPPORT_CLASS->bindLiveShareButton(Landroid/view/View;)V
-                        iget-object v1, v0, Lqot;->e:Landroidx/mediarouter/app/MediaRouteButton;
-                        invoke-static {v1}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
+                        iget-object p0, p0, Llrx;->d:Lqot;
+                        iget-object p1, p0, Lqot;->r:Landroid/widget/ImageView;
+                        invoke-static {p1}, $SUPPORT_CLASS->bindLiveShareButton(Landroid/view/View;)V
+                        iget-object p1, p0, Lqot;->e:Landroidx/mediarouter/app/MediaRouteButton;
+                        invoke-static {p1}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
                     """,
                 )
             }
@@ -97,8 +97,8 @@ internal val playerOverlayUiPatch = bytecodePatch {
                 addInstructions(
                     returnIndex,
                     """
-                        iget-object v0, p0, Lout;->q:Landroidx/mediarouter/app/MediaRouteButton;
-                        invoke-static {v0}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
+                        iget-object p0, p0, Lout;->q:Landroidx/mediarouter/app/MediaRouteButton;
+                        invoke-static {p0}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
                     """,
                 )
             }
