@@ -38,6 +38,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     static final String SECTION_CHAT = "chat";
     static final String SECTION_PRIVACY = "privacy";
     static final String SECTION_HOME = "home";
+    static final String SECTION_PLAYER = "player";
 
     private static final String ARG_SECTION = "section";
 
@@ -89,6 +90,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
             addPrivacySettings(screen);
         } else if (section.equals(SECTION_HOME)) {
             addHomeSettings(screen);
+        } else if (section.equals(SECTION_PLAYER)) {
+            addPlayerSettings(screen);
         }
     }
 
@@ -107,6 +110,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         addSectionLink(screen, SECTION_EMOTES, "7TV, BTTV, FFZ and animated emotes");
         addSectionLink(screen, SECTION_CHAT, "Chat controls");
         addSectionLink(screen, SECTION_HOME, "Home & navigation controls");
+        addSectionLink(screen, SECTION_PLAYER, "Player controls");
         addSectionLink(screen, SECTION_PRIVACY, "Privacy");
     }
 
@@ -282,6 +286,11 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 "Remove the offline followed-channels section from the Following feed.");
     }
 
+    private void addPlayerSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
+                "Hide Twitch's Create Clip button in the player.");
+    }
+
     private void addPrivacySettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.DISABLE_COMSCORE, "Disable Comscore",
                 "Prevent Twitch's Comscore measurement component from starting.");
@@ -363,6 +372,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 return "Privacy";
             case SECTION_HOME:
                 return "Home & navigation";
+            case SECTION_PLAYER:
+                return "Player Controls";
             default:
                 return SettingsPatch.TITLE;
         }
