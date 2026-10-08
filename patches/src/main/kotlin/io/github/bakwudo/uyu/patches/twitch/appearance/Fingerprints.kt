@@ -5,6 +5,8 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructionsOrNull
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.Instruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 internal object BaseViewDelegateConstructorFingerprint : Fingerprint(
@@ -34,6 +36,58 @@ internal object SubtemberHighlightTypeFingerprint : Fingerprint(
     },
 )
 
+/** Exact APK-derived resource -> Lout field verification. */
+private const val CREATE_CLIP_BUTTON_RESOURCE_ID = 0x7f0b05f0
+private const val PLAYER_SHARE_RESOURCE_ID = 0x7f0b128a
+private const val PLAYER_CAST_RESOURCE_ID = 0x7f0b0c0f
+
+private fun hasResourceBackedField(
+    instructions: List<Instruction>,
+    resourceId: Int,
+    fieldName: String,
+    fieldType: String,
+): Boolean {
+    val constants = instructions.withIndex().filter { (_, instruction) ->
+        instruction.opcode == Opcode.CONST &&
+            instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
+            instruction.narrowLiteral == resourceId
+    }
+    if (constants.size != 1) return false
+
+    val constantIndex = constants.single().index
+    var sawFindViewById = false
+    val end = minOf(constantIndex + 24, instructions.size)
+    for (index in constantIndex + 1 until end) {
+        val instruction = instructions[index]
+        val reference = (instruction as? ReferenceInstruction)?.reference
+        val methodReference = reference as? MethodReference
+        if (instruction.opcode == Opcode.INVOKE_VIRTUAL &&
+            methodReference?.definingClass == "Landroid/view/View;" &&
+            methodReference.name == "findViewById" &&
+            methodReference.parameterTypes.map { it.toString() } == listOf("I") &&
+            methodReference.returnType == "Landroid/view/View;"
+        ) {
+            sawFindViewById = true
+        }
+
+        val fieldReference = reference as? FieldReference
+        if (sawFindViewById && instruction.opcode == Opcode.IPUT_OBJECT &&
+            fieldReference?.definingClass == "Lout;" &&
+            fieldReference.name == fieldName &&
+            fieldReference.type == fieldType
+        ) {
+            return true
+        }
+    }
+    return false
+}
+
+/**
+ * Exact Twitch 31.3.1 Lout player-overlay constructor.
+ *
+ * The supplied APKM was checked for all three player-control resources and their
+ * exact obfuscated field destinations before this fingerprint was accepted.
+ */
 internal object PlayerOverlayConstructorFingerprint : Fingerprint(
     definingClass = "Lout;",
     name = "<init>",
@@ -46,16 +100,22 @@ internal object PlayerOverlayConstructorFingerprint : Fingerprint(
         "Lxks;",
         "Lh7a;",
     ),
-)
+    custom = { method, classDef ->
+        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
+        val fieldsVerified = listOf(
+            "j" to "Landroidx/compose/ui/platform/ComposeView;",
+            "k" to "Landroid/widget/ImageView;",
+            "q" to "Landroidx/mediarouter/app/MediaRouteButton;",
+        ).all { (name, type) ->
+            classDef.fields.count { it.name == name && it.type == type } == 1
+        }
 
-/**
- * Exact Twitch 31.3.1 player-overlay constructor.
- *
- * The supplied APKM contains exactly one create_clip_button_compose_view resource
- * lookup in this constructor. That lookup is stored into Lout.j, whose field type
- * is ComposeView.
- */
-private const val CREATE_CLIP_BUTTON_RESOURCE_ID = 0x7f0b05f0
+        fieldsVerified &&
+            hasResourceBackedField(instructions, CREATE_CLIP_BUTTON_RESOURCE_ID, "j", "Landroidx/compose/ui/platform/ComposeView;") &&
+            hasResourceBackedField(instructions, PLAYER_SHARE_RESOURCE_ID, "k", "Landroid/widget/ImageView;") &&
+            hasResourceBackedField(instructions, PLAYER_CAST_RESOURCE_ID, "q", "Landroidx/mediarouter/app/MediaRouteButton;")
+    },
+)
 
 internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
     definingClass = "Lout;",
