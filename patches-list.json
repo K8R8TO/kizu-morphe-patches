@@ -1,35 +1,29 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.3.4",
+  "version": "1.9.3-beta.3.5",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 1.9.3-beta.3.4 fixes the stream-opening crash introduced by the new Player Controls Share/Cast hooks by adding the missing runtime support bindings. Hide Create Clip remains included and working.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 1.9.3-beta.3.5 fixes the stream-opening crash by using dead-at-return parameter registers for the semantic Share/Cast visibility hooks. Existing Create Clip and Player Controls behavior remains included.",
       "default": true,
       "category": null,
-      "dependencies": [
-        "BytecodePatch"
-      ],
-      "compatiblePackages": [
-        {
-          "packageName": "tv.twitch.android.app",
-          "name": "Twitch",
-          "description": null,
-          "appIconColor": "#9147FF",
-          "apkFileType": "APKM",
-          "signatures": null,
-          "targets": [
-            {
-              "version": "31.3.1",
-              "versionCodes": null,
-              "isExperimental": false,
-              "minSdk": null,
-              "description": null
-            }
-          ],
-          "options": []
-        }
-      ],
+      "dependencies": ["BytecodePatch"],
+      "compatiblePackages": [{
+        "packageName": "tv.twitch.android.app",
+        "name": "Twitch",
+        "description": null,
+        "appIconColor": "#9147FF",
+        "apkFileType": "APKM",
+        "signatures": null,
+        "targets": [{
+          "version": "31.3.1",
+          "versionCodes": null,
+          "isExperimental": false,
+          "minSdk": null,
+          "description": null
+        }],
+        "options": []
+      }],
       "options": []
     }
   ]
