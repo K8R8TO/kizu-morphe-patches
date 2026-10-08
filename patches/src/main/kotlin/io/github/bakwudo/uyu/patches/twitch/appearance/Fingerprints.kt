@@ -101,8 +101,11 @@ internal object PlayerOverlayConstructorFingerprint : Fingerprint(
         "Lh7a;",
     ),
     custom = { method, classDef ->
-        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
-        val fieldsVerified = listOf(
+        val maybeInstructions = method.instructionsOrNull?.toList()
+        if (maybeInstructions == null) {
+            false
+        } else {
+            val fieldsVerified = listOf(
             "j" to "Landroidx/compose/ui/platform/ComposeView;",
             "k" to "Landroid/widget/ImageView;",
             "q" to "Landroidx/mediarouter/app/MediaRouteButton;",
