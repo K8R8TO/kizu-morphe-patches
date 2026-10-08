@@ -31,7 +31,7 @@ internal val playerOverlayUiPatch = bytecodePatch {
                 returnIndex,
                 """
                     iget-object v0, p0, Lout;->j:Landroidx/compose/ui/platform/ComposeView;
-                    invoke-static {v0}, $SUPPORT_CLASS->bind(Landroid/view/View;)V;
+                    invoke-static {v0}, $SUPPORT_CLASS->bind(Landroid/view/View;)V
                     iget-object v0, p0, Lout;->k:Landroid/widget/ImageView;
                     iget-object v1, p0, Lout;->q:Landroidx/mediarouter/app/MediaRouteButton;
                     invoke-static {v0, v1}, $SUPPORT_CLASS->bindPlayerControls(Landroid/view/View;Landroid/view/View;)V

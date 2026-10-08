@@ -145,3 +145,16 @@ Both are exposed under Player Controls.
 1.9.3-beta.3 intentionally skips the previously planned Cast-only beta.2 and implements Hide Live Share + Hide Cast together. Hide Create Clip remains unchanged from the working beta.1.10 implementation.
 
 Last updated for 1.9.3-beta.3.
+
+
+## Beta.3.1 correction
+
+Beta.3 contained one invalid smali token in the existing verified Create Clip call: a trailing semicolon after the method descriptor. Smali method descriptors already terminate with V, so the extra semicolon caused Morphe's lexer to report one lexer syntax error.
+
+Correct:
+    invoke-static {v0}, Lapp/morphe/extension/appearance/PlayerOverlaySupport;->bind(Landroid/view/View;)V
+
+Incorrect beta.3:
+    invoke-static {v0}, Lapp/morphe/extension/appearance/PlayerOverlaySupport;->bind(Landroid/view/View;)V;
+
+Beta.3.1 removes only that syntax error. The verified Lout.k Share and Lout.q Cast implementation is unchanged.
