@@ -1,6 +1,6 @@
-package dev.twitchpatches.extension.reload;
+package app.morphe.extension.reload;
 
-// Injected Compose bridges.
+// Injected Compose bridge.
 public final class NativeReloadBridge {
     public static volatile Object state;
     private NativeReloadBridge() {}

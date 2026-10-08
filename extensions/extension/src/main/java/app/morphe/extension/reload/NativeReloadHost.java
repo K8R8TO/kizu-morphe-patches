@@ -1,4 +1,4 @@
-package dev.twitchpatches.extension.reload;
+package app.morphe.extension.reload;
 
 public interface NativeReloadHost {
     Object reloadIdentity();
