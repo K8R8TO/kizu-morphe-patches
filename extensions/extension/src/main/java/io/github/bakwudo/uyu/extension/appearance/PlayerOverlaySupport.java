@@ -38,6 +38,32 @@ public final class PlayerOverlaySupport {
         }
     }
 
+    /** Binds the player Share/Live Share control to the Kizu setting. */
+    public static void bindLiveShareButton(View shareButton) {
+        if (shareButton == null) return;
+        try {
+            HiddenView.attach(
+                    shareButton,
+                    view -> Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON.get(),
+                    false
+            );
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Binds the player Chromecast/Cast control to the Kizu setting. */
+    public static void bindCastButton(View castButton) {
+        if (castButton == null) return;
+        try {
+            HiddenView.attach(
+                    castButton,
+                    view -> Settings.HIDE_CAST_BUTTON.get(),
+                    false
+            );
+        } catch (Throwable ignored) {
+        }
+    }
+
     private static void apply(View view) {
         try {
             if (Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON.get()) {
