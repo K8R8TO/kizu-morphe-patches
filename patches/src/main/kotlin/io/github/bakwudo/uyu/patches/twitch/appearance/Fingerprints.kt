@@ -114,9 +114,9 @@ internal object PlayerOverlayConstructorFingerprint : Fingerprint(
         }
 
         fieldsVerified &&
-            hasResourceBackedField(instructions, CREATE_CLIP_BUTTON_RESOURCE_ID, "j", "Landroidx/compose/ui/platform/ComposeView;") &&
-            hasResourceBackedField(instructions, PLAYER_SHARE_RESOURCE_ID, "k", "Landroid/widget/ImageView;") &&
-            hasResourceBackedField(instructions, PLAYER_CAST_RESOURCE_ID, "q", "Landroidx/mediarouter/app/MediaRouteButton;")
+            hasResourceBackedField(maybeInstructions, CREATE_CLIP_BUTTON_RESOURCE_ID, "j", "Landroidx/compose/ui/platform/ComposeView;") &&
+            hasResourceBackedField(maybeInstructions, PLAYER_SHARE_RESOURCE_ID, "k", "Landroid/widget/ImageView;") &&
+            hasResourceBackedField(maybeInstructions, PLAYER_CAST_RESOURCE_ID, "q", "Landroidx/mediarouter/app/MediaRouteButton;")
     },
 )
 
