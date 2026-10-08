@@ -144,7 +144,7 @@ Both are exposed under Player Controls.
 
 1.9.3-beta.3 intentionally skips the previously planned Cast-only beta.2 and implements Hide Live Share + Hide Cast together. Hide Create Clip remains unchanged from the working beta.1.10 implementation.
 
-Last updated for 1.9.3-beta.3.
+Last updated for 1.9.3-beta.3.2.
 
 
 ## Beta.3.1 correction
@@ -158,3 +158,18 @@ Incorrect beta.3:
     invoke-static {v0}, Lapp/morphe/extension/appearance/PlayerOverlaySupport;->bind(Landroid/view/View;)V;
 
 Beta.3.1 removes only that syntax error. The verified Lout.k Share and Lout.q Cast implementation is unchanged.
+
+
+## Beta.3.2 fingerprint correction and implementation hardening
+
+The supplied Twitch 31.3.1 APKM was re-checked for all three requested Lout player-control mappings before beta.3.2:
+
+- 0x7f0b05f0 -> findViewById -> ComposeView -> Lout.j (Create Clip)
+- 0x7f0b128a -> findViewById -> ImageView -> Lout.k (Share/Live Share)
+- 0x7f0b0c0f -> findViewById -> MediaRouteButton -> Lout.q (Cast)
+
+The Lout fingerprint now rejects a match unless the exact obfuscated fields exist with the exact field types and each resource lookup is followed by the verified resource-backed field assignment. The patch no longer injects before the first RETURN_VOID. It finds each exact IPUT_OBJECT assignment for j/k/q and injects immediately after the corresponding assignment, passing the already-initialized source register with invoke-static/range.
+
+Share and Cast now use separate extension entry points. Their HiddenView bindings use live restoration, so toggling a control off can restore the control without reopening the stream. Initial hiding is also applied immediately on attachment, with the existing pre-draw enforcement retained.
+
+Beta.3.2 release verification requires a successful GitHub Actions build, a prerelease asset containing the exact beta.3.2 version, and valid Morphe bundle/list metadata. Device runtime verification is not claimed until tested on the Samsung SM-G990B2.
