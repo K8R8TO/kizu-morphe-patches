@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.1.9",
+  "version": "1.9.3-beta.1.10",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 1.9.3-beta.1.9 hides both verified player Create Clip controls: create_clip_button_compose_view and create_clip_text_button.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 1.9.3-beta.1.10 hides both verified player Create Clip controls: create_clip_button_compose_view (Lout.j) and create_clip_text_button (Ld040, v21).",
       "default": true,
       "category": null,
       "dependencies": ["BytecodePatch"],
@@ -17,7 +17,8 @@
         "signatures": null,
         "targets": [{"version": "31.3.1", "versionCodes": null, "isExperimental": false, "minSdk": null, "description": null}],
         "options": []
-      }]
+      }],
+      "options": []
     }
   ]
 }
