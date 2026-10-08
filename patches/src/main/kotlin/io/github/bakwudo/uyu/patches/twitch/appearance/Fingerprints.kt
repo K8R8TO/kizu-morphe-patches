@@ -49,18 +49,14 @@ internal object PlayerOverlayConstructorFingerprint : Fingerprint(
 )
 
 /**
- * Exact Twitch 31.3.1 ClipButtonUiState constructor.
+ * Exact Twitch 31.3.1 player-overlay constructor.
  *
- * The supplied Twitch 31.3.1 APKM resolves this class as Lnra; with the constructor
- * (ZZLtv/twitch/android/core/strings/StringResource;)V. Its first boolean is the
- * isClipButtonVisible value exposed by ClipButtonUiState.toString().
+ * The supplied APKM contains exactly one create_clip_button_compose_view resource
+ * lookup in this constructor. That lookup is stored into Lout.j, whose field type
+ * is ComposeView.
  */
 private const val CREATE_CLIP_BUTTON_RESOURCE_ID = 0x7f0b05f0
 
-/**
- * Exact Twitch 31.3.1 player-overlay constructor. The supplied Twitch 31.3.1 APKM
- * contains exactly one create_clip_button_compose_view resource lookup in this method.
- */
 internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
     definingClass = "Lout;",
     name = "<init>",
@@ -78,40 +74,65 @@ internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
         if (instructions == null) {
             false
         } else {
-            val resourceConstants = instructions.withIndex().filter { (_, instruction) ->
+            instructions.count { instruction ->
                 instruction.opcode == Opcode.CONST &&
                     instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
                     instruction.narrowLiteral == CREATE_CLIP_BUTTON_RESOURCE_ID
+            } == 1
+        }
+    },
+)
+
+/**
+ * Exact Twitch 31.3.1 constructor that resolves create_clip_text_button.
+ *
+ * The supplied APKM contains this resource exactly once, in Ld040.<init>.
+ * The resolved view is cast to ComposeView and immediately tested for null.
+ */
+private const val CREATE_CLIP_TEXT_BUTTON_RESOURCE_ID = 0x7f0b05f2
+
+internal object PlayerClipTextButtonFingerprint : Fingerprint(
+    definingClass = "Ld040;",
+    name = "<init>",
+    returnType = "V",
+    parameters = listOf(
+        "Llp30;",
+        "Lew0;",
+        "Lylg;",
+        "Lql40;",
+        "Lwvl;",
+        "Lo57;",
+        "Lqi70;",
+    ),
+    custom = { method, _ ->
+        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
+
+        val constants = instructions.withIndex().filter { (_, instruction) ->
+            instruction.opcode == Opcode.CONST &&
+                instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
+                instruction.narrowLiteral == CREATE_CLIP_TEXT_BUTTON_RESOURCE_ID
+        }
+
+        if (constants.size != 1) return@Fingerprint false
+        val constantIndex = constants.single().index
+
+        instructions.drop(constantIndex + 1).take(16).indices.any { relative ->
+            val index = constantIndex + 1 + relative
+            val instruction = instructions[index]
+            if (instruction.opcode != Opcode.CHECK_CAST ||
+                instruction !is ReferenceInstruction ||
+                (instruction.reference as? com.android.tools.smali.dexlib2.iface.reference.TypeReference)?.type !=
+                    "Landroidx/compose/ui/platform/ComposeView;" ||
+                instruction !is com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+            ) {
+                return@any false
             }
 
-            if (resourceConstants.size != 1) {
-                false
-            } else {
-                val resourceRegister =
-                    (resourceConstants.single().value as? com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction)?.registerA
-
-                if (resourceRegister == null) {
-                    false
-                } else {
-                    val findViewCalls = instructions.withIndex().filter { (index, instruction) ->
-                        index > resourceConstants.single().index &&
-                            instruction.opcode == Opcode.INVOKE_VIRTUAL &&
-                            instruction is com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction &&
-                            instruction.registerCount == 2 &&
-                            listOf(instruction.registerC, instruction.registerD).contains(resourceRegister) &&
-                            instruction is ReferenceInstruction &&
-                            (instruction.reference as? MethodReference)?.let { reference ->
-                                reference.definingClass == "Landroid/view/View;" &&
-                                    reference.name == "findViewById" &&
-                                    reference.returnType == "Landroid/view/View;" &&
-                                    reference.parameterTypes.map { it.toString() } == listOf("I")
-                            } == true
-                    }
-
-                    findViewCalls.size == 1 &&
-                        findViewCalls.single().index + 1 < instructions.size &&
-                        instructions[findViewCalls.single().index + 1].opcode == Opcode.MOVE_RESULT_OBJECT
-                }
+            val register = instruction.registerA
+            instructions.drop(index + 1).take(4).any { next ->
+                next.opcode == Opcode.IF_EQZ &&
+                    next is com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction &&
+                    next.registerA == register
             }
         }
     },
@@ -131,15 +152,6 @@ internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
     strings = listOf("twitch.tv", "twitch.a2z.com", "targetUrl"),
 )
 
-/**
- * Exact Twitch 31.3.1 Following-feed builder method found in the supplied APKM.
- *
- * The verified method is Lq1e.l2(Lm2i;Z)V. Its bytecode directly constructs:
- * - Ll2i.<init>(List) -> ResumeWatching
- * - Lj2i.<init>(List) -> OfflineChannels
- *
- * The custom check requires both constructor calls, in addition to the exact method signature.
- */
 internal object FollowingContentBuilderFingerprint : Fingerprint(
     definingClass = "Lq1e;",
     name = "l2",
