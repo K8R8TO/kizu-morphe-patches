@@ -21,59 +21,54 @@ internal val playerOverlayUiPatch = bytecodePatch {
     dependsOn(settingsPatch)
 
     execute {
-        // Exact Twitch 31.3.1 field assignments, verified against the supplied APKM:
-        // j = Create Clip, k = player Share/Live Share, q = Cast.
-        // Bind immediately after each exact iput-object. This is deliberately the only
-        // Share/Cast injection path: the previous semantic return hooks caused stream-open
-        // runtime verification failures on the real Twitch method control-flow graph.
-        PlayerOverlayConstructorFingerprint.method.apply {
-            fun findFieldAssignment(fieldName: String, fieldType: String): Pair<Int, Int> {
-                val matches = instructions.withIndex().filter { (_, instruction) ->
-                    if (instruction.opcode != Opcode.IPUT_OBJECT || instruction !is ReferenceInstruction) return@filter false
-                    val reference = instruction.reference as? FieldReference ?: return@filter false
-                    reference.definingClass == "Lout;" &&
-                        reference.name == fieldName &&
-                        reference.type == fieldType
-                }
-                if (matches.size != 1) {
-                    throw PatchException(
-                        "Expected exactly one Twitch 31.3.1 Lout.\$fieldName assignment, found ${matches.size}.",
-                    )
-                }
-                val assignment = matches.single()
-                val register = (assignment.value as? TwoRegisterInstruction)?.registerA
-                    ?: throw PatchException("Could not read the Lout.\$fieldName source register.")
-                return assignment.index to register
-            }
-
-            val targets = listOf(
-                Triple("j", "Landroidx/compose/ui/platform/ComposeView;", "bind"),
-                Triple("k", "Landroid/widget/ImageView;", "bindLiveShareButton"),
-                Triple("q", "Landroidx/mediarouter/app/MediaRouteButton;", "bindCastButton"),
-            ).map { (fieldName, fieldType, methodName) ->
-                val (index, register) = findFieldAssignment(fieldName, fieldType)
-                Triple(index, register, methodName)
+        // Exact Twitch 31.3.1 player-header binding. The visible Share/Cast controls are
+        // Lqot.r/Lqot.e, and Llrx.v() reapplies their visibility after Lout is constructed.
+        // Bind the exact visible views at every verified field load so HiddenView can enforce
+        // the setting after Twitch's own visibility updates.
+        PlayerOverlayHeaderControlsFingerprint.method.apply {
+            val targets = instructions.withIndex().filter { (_, instruction) ->
+                if (instruction.opcode != Opcode.IGET_OBJECT || instruction !is ReferenceInstruction) return@filter false
+                val reference = instruction.reference as? FieldReference ?: return@filter false
+                reference.definingClass == "Lqot;" &&
+                    ((reference.name == "r" && reference.type == "Landroid/widget/ImageView;") ||
+                        (reference.name == "e" && reference.type == "Landroidx/mediarouter/app/MediaRouteButton;"))
+            }.map { (index, instruction) ->
+                val register = (instruction as TwoRegisterInstruction).registerA
+                val reference = instruction.reference as FieldReference
+                Triple(index, register, if (reference.name == "r") "bindLiveShareButton" else "bindCastButton")
             }.sortedByDescending { it.first }
 
-            targets.forEach { (index, _, methodName) ->
-                val fieldName = when (methodName) {
-                    "bind" -> "j"
-                    "bindLiveShareButton" -> "k"
-                    "bindCastButton" -> "q"
-                    else -> throw PatchException("Unknown verified player control field: $methodName")
-                }
-                val fieldType = when (fieldName) {
-                    "j" -> "Landroidx/compose/ui/platform/ComposeView;"
-                    "k" -> "Landroid/widget/ImageView;"
-                    "q" -> "Landroidx/mediarouter/app/MediaRouteButton;"
-                    else -> throw PatchException("Unknown verified player control type: $fieldName")
-                }
+            if (targets.isEmpty()) {
+                throw PatchException("Verified Lqot Share/Cast field loads were not found in Llrx.v().")
+            }
+
+            targets.forEach { (index, register, methodName) ->
                 addInstructions(
                     index + 1,
-                    "iget-object v0, p0, Lout;->$fieldName:$fieldType\n" +
-                        "invoke-static {v0}, $SUPPORT_CLASS->$methodName(Landroid/view/View;)V",
+                    "invoke-static/range { v$register .. v$register }, " +
+                        "$SUPPORT_CLASS->$methodName(Landroid/view/View;)V",
                 )
             }
+        }
+
+        // Exact Twitch 31.3.1 Lout Create Clip binding remains resource/field verified.
+        PlayerOverlayConstructorFingerprint.method.apply {
+            val matches = instructions.withIndex().filter { (_, instruction) ->
+                if (instruction.opcode != Opcode.IPUT_OBJECT || instruction !is ReferenceInstruction) return@filter false
+                val reference = instruction.reference as? FieldReference ?: return@filter false
+                reference.definingClass == "Lout;" &&
+                    reference.name == "j" &&
+                    reference.type == "Landroidx/compose/ui/platform/ComposeView;"
+            }
+            if (matches.size != 1) {
+                throw PatchException("Expected exactly one verified Lout.j Create Clip assignment.")
+            }
+            val index = matches.single().index
+            addInstructions(
+                index + 1,
+                "iget-object v0, p0, Lout;->j:Landroidx/compose/ui/platform/ComposeView;\n" +
+                    "invoke-static {v0}, $SUPPORT_CLASS->bind(Landroid/view/View;)V",
+            )
         }
 
         // Exact Twitch 31.3.1 Ld040.<init> lookup:
