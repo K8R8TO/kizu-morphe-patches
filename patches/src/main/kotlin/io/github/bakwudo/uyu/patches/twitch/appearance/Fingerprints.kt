@@ -4,7 +4,6 @@ import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.instructionsOrNull
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
-import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
@@ -16,7 +15,7 @@ internal object BaseViewDelegateConstructorFingerprint : Fingerprint(
 )
 
 internal object CommunityHighlightPresenterFingerprint : Fingerprint(
-    strings = listOf("CommunityHighlightPresenter\\$UpdateEvent"),
+    strings = listOf("CommunityHighlightPresenter\$UpdateEvent"),
 )
 
 internal object AddCommunityHighlightToStringFingerprint : Fingerprint(
@@ -30,7 +29,7 @@ internal object SubtemberHighlightTypeFingerprint : Fingerprint(
     name = "<clinit>",
     strings = listOf("subtember"),
     custom = { _, classDef ->
-        classDef.superclass != "\Ljava/lang/Object;" &&
+        classDef.superclass != "Ljava/lang/Object;" &&
             classDef.fields.any { AccessFlags.STATIC.isSet(it.accessFlags) && it.type == classDef.type }
     },
 )

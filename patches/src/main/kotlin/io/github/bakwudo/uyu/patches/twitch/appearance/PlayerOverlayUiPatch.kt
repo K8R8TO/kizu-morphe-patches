@@ -5,8 +5,8 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.Opcode
-import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
@@ -29,7 +29,7 @@ internal val playerOverlayUiPatch = bytecodePatch {
 
         val visibleStore = instructions.withIndex().filter { (_, instruction) ->
             instruction.opcode == Opcode.IPUT_BOOLEAN &&
-                instruction is OneRegisterInstruction &&
+                instruction is TwoRegisterInstruction &&
                 instruction is ReferenceInstruction &&
                 (instruction.reference as? FieldReference)?.let { field ->
                     field.definingClass == "Lnra;" &&
@@ -42,7 +42,7 @@ internal val playerOverlayUiPatch = bytecodePatch {
             throw PatchException("Twitch 31.3.1 ClipButtonUiState must store isClipButtonVisible exactly once.")
         }
 
-        val register = (visibleStore.single().value as OneRegisterInstruction).registerA
+        val register = (visibleStore.single().value as TwoRegisterInstruction).registerA
 
         method.addInstructions(
             visibleStore.single().index,
