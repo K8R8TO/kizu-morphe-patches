@@ -83,7 +83,7 @@ internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
     },
 )
 
-/**
+/** 
  * Exact Twitch 31.3.1 constructor that resolves create_clip_text_button.
  *
  * The supplied APKM contains this resource exactly once, in Ld040.<init>.
@@ -110,31 +110,34 @@ internal object PlayerClipTextButtonFingerprint : Fingerprint(
             false
         } else {
             val constants = instructions.withIndex().filter { (_, instruction) ->
-            instruction.opcode == Opcode.CONST &&
-                instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
-                instruction.narrowLiteral == CREATE_CLIP_TEXT_BUTTON_RESOURCE_ID
-        }
-
-        if (constants.size != 1) return@Fingerprint false
-        val constantIndex = constants.single().index
-
-        instructions.drop(constantIndex + 1).take(16).indices.any { relative ->
-            val index = constantIndex + 1 + relative
-            val instruction = instructions[index]
-            if (instruction.opcode != Opcode.CHECK_CAST ||
-                instruction !is ReferenceInstruction ||
-                (instruction.reference as? com.android.tools.smali.dexlib2.iface.reference.TypeReference)?.type !=
-                    "Landroidx/compose/ui/platform/ComposeView;" ||
-                instruction !is com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
-            ) {
-                return@any false
+                instruction.opcode == Opcode.CONST &&
+                    instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
+                    instruction.narrowLiteral == CREATE_CLIP_TEXT_BUTTON_RESOURCE_ID
             }
 
-            val register = instruction.registerA
-            instructions.drop(index + 1).take(4).any { next ->
-                next.opcode == Opcode.IF_EQZ &&
-                    next is com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction &&
-                    next.registerA == register
+            if (constants.size != 1) {
+                false
+            } else {
+                val constantIndex = constants.single().index
+                instructions.drop(constantIndex + 1).take(16).any { relative ->
+                    val index = constantIndex + 1 + relative
+                    val instruction = instructions[index]
+                    if (instruction.opcode != Opcode.CHECK_CAST ||
+                        instruction !is ReferenceInstruction ||
+                        (instruction.reference as? com.android.tools.smali.dexlib2.iface.reference.TypeReference)?.type !=
+                            "Landroidx/compose/ui/platform/ComposeView;" ||
+                        instruction !is com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+                    ) {
+                        return@any false
+                    }
+
+                    val register = instruction.registerA
+                    instructions.drop(index + 1).take(4).any { next ->
+                        next.opcode == Opcode.IF_EQZ &&
+                            next is com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction &&
+                            next.registerA == register
+                    }
+                }
             }
         }
     },
