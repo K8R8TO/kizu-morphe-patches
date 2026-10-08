@@ -2,7 +2,9 @@ package io.github.bakwudo.uyu.patches.twitch.reload
 
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.resourcePatch
-import io.github.bakwudo.uyu.patches.twitch.shared.parseResourceXml
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
+import org.xml.sax.InputSource
 import org.w3c.dom.Element
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
@@ -12,6 +14,10 @@ internal var nativeMuteLabel = 0L
 internal var nativeReloadIcon = 0
 internal var nativeMuteButton = 0
 internal var nativePlaybackContainer = 0
+
+private fun parseResourceXml(text: String) =
+    DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+        .newDocumentBuilder().parse(InputSource(StringReader(text)))
 
 internal val nativeReloadResources = resourcePatch {
     execute {
