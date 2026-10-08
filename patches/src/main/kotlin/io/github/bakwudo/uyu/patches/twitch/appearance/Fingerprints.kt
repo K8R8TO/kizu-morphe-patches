@@ -105,9 +105,11 @@ internal object PlayerClipTextButtonFingerprint : Fingerprint(
         "Lqi70;",
     ),
     custom = { method, _ ->
-        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
-
-        val constants = instructions.withIndex().filter { (_, instruction) ->
+        val instructions = method.instructionsOrNull?.toList()
+        if (instructions == null) {
+            false
+        } else {
+            val constants = instructions.withIndex().filter { (_, instruction) ->
             instruction.opcode == Opcode.CONST &&
                 instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
                 instruction.narrowLiteral == CREATE_CLIP_TEXT_BUTTON_RESOURCE_ID
