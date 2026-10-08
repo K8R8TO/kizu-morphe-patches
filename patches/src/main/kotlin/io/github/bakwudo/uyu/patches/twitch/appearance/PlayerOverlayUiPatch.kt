@@ -55,11 +55,23 @@ internal val playerOverlayUiPatch = bytecodePatch {
                 Triple(index, register, methodName)
             }.sortedByDescending { it.first }
 
-            targets.forEach { (index, register, methodName) ->
+            targets.forEach { (index, _, methodName) ->
+                val fieldName = when (methodName) {
+                    "bind" -> "j"
+                    "bindLiveShareButton" -> "k"
+                    "bindCastButton" -> "q"
+                    else -> throw PatchException("Unknown verified player control field: $methodName")
+                }
+                val fieldType = when (fieldName) {
+                    "j" -> "Landroidx/compose/ui/platform/ComposeView;"
+                    "k" -> "Landroid/widget/ImageView;"
+                    "q" -> "Landroidx/mediarouter/app/MediaRouteButton;"
+                    else -> throw PatchException("Unknown verified player control type: $fieldName")
+                }
                 addInstructions(
                     index + 1,
-                    "invoke-static/range { v$register .. v$register }, " +
-                        "$SUPPORT_CLASS->$methodName(Landroid/view/View;)V",
+                    "iget-object v0, p0, Lout;->$fieldName:$fieldType\n" +
+                        "invoke-static {v0}, $SUPPORT_CLASS->$methodName(Landroid/view/View;)V",
                 )
             }
         }
