@@ -3,14 +3,14 @@ name: Pre-release
 on:
   push:
     branches:
-      - beta
+      - dev
   pull_request_target:
     types:
       - opened
       - synchronize
   workflow_dispatch:
 concurrency:
-  group: kizu-prerelease-beta11
+  group: kizu-prerelease-dev
   cancel-in-progress: true
 jobs:
   prerelease:
@@ -22,10 +22,10 @@ jobs:
       attestations: write
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout beta
+      - name: Checkout dev
         uses: actions/checkout@v5
         with:
-          ref: beta
+          ref: dev
           fetch-depth: 0
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -47,7 +47,7 @@ jobs:
           python3 - <<'PY'
           import json, os, pathlib, re
           v = os.environ["VERSION"]
-          if not re.fullmatch(r"\d+\.\d+\.\d+-[0-9A-Za-z.-]+", v):
+          if not re.fullmatch(r"d+.d+.d+-[0-9A-Za-z.-]+", v):
               raise SystemExit(f"Invalid pre-release version: {v}")
           bundle = json.loads(pathlib.Path("patches-bundle.json").read_text())
           plist = json.loads(pathlib.Path("patches-list.json").read_text())
@@ -93,7 +93,7 @@ jobs:
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }} (Pre-release)
-          target_commitish: beta
+          target_commitish: dev
           body: |
             Kizu Twitch Patches v${{ steps.version.outputs.version }} pre-release.
             Testing channel only. This is not the stable release.
