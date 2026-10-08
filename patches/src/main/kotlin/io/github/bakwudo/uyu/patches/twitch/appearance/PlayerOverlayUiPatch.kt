@@ -59,7 +59,7 @@ internal val playerOverlayUiPatch = bytecodePatch {
                 addInstructions(
                     index + 1,
                     "invoke-static/range { v$register .. v$register }, " +
-                        "\$SUPPORT_CLASS->\$methodName(Landroid/view/View;)V",
+                        "$SUPPORT_CLASS->$methodName(Landroid/view/View;)V",
                 )
             }
         }
