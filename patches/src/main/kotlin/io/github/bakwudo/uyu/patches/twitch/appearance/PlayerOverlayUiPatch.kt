@@ -63,6 +63,47 @@ internal val playerOverlayUiPatch = bytecodePatch {
             }
         }
 
+        // The constructor binding is not the final authority for Share/Cast visibility:
+        // Twitch's state method can re-apply its own visibility after construction. Keep the
+        // initial bindings above, then enforce the same settings through the APK-verified
+        // semantic visibility methods below.
+        PlayerOverlayHeaderControlsFingerprint.method.apply {
+            val returns = instructions.withIndex()
+                .filter { it.value.opcode == Opcode.RETURN_VOID }
+                .map { it.index }
+                .sortedDescending()
+
+            returns.forEach { returnIndex ->
+                addInstructions(
+                    returnIndex,
+                    """
+                        iget-object v0, p0, Llrx;->d:Lqot;
+                        iget-object v1, v0, Lqot;->r:Landroid/widget/ImageView;
+                        invoke-static {v1}, $SUPPORT_CLASS->bindLiveShareButton(Landroid/view/View;)V
+                        iget-object v1, v0, Lqot;->e:Landroidx/mediarouter/app/MediaRouteButton;
+                        invoke-static {v1}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
+                    """,
+                )
+            }
+        }
+
+        PlayerOverlayChromecastSetupFingerprint.method.apply {
+            val returns = instructions.withIndex()
+                .filter { it.value.opcode == Opcode.RETURN_VOID }
+                .map { it.index }
+                .sortedDescending()
+
+            returns.forEach { returnIndex ->
+                addInstructions(
+                    returnIndex,
+                    """
+                        iget-object v0, p0, Lout;->q:Landroidx/mediarouter/app/MediaRouteButton;
+                        invoke-static {v0}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
+                    """,
+                )
+            }
+        }
+
         // Exact Twitch 31.3.1 Ld040.<init> lookup:
         // create_clip_text_button (resource 0x7f0b05f2) -> ComposeView v21 -> if-eqz v21.
         // v21 cannot be used with the 35c invoke form, so /range is mandatory.
