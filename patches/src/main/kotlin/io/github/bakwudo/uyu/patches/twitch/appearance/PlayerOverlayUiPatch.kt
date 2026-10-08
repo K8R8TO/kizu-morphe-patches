@@ -6,8 +6,10 @@ import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.EXTENSION_PACKAGE
@@ -19,24 +21,46 @@ internal val playerOverlayUiPatch = bytecodePatch {
     dependsOn(settingsPatch)
 
     execute {
-        // Exact Twitch 31.3.1 Lout.j:
-        // create_clip_button_compose_view (resource 0x7f0b05f0).
+        // Exact Twitch 31.3.1 field assignments, verified against the supplied APKM:
+        // j = create_clip_button_compose_view, k = player Share/Live Share, q = Cast.
+        // Bind immediately after each exact iput-object. This avoids relying on the first
+        // RETURN_VOID in the constructor and avoids any register clobbering.
         PlayerOverlayConstructorFingerprint.method.apply {
-            val returnIndex = instructions.indexOfFirst { it.opcode == Opcode.RETURN_VOID }
-            if (returnIndex < 0) {
-                throw PatchException("Twitch 31.3.1 Lout constructor has no RETURN_VOID.")
+            fun findFieldAssignment(fieldName: String, fieldType: String): Pair<Int, Int> {
+                val matches = instructions.withIndex().filter { (_, instruction) ->
+                    if (instruction.opcode != Opcode.IPUT_OBJECT || instruction !is ReferenceInstruction) return@filter false
+                    val reference = instruction.reference as? FieldReference ?: return@filter false
+                    reference.definingClass == "Lout;" &&
+                        reference.name == fieldName &&
+                        reference.type == fieldType
+                }
+                if (matches.size != 1) {
+                    throw PatchException(
+                        "Expected exactly one Twitch 31.3.1 Lout.$fieldName assignment, found ${matches.size}.",
+                    )
+                }
+                val assignment = matches.single()
+                val register = (assignment.value as? TwoRegisterInstruction)?.registerA
+                    ?: throw PatchException("Could not read the Lout.$fieldName source register.")
+                return assignment.index to register
             }
 
-            addInstructions(
-                returnIndex,
-                """
-                    iget-object v0, p0, Lout;->j:Landroidx/compose/ui/platform/ComposeView;
-                    invoke-static {v0}, $SUPPORT_CLASS->bind(Landroid/view/View;)V
-                    iget-object v0, p0, Lout;->k:Landroid/widget/ImageView;
-                    iget-object v1, p0, Lout;->q:Landroidx/mediarouter/app/MediaRouteButton;
-                    invoke-static {v0, v1}, $SUPPORT_CLASS->bindPlayerControls(Landroid/view/View;Landroid/view/View;)V
-                """,
-            )
+            val targets = listOf(
+                Triple("j", "Landroidx/compose/ui/platform/ComposeView;", "bind"),
+                Triple("k", "Landroid/widget/ImageView;", "bindLiveShareButton"),
+                Triple("q", "Landroidx/mediarouter/app/MediaRouteButton;", "bindCastButton"),
+            ).map { (fieldName, fieldType, methodName) ->
+                val (index, register) = findFieldAssignment(fieldName, fieldType)
+                Triple(index, register, methodName)
+            }.sortedByDescending { it.first }
+
+            targets.forEach { (index, register, methodName) ->
+                addInstructions(
+                    index + 1,
+                    "invoke-static/range { v$register .. v$register }, " +
+                        "$SUPPORT_CLASS->$methodName(Landroid/view/View;)V",
+                )
+            }
         }
 
         // Exact Twitch 31.3.1 Ld040.<init> lookup:
