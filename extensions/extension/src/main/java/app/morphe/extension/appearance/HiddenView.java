@@ -35,6 +35,7 @@ final class HiddenView implements ViewTreeObserver.OnPreDrawListener, View.OnAtt
     public void onViewAttachedToWindow(View attached) {
         observer = view.getViewTreeObserver();
         observer.addOnPreDrawListener(this);
+        update();
     }
 
     @Override
