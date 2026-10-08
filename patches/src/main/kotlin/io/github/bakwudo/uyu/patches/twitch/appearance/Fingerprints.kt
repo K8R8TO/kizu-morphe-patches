@@ -155,6 +155,84 @@ internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
  */
 private const val CREATE_CLIP_TEXT_BUTTON_RESOURCE_ID = 0x7f0b05f2
 
+/**
+ * Exact Twitch 31.3.1 player-header state method.
+ *
+ * In the supplied APKM, Llrx.v(ViewDelegateState) is the state/visibility path for the
+ * generated player-control binding. It references Lqot.r (ImageView, resource 0x7f0b128a,
+ * Share/Live Share) and Lqot.e (MediaRouteButton, resource 0x7f0b0394, Chromecast control)
+ * while calling View.setVisibility().
+ */
+internal object PlayerOverlayHeaderControlsFingerprint : Fingerprint(
+    definingClass = "Llrx;",
+    name = "v",
+    returnType = "V",
+    parameters = listOf("Ltv/twitch/android/core/mvp/viewdelegate/ViewDelegateState;"),
+    custom = { method, classDef ->
+        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
+        val hasDelegateBindingField = classDef.fields.count {
+            it.name == "d" && it.type == "Lqot;"
+        } == 1
+
+        fun hasQotField(name: String, type: String) = instructions.any { instruction ->
+            val reference = (instruction as? ReferenceInstruction)?.reference as? FieldReference
+            reference?.definingClass == "Lqot;" &&
+                reference.name == name &&
+                reference.type == type
+        }
+
+        fun hasSetVisibility(type: String) = instructions.any { instruction ->
+            val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+            instruction.opcode == Opcode.INVOKE_VIRTUAL &&
+                reference?.name == "setVisibility" &&
+                reference?.definingClass == type &&
+                reference.parameterTypes.map { it.toString() } == listOf("I") &&
+                reference.returnType == "V"
+        }
+
+        hasDelegateBindingField &&
+            hasQotField("r", "Landroid/widget/ImageView;") &&
+            hasQotField("e", "Landroidx/mediarouter/app/MediaRouteButton;") &&
+            hasSetVisibility("Landroid/widget/ImageView;") &&
+            hasSetVisibility("Landroidx/mediarouter/app/MediaRouteButton;")
+    },
+)
+
+/**
+ * Exact Twitch 31.3.1 Chromecast setup method.
+ *
+ * The supplied APKM's Lout.z() reads Lout.q (MediaRouteButton) and drives its visibility.
+ * It has multiple return paths, so the patch must enforce the setting before every return.
+ */
+internal object PlayerOverlayChromecastSetupFingerprint : Fingerprint(
+    definingClass = "Lout;",
+    name = "z",
+    returnType = "V",
+    parameters = listOf(),
+    custom = { method, classDef ->
+        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
+        val qField = classDef.fields.count {
+            it.name == "q" && it.type == "Landroidx/mediarouter/app/MediaRouteButton;"
+        } == 1
+        val qLoad = instructions.any { instruction ->
+            val reference = (instruction as? ReferenceInstruction)?.reference as? FieldReference
+            instruction.opcode == Opcode.IGET_OBJECT &&
+                reference?.definingClass == "Lout;" &&
+                reference.name == "q" &&
+                reference.type == "Landroidx/mediarouter/app/MediaRouteButton;"
+        }
+        val qVisibility = instructions.any { instruction ->
+            val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+            instruction.opcode == Opcode.INVOKE_VIRTUAL &&
+                reference?.definingClass == "Landroidx/mediarouter/app/MediaRouteButton;" &&
+                reference.name == "setVisibility" &&
+                reference.parameterTypes.map { it.toString() } == listOf("I") &&
+                reference.returnType == "V"
+        }
+        qField && qLoad && qVisibility
+    },
+)
+
 internal object PlayerClipTextButtonFingerprint : Fingerprint(
     definingClass = "Ld040;",
     name = "<init>",
