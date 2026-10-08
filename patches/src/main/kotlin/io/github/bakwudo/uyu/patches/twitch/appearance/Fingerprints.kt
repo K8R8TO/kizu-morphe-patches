@@ -106,17 +106,18 @@ internal object PlayerOverlayConstructorFingerprint : Fingerprint(
             false
         } else {
             val fieldsVerified = listOf(
-            "j" to "Landroidx/compose/ui/platform/ComposeView;",
-            "k" to "Landroid/widget/ImageView;",
-            "q" to "Landroidx/mediarouter/app/MediaRouteButton;",
-        ).all { (name, type) ->
-            classDef.fields.count { it.name == name && it.type == type } == 1
-        }
+                "j" to "Landroidx/compose/ui/platform/ComposeView;",
+                "k" to "Landroid/widget/ImageView;",
+                "q" to "Landroidx/mediarouter/app/MediaRouteButton;",
+            ).all { (name, type) ->
+                classDef.fields.count { it.name == name && it.type == type } == 1
+            }
 
-        fieldsVerified &&
-            hasResourceBackedField(maybeInstructions, CREATE_CLIP_BUTTON_RESOURCE_ID, "j", "Landroidx/compose/ui/platform/ComposeView;") &&
-            hasResourceBackedField(maybeInstructions, PLAYER_SHARE_RESOURCE_ID, "k", "Landroid/widget/ImageView;") &&
-            hasResourceBackedField(maybeInstructions, PLAYER_CAST_RESOURCE_ID, "q", "Landroidx/mediarouter/app/MediaRouteButton;")
+            fieldsVerified &&
+                hasResourceBackedField(maybeInstructions, CREATE_CLIP_BUTTON_RESOURCE_ID, "j", "Landroidx/compose/ui/platform/ComposeView;") &&
+                hasResourceBackedField(maybeInstructions, PLAYER_SHARE_RESOURCE_ID, "k", "Landroid/widget/ImageView;") &&
+                hasResourceBackedField(maybeInstructions, PLAYER_CAST_RESOURCE_ID, "q", "Landroidx/mediarouter/app/MediaRouteButton;")
+        }
     },
 )
 
