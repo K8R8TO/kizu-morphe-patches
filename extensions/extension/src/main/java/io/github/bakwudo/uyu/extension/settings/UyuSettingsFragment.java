@@ -109,8 +109,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
         }
         addSectionLink(screen, SECTION_EMOTES, "7TV, BTTV, FFZ and animated emotes");
         addSectionLink(screen, SECTION_CHAT, "Chat controls");
+        addSectionLink(screen, SECTION_PLAYER, "Player Controls");
         addSectionLink(screen, SECTION_HOME, "Home & navigation controls");
-        addSectionLink(screen, SECTION_PLAYER, "Player controls");
         addSectionLink(screen, SECTION_PRIVACY, "Privacy");
     }
 
