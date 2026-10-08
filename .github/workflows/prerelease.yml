@@ -82,6 +82,12 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           test -f "patches/build/libs/patches-$VERSION.mpp"
+      - name: Pin pre-release tag to this build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git tag -f "v$VERSION" "$GITHUB_SHA"
+          git push origin "refs/tags/v$VERSION" --force
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v3
         with:
