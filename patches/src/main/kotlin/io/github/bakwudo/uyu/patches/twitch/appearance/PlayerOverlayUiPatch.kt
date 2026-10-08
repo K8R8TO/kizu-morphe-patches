@@ -34,7 +34,7 @@ internal val playerOverlayUiPatch = bytecodePatch {
                         (reference.name == "e" && reference.type == "Landroidx/mediarouter/app/MediaRouteButton;"))
             }.map { (index, instruction) ->
                 val register = (instruction as TwoRegisterInstruction).registerA
-                val reference = instruction.reference as FieldReference
+                val reference = (instruction as ReferenceInstruction).reference as FieldReference
                 Triple(index, register, if (reference.name == "r") "bindLiveShareButton" else "bindCastButton")
             }.sortedByDescending { it.first }
 
