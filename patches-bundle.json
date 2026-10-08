@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-09T02:17:00",
-  "description": "# [1.9.3-beta.3.8] Fix player controls smali interpolation",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.3.8/patches-1.9.3-beta.3.8.mpp",
+  "created_at": "2026-10-08T21:13:10",
+  "description": "# [1.9.3-beta.3.9] Fix visible player Share and Cast controls",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.3.9/patches-1.9.3-beta.3.9.mpp",
   "signature_download_url": "",
-  "version": "1.9.3-beta.3.8"
+  "version": "1.9.3-beta.3.9"
 }
