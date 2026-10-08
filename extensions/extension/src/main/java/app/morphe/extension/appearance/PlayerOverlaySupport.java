@@ -9,12 +9,8 @@ public final class PlayerOverlaySupport {
     private PlayerOverlaySupport() {
     }
 
-    /**
-     * Twitch 31.3.1's Lout; player overlay keeps the Create Clip controls as
-     * concrete views. Binding those exact instances avoids relying on a view-tree
-     * scan, which can miss controls managed by the overlay lifecycle.
-     */
-    public static void bind(View createClipComposeView, View createClipImageView) {
+    /** Hide the verified Twitch 31.3.1 player Create Clip ComposeView. */
+    public static void bind(View createClipComposeView) {
         try {
             if (createClipComposeView != null) {
                 HiddenView.attach(
@@ -22,9 +18,16 @@ public final class PlayerOverlaySupport {
                         view -> Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON.get(),
                         false);
             }
-            if (createClipImageView != null) {
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Hide the separately-created verified create_clip_text_button ComposeView. */
+    public static void bindTextClipButton(View createClipTextButton) {
+        try {
+            if (createClipTextButton != null) {
                 HiddenView.attach(
-                        createClipImageView,
+                        createClipTextButton,
                         view -> Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON.get(),
                         false);
             }
