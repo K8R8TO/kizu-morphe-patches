@@ -136,7 +136,6 @@ Used/adapted for:
 - Login compatibility.
 - Notification compatibility.
 - Ad and promotion handling.
-- Danmaku implementation and supporting UI.
 - Channel Points patch structure.
 - Shared patch/extension utilities.
 - Twitch compatibility plumbing.
@@ -209,11 +208,6 @@ These repositories were used as technical/reference material or as part of the u
 
 Upstream/reference lineage identified by UYU and Hooman's work. Kizu preserves that lineage for inherited patching concepts and patterns.
 
-### niconico-yt-morphe-patches
-
-**Repository:** https://github.com/david419kr/niconico-yt-morphe-patches
-
-Reference for the Niconico-style Danmaku overlay concept credited through the UYU lineage.
 
 ### morphe-androidtv-patches
 
