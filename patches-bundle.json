@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-09T00:33:00",
-  "description": "# [1.9.3-beta.3.5] Fix stream-opening verifier crash in Share/Cast hooks",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.3.5/patches-1.9.3-beta.3.5.mpp",
+  "description": "# [1.9.3-beta.3.6] Remove unsafe semantic Share/Cast hooks that caused stream-opening crashes",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.3.6/patches-1.9.3-beta.3.6.mpp",
   "signature_download_url": "",
-  "version": "1.9.3-beta.3.5"
+  "version": "1.9.3-beta.3.6"
 }
