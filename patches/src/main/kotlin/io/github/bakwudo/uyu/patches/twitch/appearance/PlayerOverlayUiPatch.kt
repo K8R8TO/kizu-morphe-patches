@@ -58,7 +58,7 @@ internal val playerOverlayUiPatch = bytecodePatch {
             targets.forEach { (index, register, methodName) ->
                 addInstructions(
                     index + 1,
-                    "invoke-static/range { v\$register .. v\$register }, " +
+                    "invoke-static/range { v$register .. v$register }, " +
                         "\$SUPPORT_CLASS->\$methodName(Landroid/view/View;)V",
                 )
             }
