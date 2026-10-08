@@ -68,7 +68,7 @@ internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
         "Lh7a;",
     ),
     custom = { method, _ ->
-        val instructions = method.instructionsOrNull
+        val instructions = method.instructionsOrNull?.toList()
         if (instructions == null) {
             false
         } else {
