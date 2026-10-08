@@ -68,39 +68,48 @@ internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
         "Lh7a;",
     ),
     custom = { method, _ ->
-        val instructions = method.instructionsOrNull ?: return@Fingerprint false
+        val instructions = method.instructionsOrNull
+        if (instructions == null) {
+            false
+        } else {
+            val resourceConstants = instructions.withIndex().filter { (_, instruction) ->
+                instruction.opcode == Opcode.CONST &&
+                    instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
+                    instruction.narrowLiteral == CREATE_CLIP_BUTTON_RESOURCE_ID
+            }
 
-        val resourceConstants = instructions.withIndex().filter { (_, instruction) ->
-            instruction.opcode == Opcode.CONST &&
-                instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
-                instruction.narrowLiteral == CREATE_CLIP_BUTTON_RESOURCE_ID
+            if (resourceConstants.size != 1) {
+                false
+            } else {
+                val resourceRegister =
+                    (resourceConstants.single().value as? com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction)?.registerA
+
+                if (resourceRegister == null) {
+                    false
+                } else {
+                    val findViewCalls = instructions.withIndex().filter { (index, instruction) ->
+                        index > resourceConstants.single().index &&
+                            instruction.opcode == Opcode.INVOKE_VIRTUAL &&
+                            instruction is FiveRegisterInstruction &&
+                            instruction.registerCount == 2 &&
+                            listOf(instruction.registerC, instruction.registerD).contains(resourceRegister) &&
+                            instruction is ReferenceInstruction &&
+                            (instruction.reference as? MethodReference)?.let { reference ->
+                                reference.definingClass == "Landroid/view/View;" &&
+                                    reference.name == "findViewById" &&
+                                    reference.returnType == "Landroid/view/View;" &&
+                                    reference.parameterTypes.map { it.toString() } == listOf("I")
+                            } == true
+                    }
+
+                    findViewCalls.size == 1 &&
+                        findViewCalls.single().index + 1 < instructions.size &&
+                        instructions[findViewCalls.single().index + 1].opcode == Opcode.MOVE_RESULT_OBJECT
+                }
+            }
         }
-        if (resourceConstants.size != 1) return@Fingerprint false
-
-        val resourceRegister = (resourceConstants.single().value
-            as? com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction)?.registerA
-            ?: return@Fingerprint false
-
-        val findViewCalls = instructions.withIndex().filter { (index, instruction) ->
-            index > resourceConstants.single().index &&
-                instruction.opcode == Opcode.INVOKE_VIRTUAL &&
-                instruction is FiveRegisterInstruction &&
-                instruction.registerCount == 2 &&
-                listOf(instruction.registerC, instruction.registerD).contains(resourceRegister) &&
-                instruction is ReferenceInstruction &&
-                (instruction.reference as? MethodReference)?.let { reference ->
-                    reference.definingClass == "Landroid/view/View;" &&
-                        reference.name == "findViewById" &&
-                        reference.returnType == "Landroid/view/View;" &&
-                        reference.parameterTypes.map { it.toString() } == listOf("I")
-                } == true
-        }
-
-        findViewCalls.size == 1 && findViewCalls.single().index + 1 < instructions.size &&
-            instructions[findViewCalls.single().index + 1].opcode == Opcode.MOVE_RESULT_OBJECT
     },
 )
-
 internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
     definingClass = "Loy3;",
     name = "d",
