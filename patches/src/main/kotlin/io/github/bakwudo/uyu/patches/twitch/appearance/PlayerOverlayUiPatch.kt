@@ -13,7 +13,7 @@ import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.EXTENSION_PACKAGE
 
-private const val SUPPORT_CLASS = "$" + "EXTENSION_PACKAGE/appearance/PlayerOverlaySupport;"
+private const val SUPPORT_CLASS = "$EXTENSION_PACKAGE/appearance/PlayerOverlaySupport;"
 private const val CREATE_CLIP_BUTTON_RESOURCE_ID = 0x7f0b05f0
 
 /**
