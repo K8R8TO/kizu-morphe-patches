@@ -31,6 +31,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     static final String SECTION_CHAT = "chat";
     static final String SECTION_PRIVACY = "privacy";
     static final String SECTION_HOME = "home";
+    static final String SECTION_PLAYER = "player";
     private static final String ARG_SECTION = "section";
     private static final String[] WEIGHT_NAMES = {
             "Thin", "Extra light", "Light", "Regular", "Medium", "Semi bold", "Bold", "Extra bold", "Black",
@@ -96,6 +97,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         else if (section.equals(SECTION_CHAT)) addChatSettings(screen);
         else if (section.equals(SECTION_PRIVACY)) addPrivacySettings(screen);
         else if (section.equals(SECTION_HOME)) addHomeSettings(screen);
+        else if (section.equals(SECTION_PLAYER)) addPlayerSettings(screen);
     }
 
     private void addSectionLinks(PreferenceScreen screen) {
@@ -109,6 +111,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         addSectionLink(screen, SECTION_EMOTES, "7TV, BTTV, FFZ and animated emotes");
         addSectionLink(screen, SECTION_CHAT, "Chat controls");
         addSectionLink(screen, SECTION_HOME, "Home & navigation controls");
+        addSectionLink(screen, SECTION_PLAYER, "Player Controls");
         addSectionLink(screen, SECTION_PRIVACY, "Privacy");
     }
 
@@ -316,6 +319,11 @@ public class UyuSettingsFragment extends PreferenceFragment {
         return "Mod";
     }
 
+    private void addPlayerSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
+                "Hide Twitch's Create Clip button in the player.");
+    }
+
     private void addHomeSettings(PreferenceScreen screen) {
         addHomeSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
                 "Hide Twitch's Go Ad-Free/Turbo control in the Following feed.");
@@ -404,6 +412,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
             case SECTION_CHAT: return "Chat";
             case SECTION_PRIVACY: return "Privacy";
             case SECTION_HOME: return "Home & navigation";
+            case SECTION_PLAYER: return "Player Controls";
             default: return SettingsPatch.TITLE;
         }
     }
