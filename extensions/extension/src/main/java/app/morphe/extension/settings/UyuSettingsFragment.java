@@ -322,6 +322,10 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private void addPlayerSettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
                 "Hide Twitch's Create Clip button in the player.");
+        addSwitch(screen, Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON, "Hide Live Share Button",
+                "Hide Twitch's Share button in the player.");
+        addSwitch(screen, Settings.HIDE_CAST_BUTTON, "Hide Cast Button",
+                "Hide Twitch's Cast button in the player.");
     }
 
     private void addHomeSettings(PreferenceScreen screen) {

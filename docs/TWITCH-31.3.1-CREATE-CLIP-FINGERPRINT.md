@@ -116,3 +116,32 @@ Failure occurred in InlineSmaliCompiler during PlayerOverlayUiPatch.kt.
 Root cause confirmed from the exact APK: the target register is v21, so the normal 35c invoke form cannot encode it; invoke-static/range is required.
 
 Last updated for 1.9.3-beta.1.10.
+
+## Verified player Share and Cast controls
+
+The same Twitch 31.3.1 player overlay constructor exposes the other two requested player controls:
+
+- Lout.k : Landroid/widget/ImageView; = Share/Live Share control
+- Lout.q : Landroidx/mediarouter/app/MediaRouteButton; = Cast control
+
+Verified resource lookups from the supplied APKM:
+
+- 0x7f0b128a -> Lout.k -> player Share/Live Share ImageView
+- 0x7f0b0c0f -> Lout.q -> player Cast MediaRouteButton
+
+The combined beta.3 hook uses the same already-proven Lout constructor and calls:
+
+    invoke-static {v0, v1}, Lapp/morphe/extension/appearance/PlayerOverlaySupport;->bindPlayerControls(Landroid/view/View;Landroid/view/View;)V
+
+The runtime controls are independently governed by:
+
+    hide_player_live_share_button
+    hide_cast_button
+
+Both are exposed under Player Controls.
+
+## Release-plan exception
+
+1.9.3-beta.3 intentionally skips the previously planned Cast-only beta.2 and implements Hide Live Share + Hide Cast together. Hide Create Clip remains unchanged from the working beta.1.10 implementation.
+
+Last updated for 1.9.3-beta.3.

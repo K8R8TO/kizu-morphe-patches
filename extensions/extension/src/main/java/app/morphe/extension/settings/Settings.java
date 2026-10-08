@@ -141,6 +141,12 @@ public final class Settings {
     /** Hide Twitch's Create Clip control in the player overlay. */
     public static final BooleanSetting HIDE_PLAYER_CREATE_CLIP_BUTTON =
             new BooleanSetting("hide_player_create_clip_button", true);
+    /** Hide Twitch's Share/Live Share control in the player overlay. */
+    public static final BooleanSetting HIDE_PLAYER_LIVE_SHARE_BUTTON =
+            new BooleanSetting("hide_player_live_share_button", true);
+    /** Hide Twitch's Cast control in the player overlay. */
+    public static final BooleanSetting HIDE_CAST_BUTTON =
+            new BooleanSetting("hide_cast_button", true);
 
     public static final BooleanSetting SHOW_SLEEP_TIMER =
             new BooleanSetting("show_sleep_timer", true);
