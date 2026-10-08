@@ -138,6 +138,10 @@ public final class Settings {
     public static final IntSetting REWIND_SEEK_SECONDS =
             new IntSetting("rewind_seek_seconds", 10, 5, 120);
     /** Controls whether the sleep-timer entry/button is exposed. */
+    /** Hide Twitch's Create Clip control in the player overlay. */
+    public static final BooleanSetting HIDE_PLAYER_CREATE_CLIP_BUTTON =
+            new BooleanSetting("hide_player_create_clip_button", true);
+
     public static final BooleanSetting SHOW_SLEEP_TIMER =
             new BooleanSetting("show_sleep_timer", true);
 
