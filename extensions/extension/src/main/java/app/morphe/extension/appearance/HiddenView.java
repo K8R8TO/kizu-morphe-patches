@@ -16,6 +16,7 @@ final class HiddenView implements ViewTreeObserver.OnPreDrawListener, View.OnAtt
     private final Condition condition;
     private final boolean restore;
     private boolean hiddenByUs;
+    private int visibilityBeforeHide = View.VISIBLE;
     private ViewTreeObserver observer;
 
     private HiddenView(View view, Condition condition, boolean restore) {
@@ -52,14 +53,18 @@ final class HiddenView implements ViewTreeObserver.OnPreDrawListener, View.OnAtt
     private boolean update() {
         if (condition.shouldHide(view)) {
             if (view.getVisibility() == View.GONE) return false;
+            visibilityBeforeHide = view.getVisibility();
             view.setVisibility(View.GONE);
             hiddenByUs = true;
             return true;
         }
         if (!hiddenByUs) return false;
+        if (!restore || view.getVisibility() != View.GONE) {
+            hiddenByUs = false;
+            return false;
+        }
+        view.setVisibility(visibilityBeforeHide);
         hiddenByUs = false;
-        if (!restore || view.getVisibility() != View.GONE) return false;
-        view.setVisibility(View.VISIBLE);
         return true;
     }
 }
