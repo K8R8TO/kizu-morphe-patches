@@ -169,8 +169,12 @@ internal object PlayerOverlayHeaderControlsFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf("Ltv/twitch/android/core/mvp/viewdelegate/ViewDelegateState;"),
     custom = { method, classDef ->
-        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
-        val hasDelegateBindingField = classDef.fields.count {
+        val maybeInstructions = method.instructionsOrNull?.toList()
+        if (maybeInstructions == null) {
+            false
+        } else {
+            val instructions = maybeInstructions
+            val hasDelegateBindingField = classDef.fields.count {
             it.name == "d" && it.type == "Lqot;"
         } == 1
 
@@ -190,11 +194,12 @@ internal object PlayerOverlayHeaderControlsFingerprint : Fingerprint(
                 reference.returnType == "V"
         }
 
-        hasDelegateBindingField &&
-            hasQotField("r", "Landroid/widget/ImageView;") &&
-            hasQotField("e", "Landroidx/mediarouter/app/MediaRouteButton;") &&
-            hasSetVisibility("Landroid/widget/ImageView;") &&
-            hasSetVisibility("Landroidx/mediarouter/app/MediaRouteButton;")
+            hasDelegateBindingField &&
+                hasQotField("r", "Landroid/widget/ImageView;") &&
+                hasQotField("e", "Landroidx/mediarouter/app/MediaRouteButton;") &&
+                hasSetVisibility("Landroid/widget/ImageView;") &&
+                hasSetVisibility("Landroidx/mediarouter/app/MediaRouteButton;")
+        }
     },
 )
 
@@ -210,8 +215,12 @@ internal object PlayerOverlayChromecastSetupFingerprint : Fingerprint(
     returnType = "V",
     parameters = listOf(),
     custom = { method, classDef ->
-        val instructions = method.instructionsOrNull?.toList() ?: return@Fingerprint false
-        val qField = classDef.fields.count {
+        val maybeInstructions = method.instructionsOrNull?.toList()
+        if (maybeInstructions == null) {
+            false
+        } else {
+            val instructions = maybeInstructions
+            val qField = classDef.fields.count {
             it.name == "q" && it.type == "Landroidx/mediarouter/app/MediaRouteButton;"
         } == 1
         val qLoad = instructions.any { instruction ->
@@ -229,7 +238,8 @@ internal object PlayerOverlayChromecastSetupFingerprint : Fingerprint(
                 reference.parameterTypes.map { it.toString() } == listOf("I") &&
                 reference.returnType == "V"
         }
-        qField && qLoad && qVisibility
+            qField && qLoad && qVisibility
+        }
     },
 )
 
