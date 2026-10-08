@@ -16,7 +16,7 @@ internal object BaseViewDelegateConstructorFingerprint : Fingerprint(
 )
 
 internal object CommunityHighlightPresenterFingerprint : Fingerprint(
-    strings = listOf("CommunityHighlightPresenter\$UpdateEvent"),
+    strings = listOf("CommunityHighlightPresenter\\$UpdateEvent"),
 )
 
 internal object AddCommunityHighlightToStringFingerprint : Fingerprint(
@@ -30,7 +30,7 @@ internal object SubtemberHighlightTypeFingerprint : Fingerprint(
     name = "<clinit>",
     strings = listOf("subtember"),
     custom = { _, classDef ->
-        classDef.superclass != "Ljava/lang/Object;" &&
+        classDef.superclass != "\Ljava/lang/Object;" &&
             classDef.fields.any { AccessFlags.STATIC.isSet(it.accessFlags) && it.type == classDef.type }
     },
 )
@@ -49,67 +49,24 @@ internal object PlayerOverlayConstructorFingerprint : Fingerprint(
     ),
 )
 
-private const val CREATE_CLIP_BUTTON_RESOURCE_ID = 0x7f0b05f0
-
 /**
- * Exact Twitch 31.3.1 player-overlay constructor, with the Create Clip resource lookup
- * verified against the supplied Twitch 31.3.1 APKM.
+ * Exact Twitch 31.3.1 ClipButtonUiState constructor.
+ *
+ * The supplied Twitch 31.3.1 APKM resolves this class as Lnra; with the constructor
+ * (ZZLtv/twitch/android/core/strings/StringResource;)V. Its first boolean is the
+ * isClipButtonVisible value exposed by ClipButtonUiState.toString().
  */
-internal object PlayerOverlayCreateClipFingerprint : Fingerprint(
-    definingClass = "Lout;",
+internal object ClipButtonUiStateConstructorFingerprint : Fingerprint(
+    definingClass = "Lnra;",
     name = "<init>",
     returnType = "V",
     parameters = listOf(
-        "Landroid/content/Context;",
-        "Landroid/view/View;",
-        "Lo57;",
-        "Lylg;",
-        "Lxks;",
-        "Lh7a;",
+        "Z",
+        "Z",
+        "Ltv/twitch/android/core/strings/StringResource;",
     ),
-    custom = { method, _ ->
-        val instructions = method.instructionsOrNull?.toList()
-        if (instructions == null) {
-            false
-        } else {
-            val resourceConstants = instructions.withIndex().filter { (_, instruction) ->
-                instruction.opcode == Opcode.CONST &&
-                    instruction is com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction &&
-                    instruction.narrowLiteral == CREATE_CLIP_BUTTON_RESOURCE_ID
-            }
-
-            if (resourceConstants.size != 1) {
-                false
-            } else {
-                val resourceRegister =
-                    (resourceConstants.single().value as? com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction)?.registerA
-
-                if (resourceRegister == null) {
-                    false
-                } else {
-                    val findViewCalls = instructions.withIndex().filter { (index, instruction) ->
-                        index > resourceConstants.single().index &&
-                            instruction.opcode == Opcode.INVOKE_VIRTUAL &&
-                            instruction is FiveRegisterInstruction &&
-                            instruction.registerCount == 2 &&
-                            listOf(instruction.registerC, instruction.registerD).contains(resourceRegister) &&
-                            instruction is ReferenceInstruction &&
-                            (instruction.reference as? MethodReference)?.let { reference ->
-                                reference.definingClass == "Landroid/view/View;" &&
-                                    reference.name == "findViewById" &&
-                                    reference.returnType == "Landroid/view/View;" &&
-                                    reference.parameterTypes.map { it.toString() } == listOf("I")
-                            } == true
-                    }
-
-                    findViewCalls.size == 1 &&
-                        findViewCalls.single().index + 1 < instructions.size &&
-                        instructions[findViewCalls.single().index + 1].opcode == Opcode.MOVE_RESULT_OBJECT
-                }
-            }
-        }
-    },
 )
+
 internal object BrowserRouterDisclaimerFingerprint : Fingerprint(
     definingClass = "Loy3;",
     name = "d",

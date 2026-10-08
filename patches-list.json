@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.1",
+  "version": "1.9.3-beta.1.3",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 1.9.3-beta.1 adds only the verified player Create Clip hide hook.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 1.9.3-beta.1.3 fixes Hide Create Clip by patching ClipButtonUiState.isClipButtonVisible and includes the Player Controls setting.",
       "default": true,
       "category": null,
       "dependencies": [

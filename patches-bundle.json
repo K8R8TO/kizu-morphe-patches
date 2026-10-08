@@ -1,6 +1,7 @@
 {
-  "created_at": "2026-10-08T12:35:00",
-  "description": "# [1.9.3-beta.1] Hide Clip",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.1/patches-1.9.3-beta.1.mpp",
-  "version": "1.9.3-beta.1"
+  "created_at": "2026-10-08T14:05:12",
+  "description": "# [1.9.3-beta.1.3] Hide Clip",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.1.3/patches-1.9.3-beta.1.3.mpp",
+  "signature_download_url": "",
+  "version": "1.9.3-beta.1.3"
 }
