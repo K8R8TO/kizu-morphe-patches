@@ -84,7 +84,6 @@ Kizu's third-party picker is kept separate from Twitch's native picker. Twitch's
 
 ### Timestamps
 - Show timestamps on chat messages.
-- Configurable timestamp formatting.
 
 ### Mention highlighting
 - Highlight chat messages that directly mention the logged-in account.
@@ -92,53 +91,10 @@ Kizu's third-party picker is kept separate from Twitch's native picker. Twitch's
 - Optional sound notification when mentioned.
 - Configurable mention-sound cooldown.
 
-### Landscape chat
-- Enable/disable custom landscape chat sizing.
-- Configurable landscape chat width.
-- Enable/disable custom landscape chat opacity.
-- Configurable landscape chat opacity.
-
-## Danmaku
-
-Optional Niconico-style scrolling chat over the video:
-
-- Danmaku comments on live streams.
-- Portrait mode.
-- Mini-player mode.
-- Picture-in-picture mode.
-- Option to hide landscape chat while using Danmaku.
-- Configurable number of rows.
-- Configurable occupied video area.
-- Configurable message lifetime.
-- Configurable maximum messages on screen.
-- Custom font selection.
-- Configurable font weight.
-- Custom text color.
-- Custom outline color.
-- Configurable outline width.
-- Configurable opacity.
-- In-player Danmaku toggle/control.
-
-## Player controls and gestures
-
-The Kizu Twitch baseline also contains the following player-side functionality:
-
-- **Forward seek gesture** with configurable duration.
-- **Rewind seek gesture** with configurable duration.
-- **Volume swipe gesture**.
-- **Brightness swipe gesture**.
-- Optional **gesture OSD** showing adjustment feedback.
-- **Refresh/reload stream** button.
-- **Video/player statistics** button.
-
-These player features are part of the Kizu feature baseline and are kept separate from newer 1.9.3 player-hook work.
-
 ## Privacy and compatibility
 
 - Disable **Comscore** measurement.
 - Disable Twitch **crash reporting / Bugsnag** integration.
-- Twitch login compatibility fixes for patched builds.
-- Twitch notification compatibility fixes.
 
 ## Settings
 
@@ -146,7 +102,6 @@ Kizu exposes its functionality through the custom settings UI with sections for:
 
 - General
 - Appearance
-- Danmaku
 - Ads
 - Emotes
 - Chat
