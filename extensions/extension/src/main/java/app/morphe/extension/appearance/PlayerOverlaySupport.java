@@ -22,23 +22,36 @@ public final class PlayerOverlaySupport {
         }
     }
 
-    /** Hide the verified Twitch 31.3.1 player Share and Cast controls. */
-    public static void bindPlayerControls(View shareButton, View castButton) {
+    /** Hide the verified Twitch 31.3.1 player Share/Live Share control. */
+    public static void bindLiveShareButton(View shareButton) {
         try {
             if (shareButton != null) {
                 HiddenView.attach(
                         shareButton,
                         view -> Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON.get(),
-                        false);
+                        true);
             }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** Hide the verified Twitch 31.3.1 player Cast control. */
+    public static void bindCastButton(View castButton) {
+        try {
             if (castButton != null) {
                 HiddenView.attach(
                         castButton,
                         view -> Settings.HIDE_CAST_BUTTON.get(),
-                        false);
+                        true);
             }
         } catch (Throwable ignored) {
         }
+    }
+
+    /** Compatibility helper retained for any already-built callers. */
+    public static void bindPlayerControls(View shareButton, View castButton) {
+        bindLiveShareButton(shareButton);
+        bindCastButton(castButton);
     }
 
     /** Hide the separately-created verified create_clip_text_button ComposeView. */
