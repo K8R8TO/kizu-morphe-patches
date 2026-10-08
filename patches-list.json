@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.3.6",
+  "version": "1.9.3-beta.3.7",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta 3.6 removes the unsafe semantic Share/Cast return hooks that caused stream-opening crashes. Share/Cast are bound only at the exact verified Lout constructor field assignments, using the same safe strategy as the working Create Clip path.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta 3.7 fixes the dynamic smali interpolation used by the exact verified player Create Clip, Live Share, and Cast bindings.",
       "default": true,
       "category": null,
       "dependencies": ["BytecodePatch"],
