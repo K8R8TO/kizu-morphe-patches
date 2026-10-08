@@ -14,7 +14,7 @@ import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.EXTENSION_PACKAGE
 
-private const val SUPPORT_CLASS = "$EXTENSION_PACKAGE/appearance/PlayerOverlaySupport;"
+private const val SUPPORT_CLASS = "\$EXTENSION_PACKAGE/appearance/PlayerOverlaySupport;"
 
 internal val playerOverlayUiPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
@@ -22,9 +22,10 @@ internal val playerOverlayUiPatch = bytecodePatch {
 
     execute {
         // Exact Twitch 31.3.1 field assignments, verified against the supplied APKM:
-        // j = create_clip_button_compose_view, k = player Share/Live Share, q = Cast.
-        // Bind immediately after each exact iput-object. This avoids relying on the first
-        // RETURN_VOID in the constructor and avoids any register clobbering.
+        // j = Create Clip, k = player Share/Live Share, q = Cast.
+        // Bind immediately after each exact iput-object. This is deliberately the only
+        // Share/Cast injection path: the previous semantic return hooks caused stream-open
+        // runtime verification failures on the real Twitch method control-flow graph.
         PlayerOverlayConstructorFingerprint.method.apply {
             fun findFieldAssignment(fieldName: String, fieldType: String): Pair<Int, Int> {
                 val matches = instructions.withIndex().filter { (_, instruction) ->
@@ -36,12 +37,12 @@ internal val playerOverlayUiPatch = bytecodePatch {
                 }
                 if (matches.size != 1) {
                     throw PatchException(
-                        "Expected exactly one Twitch 31.3.1 Lout.$fieldName assignment, found ${matches.size}.",
+                        "Expected exactly one Twitch 31.3.1 Lout.\$fieldName assignment, found ${matches.size}.",
                     )
                 }
                 val assignment = matches.single()
                 val register = (assignment.value as? TwoRegisterInstruction)?.registerA
-                    ?: throw PatchException("Could not read the Lout.$fieldName source register.")
+                    ?: throw PatchException("Could not read the Lout.\$fieldName source register.")
                 return assignment.index to register
             }
 
@@ -57,49 +58,8 @@ internal val playerOverlayUiPatch = bytecodePatch {
             targets.forEach { (index, register, methodName) ->
                 addInstructions(
                     index + 1,
-                    "invoke-static/range { v$register .. v$register }, " +
-                        "$SUPPORT_CLASS->$methodName(Landroid/view/View;)V",
-                )
-            }
-        }
-
-        // The constructor binding is not the final authority for Share/Cast visibility:
-        // Twitch's state method can re-apply its own visibility after construction. Keep the
-        // initial bindings above, then enforce the same settings through the APK-verified
-        // semantic visibility methods below.
-        PlayerOverlayHeaderControlsFingerprint.method.apply {
-            val returns = instructions.withIndex()
-                .filter { it.value.opcode == Opcode.RETURN_VOID }
-                .map { it.index }
-                .sortedDescending()
-
-            returns.forEach { returnIndex ->
-                addInstructions(
-                    returnIndex,
-                    """
-                        iget-object p0, p0, Llrx;->d:Lqot;
-                        iget-object p1, p0, Lqot;->r:Landroid/widget/ImageView;
-                        invoke-static {p1}, $SUPPORT_CLASS->bindLiveShareButton(Landroid/view/View;)V
-                        iget-object p1, p0, Lqot;->e:Landroidx/mediarouter/app/MediaRouteButton;
-                        invoke-static {p1}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
-                    """,
-                )
-            }
-        }
-
-        PlayerOverlayChromecastSetupFingerprint.method.apply {
-            val returns = instructions.withIndex()
-                .filter { it.value.opcode == Opcode.RETURN_VOID }
-                .map { it.index }
-                .sortedDescending()
-
-            returns.forEach { returnIndex ->
-                addInstructions(
-                    returnIndex,
-                    """
-                        iget-object p0, p0, Lout;->q:Landroidx/mediarouter/app/MediaRouteButton;
-                        invoke-static {p0}, $SUPPORT_CLASS->bindCastButton(Landroid/view/View;)V
-                    """,
+                    "invoke-static/range { v\$register .. v\$register }, " +
+                        "\$SUPPORT_CLASS->\$methodName(Landroid/view/View;)V",
                 )
             }
         }
@@ -160,8 +120,8 @@ internal val playerOverlayUiPatch = bytecodePatch {
 
             addInstructions(
                 targetIndex,
-                "invoke-static/range { v$targetRegister .. v$targetRegister }, " +
-                    "$SUPPORT_CLASS->bindTextClipButton(Landroid/view/View;)V",
+                "invoke-static/range { v\$targetRegister .. v\$targetRegister }, " +
+                    "\$SUPPORT_CLASS->bindTextClipButton(Landroid/view/View;)V",
             )
         }
     }
