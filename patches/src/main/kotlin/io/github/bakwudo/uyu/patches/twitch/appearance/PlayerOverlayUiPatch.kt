@@ -120,8 +120,8 @@ internal val playerOverlayUiPatch = bytecodePatch {
 
             addInstructions(
                 targetIndex,
-                "invoke-static/range { v\$targetRegister .. v\$targetRegister }, " +
-                    "\$SUPPORT_CLASS->bindTextClipButton(Landroid/view/View;)V",
+                "invoke-static/range { v$targetRegister .. v$targetRegister }, " +
+                    "$SUPPORT_CLASS->bindTextClipButton(Landroid/view/View;)V",
             )
         }
     }
