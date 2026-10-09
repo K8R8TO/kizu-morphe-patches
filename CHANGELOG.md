@@ -1,3 +1,11 @@
+# [1.9.3-beta.14](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.14) (2026-10-09)
+
+### Player Controls
+
+* fix a Morphe patch-application failure in the native landscape swipe guard by anchoring its continue branch to the original parent instruction
+* keep the early parent-interception guard scoped to Twitch's verified `ConstraintTheatreContainerView` and the user-enabled landscape prevention setting
+* preserve beta.13's native swipe-decision/fallback guards and all existing brightness, volume, Video Stats, and Reload Stream behavior
+
 # [1.9.3-beta.13](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.13) (2026-10-09)
 
 ### Player Controls

@@ -152,6 +152,8 @@ Target artifact: the supplied Twitch 31.3.1 APKM (build code 3103016). These ide
 
 ### Guard strategy
 
+Beta.14 keeps the beta.13 guard but uses an `ExternalLabel` anchored to the verified original first instruction rather than an internal inserted label. This avoids the Morphe inline-label remapping failure reported while applying beta.13.
+
 Beta.13 adds an earlier guard directly to the verified superclass `DraggableConstraintLayout.onInterceptTouchEvent(MotionEvent)`. It only short-circuits when the runtime object is a `ConstraintTheatreContainerView`, the user toggle is ON, and the device is in landscape; this is before Twitch invokes its drag decision. Beta.12's subclass decision and fallback-touch guards remain as defense-in-depth.
 
 The patch checks the existing `disable_landscape_swipe_to_portrait` setting at runtime. When the setting is ON and the container is in landscape, it makes the parent's interception decision return false and prevents any fallback touch events handled by the outer container from reaching Twitch's drag helper. When the setting is OFF or orientation is not landscape, the original methods continue unchanged. Kizu's child-level brightness and volume handling remains in place.

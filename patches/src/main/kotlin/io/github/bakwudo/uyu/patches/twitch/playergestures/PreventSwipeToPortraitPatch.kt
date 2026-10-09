@@ -5,6 +5,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLa
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
@@ -83,6 +84,13 @@ internal val preventSwipeToPortraitPatch = bytecodePatch {
                 "Twitch swipe guard: DraggableConstraintLayout.onInterceptTouchEvent() no longer matches the verified 31.3.1 parent handler.",
             )
         }
+        val firstParentInstruction = parentIntercept.instructions.firstOrNull()
+            ?: throw PatchException(
+                "Twitch swipe guard: parent interception method has no executable instructions.",
+            )
+        // Use an external label anchored to the original first instruction. Morphe's inline
+        // label remapper has an empty-method edge case for this superclass method; an external
+        // anchor avoids remapping a branch to a label within the injected block.
         parentIntercept.addInstructionsWithLabels(
             0,
             """
@@ -93,8 +101,8 @@ internal val preventSwipeToPortraitPatch = bytecodePatch {
                 if-eqz v0, :kizu_continue_native_parent_interception
                 const/4 v0, 0x0
                 return v0
-                :kizu_continue_native_parent_interception
             """,
+            ExternalLabel("kizu_continue_native_parent_interception", firstParentInstruction),
         )
 
         val decision = NativeLandscapeSwipeDecisionFingerprint.method
