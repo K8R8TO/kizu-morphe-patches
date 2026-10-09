@@ -294,8 +294,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
         deletedMessageStyle.setOnPreferenceClickListener(clicked -> {
             Activity activity = getActivity();
             if (activity == null) return true;
-            String[] names = {"Strikethrough", "Grey"};
-            String[] values = {"strikethrough", "grey"};
+            String[] names = {"Mod", "Strikethrough", "Grey"};
+            String[] values = {"mod", "strikethrough", "grey"};
             int selected = deletedMessageStyleIndex(Settings.CHAT_DELETED_MESSAGES_STYLE.get());
             new AlertDialog.Builder(activity)
                     .setTitle("Deleted message style")
@@ -325,11 +325,15 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private static int deletedMessageStyleIndex(String value) {
-        return "grey".equalsIgnoreCase(value) ? 1 : 0;
+        if ("strikethrough".equalsIgnoreCase(value)) return 1;
+        if ("grey".equalsIgnoreCase(value)) return 2;
+        return 0;
     }
 
     private static String deletedMessageStyleName(String value) {
-        return "grey".equalsIgnoreCase(value) ? "Grey" : "Strikethrough";
+        if ("strikethrough".equalsIgnoreCase(value)) return "Strikethrough";
+        if ("grey".equalsIgnoreCase(value)) return "Grey";
+        return "Mod";
     }
 
     private void addPlayerSettings(PreferenceScreen screen) {

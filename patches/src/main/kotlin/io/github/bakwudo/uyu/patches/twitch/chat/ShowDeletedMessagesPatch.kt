@@ -88,14 +88,33 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 const/4 v$scratchRegister, 0x0
                 aget-object v$scratchRegister, v$arrayRegister, v$scratchRegister
                 iget-object p1, v$scratchRegister, $originalMessageField
-                invoke-static {p1}, $SUPPORT->styleOriginalMessage(Landroid/text/SpannedString;)Landroid/text/SpannedString;
-                move-result-object p1
                 const/4 p4, 0x1
                 const/4 v$scratchRegister, 0x0
                 new-array v$arrayRegister, v$scratchRegister, [$spanType
             """,
             ExternalLabel("kizu_deleted_style_stock", formatter.getInstruction(arrayLengthIndex)),
         )
+
+        // Style the final returned Spanned, after Twitch has finished rebuilding the row.
+        val returnObjectIndices = formatter.instructions.indices.filter { index ->
+            formatter.instructions[index].opcode == Opcode.RETURN_OBJECT
+        }
+        if (returnObjectIndices.isEmpty()) {
+            throw PatchException("Twitch deleted messages: formatter return-object was not found.")
+        }
+        returnObjectIndices.sortedDescending().forEach { index ->
+            val returnRegister = formatter.getInstruction<OneRegisterInstruction>(index).registerA
+            if (returnRegister > 0xf) {
+                throw PatchException("Twitch deleted messages: formatter return register does not fit invoke-static.")
+            }
+            formatter.addInstructions(
+                index,
+                """
+                    invoke-static {v$returnRegister}, $SUPPORT->applyVisualStyleToResult(Landroid/text/Spanned;)Landroid/text/Spanned;
+                    move-result-object v$returnRegister
+                """,
+            )
+        }
 
         // Twitch can reset this flag after construction; filter both later reads as well.
         val accessReads = spanClass.methods.flatMap { method ->
