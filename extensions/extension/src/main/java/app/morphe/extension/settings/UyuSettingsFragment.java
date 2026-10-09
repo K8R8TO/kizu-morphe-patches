@@ -325,13 +325,13 @@ public class UyuSettingsFragment extends PreferenceFragment {
         addSwitch(screen, Settings.SHOW_REFRESH_BUTTON, "Show Reload Stream Button",
                 "Show a single-tap reload button immediately to the left of the mute control.");
         addSwitch(screen, Settings.BRIGHTNESS_GESTURE, "Brightness Swipe Gesture",
-                "In landscape, swipe vertically on the left half of the player to change screen brightness.");
+                "In landscape, swipe vertically on the left half of the video pane to change screen brightness.");
         addSwitch(screen, Settings.VOLUME_GESTURE, "Volume Swipe Gesture",
-                "In landscape, swipe vertically on the right half of the player to change media volume.");
+                "In landscape, swipe vertically on the right half of the video pane to change media volume.");
         addSwitch(screen, Settings.GESTURE_OSD, "Gesture Progress Overlay",
                 "Show the PurpleTV-style progress bar and value while adjusting brightness or volume.");
         addSwitch(screen, Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT, "Prevent Swipe-to-Portrait Collapse",
-                "In landscape, prevent vertical swipes on the player from collapsing it back to portrait. Enabled-side swipes still adjust brightness or volume.");
+                "Blocks Twitch from collapsing landscape playback during vertical swipes on the video pane. Turn this off to restore Twitch’s default behavior.");
         addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
                 "Hide Twitch's Create Clip button in the player.");
         addSwitch(screen, Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON, "Hide Live Share Button",

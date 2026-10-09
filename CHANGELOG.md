@@ -1,3 +1,12 @@
+# [1.9.3-beta.9](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.9) (2026-10-09)
+
+### Player Controls
+
+* split brightness and volume gestures across the actual video pane instead of the whole theatre window, fixing the volume side when landscape chat is present
+* lower the interception threshold so Kizu takes ownership of vertical swipes earlier and can reliably prevent Twitch's portrait-collapse gesture
+* clarify the independent **Prevent Swipe-to-Portrait Collapse** toggle; it remains enabled by default and can be disabled to restore Twitch's default behavior
+* preserve Twitch's native Video Stats panel and single-tap Reload Stream
+
 # [1.9.3-beta.6](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.6) (2026-10-09)
 
 ### Player Controls

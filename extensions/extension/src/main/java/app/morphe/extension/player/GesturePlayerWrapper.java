@@ -49,7 +49,7 @@ public final class GesturePlayerWrapper extends RelativeLayout {
 
     public GesturePlayerWrapper(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop() * 2;
+        touchSlop = Math.max(1, ViewConfiguration.get(context).getScaledTouchSlop());
         edgeIgnorePx = dp(EDGE_IGNORE_DP);
         progressView = new GestureProgressView(context);
         progressView.setVisibility(View.INVISIBLE);
@@ -114,7 +114,7 @@ public final class GesturePlayerWrapper extends RelativeLayout {
         if (event.getPointerCount() > 1 || playerOverlay == null
                 || getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) return;
         downY = event.getY();
-        brightnessSide = event.getX() < getWidth() / 2.0f;
+        brightnessSide = isOnBrightnessSide(event.getX());
         boolean adjustGesture = gestureEnabled();
         boolean blockCollapse = Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT.get();
         if ((!adjustGesture && !blockCollapse) || !isTouchAreaAllowed(event.getX(), event.getY())) return;
@@ -140,6 +140,17 @@ public final class GesturePlayerWrapper extends RelativeLayout {
         } catch (Throwable ignored) {
             candidate = blockCollapse;
         }
+    }
+
+    /** Split gestures across the actual video pane, not the entire theatre window. */
+    private boolean isOnBrightnessSide(float x) {
+        if (playerOverlay == null || playerOverlay.getWidth() <= 0) {
+            return x < getWidth() / 2.0f;
+        }
+        playerOverlay.getLocationOnScreen(viewLocation);
+        getLocationOnScreen(wrapperLocation);
+        float playerLeft = viewLocation[0] - wrapperLocation[0];
+        return x < playerLeft + (playerOverlay.getWidth() / 2.0f);
     }
 
     private boolean gestureEnabled() {
