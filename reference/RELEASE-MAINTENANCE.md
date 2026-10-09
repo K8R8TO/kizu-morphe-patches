@@ -3,7 +3,7 @@
 ## Current known-good state
 
 - Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.19`
+- Current prerelease: `1.9.3-beta.20`
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
@@ -105,6 +105,12 @@ Final implementation:
 - The injection now places a real `nop` at that label, keeping the continuation target inside the injected instruction block and allowing Twitch's original formatter to continue immediately afterward.
 - This addresses the reported apply-time `ArrayIndexOutOfBoundsException: length=0; index=0`.
 - Build, artifact publication, and runtime deleted-message behavior must each be verified separately; not runtime-verified yet.
+
+### beta.20 — array-wide deleted-message recovery and settings crash containment
+- beta.19 inspected only index 0 of Twitch's returned span array. Another span can appear first, so recovery now tries every candidate, matching the verified stable 1.9.2 behavior.
+- Successful recovery returns the styled original immediately. If no candidate can be recovered or the setting is off, the helper returns null; the injected hook restores the original class register and span-array result before continuing through Twitch's stock formatter.
+- Added guarded failure handling and diagnostic logging around Kizu settings-screen construction and styling so a settings UI exception does not automatically take down the entire Activity. This is crash containment, not proof the underlying settings exception is eliminated.
+- Build/release verification and on-device runtime behavior must be tracked separately. Not runtime-verified yet.
 
 ## Morphe prerelease feed rule
 
