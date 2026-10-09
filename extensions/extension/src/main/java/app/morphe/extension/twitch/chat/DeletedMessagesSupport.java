@@ -29,9 +29,10 @@ public final class DeletedMessagesSupport {
             SpannedString message,
             Object[] spans
     ) {
-        if (message == null || spans == null || spans.length == 0) return null;
+        if (message == null) return null;
+        if (spans == null || spans.length == 0) return message;
         try {
-            if (!Settings.CHAT_DELETED_MESSAGES.get()) return null;
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) return message;
 
             // Twitch may return multiple spans. Never assume index 0 is the deleted-message span.
             for (Object candidate : spans) {
@@ -62,8 +63,8 @@ public final class DeletedMessagesSupport {
             }
         } catch (Throwable ignored) {
         }
-        // Null tells the injected hook to restore Twitch's registers and run its stock formatter.
-        return null;
+        // Preserve Twitch's original formatter input when no deleted span can be recovered.
+        return message;
     }
 
     private static SpannedString findOriginalMessage(ClickableSpan deletedSpan) {
