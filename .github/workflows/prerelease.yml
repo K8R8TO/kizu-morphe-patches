@@ -10,7 +10,7 @@ on:
       - synchronize
   workflow_dispatch:
 concurrency:
-  group: kizu-prerelease-dev
+  group: kizu-prerelease-dev-v2
   cancel-in-progress: true
 jobs:
   prerelease:
