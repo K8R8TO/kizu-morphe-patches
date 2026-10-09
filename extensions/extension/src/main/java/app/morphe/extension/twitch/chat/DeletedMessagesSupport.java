@@ -33,10 +33,6 @@ public final class DeletedMessagesSupport {
         try {
             if (!Settings.CHAT_DELETED_MESSAGES.get()) return message;
 
-            // Keep Twitch's native clickable deleted-message span in Mod mode.
-            // Only replace the placeholder when a visual replacement style is selected.
-            if ("mod".equals(normalizeStyle())) return message;
-
             for (Object candidate : spans) {
                 if (!(candidate instanceof ClickableSpan)) continue;
                 ClickableSpan deletedSpan = (ClickableSpan) candidate;
