@@ -21,6 +21,11 @@ public final class VideoStatsRuntime {
         Class<?> type = candidate.getClass();
         while (type != null) {
             if ("sl2".equals(type.getName())) {
+                Object previous = playerContext.get();
+                if (previous != candidate) {
+                    latestStats = null;
+                    loggedFailure = false;
+                }
                 playerContext = new WeakReference<>(candidate);
                 return;
             }
