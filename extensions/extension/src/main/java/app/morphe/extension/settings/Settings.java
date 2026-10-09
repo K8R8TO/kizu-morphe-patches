@@ -132,6 +132,9 @@ public final class Settings {
             new BooleanSetting("brightness_gesture", true);
     public static final BooleanSetting GESTURE_OSD =
             new BooleanSetting("gesture_osd", true);
+    /** Prevent Twitch's landscape player from collapsing to portrait during vertical swipes. */
+    public static final BooleanSetting DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT =
+            new BooleanSetting("disable_landscape_swipe_to_portrait", true);
     public static final BooleanSetting CUSTOM_FORWARD_SEEK =
             new BooleanSetting("custom_forward_seek", true);
     public static final IntSetting FORWARD_SEEK_SECONDS =
