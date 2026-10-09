@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.11",
+  "version": "1.9.3-beta.12",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1, including Twitch's native live Video Stats panel beside single-tap Reload Stream, landscape brightness and full-range media-volume gestures with edge-swipe collapse prevention, configurable swipe-to-portrait collapse prevention, and player visibility controls.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1, including Twitch's native live Video Stats panel beside single-tap Reload Stream, landscape brightness and full-range media-volume gestures, and a verified parent-level guard for configurable swipe-to-portrait collapse prevention.",
       "default": true,
       "category": null,
       "dependencies": [

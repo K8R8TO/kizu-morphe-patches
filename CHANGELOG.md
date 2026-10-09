@@ -1,3 +1,11 @@
+# [1.9.3-beta.12](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.12) (2026-10-09)
+
+### Player Controls
+
+* suppress Twitch's verified parent-level swipe-to-portrait drag decision in landscape while the Kizu prevention toggle is enabled
+* guard the outer container's fallback touch handler too, so events not owned by a child cannot fall through into Twitch's drag helper
+* keep the setting dynamic and preserve Kizu's child-level brightness/volume gestures when prevention is enabled
+
 # [1.9.3-beta.11](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.11) (2026-10-09)
 
 ### Player Controls

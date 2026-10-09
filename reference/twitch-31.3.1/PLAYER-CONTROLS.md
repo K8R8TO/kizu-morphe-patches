@@ -136,6 +136,22 @@ Expected:
 
 Beta 3 added Cast + Share together. Create Clip originated in beta 1.
 
+## Verified landscape swipe-to-portrait handler
+
+Target artifact: the supplied Twitch 31.3.1 APKM (build code 3103016). These identifiers and offsets were inspected from its actual `base.apk`, not inferred from PurpleTV.
+
+- DEX: `classes2.dex`
+- Parent container: `Ltv/twitch/android/shared/ui/elements/draggable/ConstraintTheatreContainerView;`
+- Interception decision: `p(Landroid/view/MotionEvent;)Z`, code-item offset `0x65105c`; 7 registers and 86 code units
+- Fallback touch handler: `onTouchEvent(Landroid/view/MotionEvent;)Z`, code-item offset `0x650fdc`; 5 registers and 55 code units
+- The decision method references the container's `k(MotionEvent)Z`, `MotionEvent.getRawY()F`, and `Lv880;.s(MotionEvent)Z` drag-helper path.
+- The fallback handler calls both `DraggableConstraintLayout.onTouchEvent(MotionEvent)` and `ScaleGestureDetector.onTouchEvent(MotionEvent)`.
+- Layout resources `twitch_rn_theatre_fragment.xml` and `theatre_container_layout.xml` instantiate this custom draggable container. It can intercept before the nested `theatre_root_container`; changing only that inner layout cannot prevent the parent from taking the gesture first.
+
+### Guard strategy
+
+The patch checks the existing `disable_landscape_swipe_to_portrait` setting at runtime. When the setting is ON and the container is in landscape, it makes the parent's interception decision return false and prevents any fallback touch events handled by the outer container from reaching Twitch's drag helper. When the setting is OFF or orientation is not landscape, the original methods continue unchanged. Kizu's child-level brightness and volume handling remains in place.
+
 ## PurpleTV behavioral reference
 
 PurpleTV was used as a behavioral reference, not as proof of Twitch 31.3.1 fingerprints.

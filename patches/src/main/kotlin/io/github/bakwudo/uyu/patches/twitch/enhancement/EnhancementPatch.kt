@@ -2,6 +2,7 @@ package io.github.bakwudo.uyu.patches.twitch.enhancement
 
 import app.morphe.patcher.patch.bytecodePatch
 import io.github.bakwudo.uyu.patches.twitch.playergestures.playerGesturesResourcePatch
+import io.github.bakwudo.uyu.patches.twitch.playergestures.preventSwipeToPortraitPatch
 import io.github.bakwudo.uyu.patches.twitch.ads.blockAdsPatch
 import io.github.bakwudo.uyu.patches.twitch.channelpoints.autoClaimChannelPointsPatch
 import io.github.bakwudo.uyu.patches.twitch.appearance.hidePromotionsPatch
@@ -41,6 +42,7 @@ val twitchEnhancementPatch = bytecodePatch(
         thirdPartyEmotePickerUrlPatch,
         privacyPatch,
         playerGesturesResourcePatch,
+        preventSwipeToPortraitPatch,
     )
     execute {
         installReloadStream()
