@@ -134,6 +134,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 :kizu_deleted_messages_return
                 return-object v$spanArrayRegister
                 :kizu_deleted_messages_continue
+                nop
             """,
         )
     }
