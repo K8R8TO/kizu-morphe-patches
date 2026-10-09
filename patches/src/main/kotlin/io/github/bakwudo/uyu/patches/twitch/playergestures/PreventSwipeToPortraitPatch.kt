@@ -131,16 +131,20 @@ internal val preventSwipeToPortraitPatch = bytecodePatch {
         // Return false from the parent's interception decision only while Kizu's
         // Prevent Swipe-to-Portrait Collapse setting is ON and the app is landscape.
         // This lets the child player receive swipes for Kizu's brightness/volume controls.
+        val firstDecisionInstruction = decision.instructions.firstOrNull()
+            ?: throw PatchException(
+                "Twitch swipe guard: ConstraintTheatreContainerView.p() has no executable instructions.",
+            )
         decision.addInstructionsWithLabels(
             0,
             """
                 invoke-static/range { p0 .. p0 }, $SUPPORT_CLASS->shouldSuppressNativeLandscapeSwipe(Landroid/view/View;)Z
                 move-result v0
-                if-eqz v0, :kizu_continue_native_landscape_swipe
+                if-eqz v0, :kizu_continue_native_landscape_decision
                 const/4 v0, 0x0
                 return v0
-                :kizu_continue_native_landscape_swipe
             """,
+            ExternalLabel("kizu_continue_native_landscape_decision", firstDecisionInstruction),
         )
 
         val touch = NativeLandscapeSwipeTouchFingerprint.method
@@ -176,6 +180,10 @@ internal val preventSwipeToPortraitPatch = bytecodePatch {
 
         // If the outer container itself becomes the touch target (rather than a player child),
         // consume those events without forwarding them into Twitch's native drag helper.
+        val firstTouchInstruction = touch.instructions.firstOrNull()
+            ?: throw PatchException(
+                "Twitch swipe guard: ConstraintTheatreContainerView.onTouchEvent() has no executable instructions.",
+            )
         touch.addInstructionsWithLabels(
             0,
             """
@@ -184,8 +192,8 @@ internal val preventSwipeToPortraitPatch = bytecodePatch {
                 if-eqz v0, :kizu_continue_native_landscape_touch
                 const/4 v0, 0x1
                 return v0
-                :kizu_continue_native_landscape_touch
             """,
+            ExternalLabel("kizu_continue_native_landscape_touch", firstTouchInstruction),
         )
     }
 }
