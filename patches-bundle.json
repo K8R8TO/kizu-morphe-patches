@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-09T06:30:00",
-  "description": "# [1.9.3-beta.4.4] Fix Reload Stream click host lifetime",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.4.4/patches-1.9.3-beta.4.4.mpp",
+  "description": "# [1.9.3-beta.5] Add Video Stats beside Reload Stream",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.5/patches-1.9.3-beta.5.mpp",
   "signature_download_url": "",
-  "version": "1.9.3-beta.4.4"
+  "version": "1.9.3-beta.5"
 }
