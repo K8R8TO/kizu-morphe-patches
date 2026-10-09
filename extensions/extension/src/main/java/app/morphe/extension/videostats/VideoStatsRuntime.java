@@ -20,7 +20,7 @@ public final class VideoStatsRuntime {
         if (candidate == null) return;
         Class<?> type = candidate.getClass();
         while (type != null) {
-            if ("Lsl2".equals(type.getName())) {
+            if ("sl2".equals(type.getName())) {
                 playerContext = new WeakReference<>(candidate);
                 return;
             }
@@ -50,13 +50,13 @@ public final class VideoStatsRuntime {
             if (player == null || presenter == null) return latestStats != null;
 
             ClassLoader loader = controller.getClass().getClassLoader();
-            Class<?> playerType = Class.forName("Lska", true, loader);
-            Class<?> presenterType = Class.forName("Llvt", true, loader);
+            Class<?> playerType = Class.forName("ska", true, loader);
+            Class<?> presenterType = Class.forName("lvt", true, loader);
             if (!playerType.isInstance(player) || !presenterType.isInstance(presenter)) {
                 return latestStats != null;
             }
 
-            Class<?> factoryType = Class.forName("Lu480", true, loader);
+            Class<?> factoryType = Class.forName("u480", true, loader);
             Method factory = factoryType.getDeclaredMethod(
                     "a", playerType, presenterType, View.class, String.class);
             factory.setAccessible(true);
@@ -77,9 +77,17 @@ public final class VideoStatsRuntime {
     }
 
     private static Object invokeNoArgs(Object target, String name) throws Exception {
-        Method method = target.getClass().getDeclaredMethod(name);
-        method.setAccessible(true);
-        return method.invoke(target);
+        Class<?> type = target.getClass();
+        while (type != null) {
+            try {
+                Method method = type.getDeclaredMethod(name);
+                method.setAccessible(true);
+                return method.invoke(target);
+            } catch (NoSuchMethodException ignored) {
+                type = type.getSuperclass();
+            }
+        }
+        throw new NoSuchMethodException(target.getClass().getName() + "." + name);
     }
 
     private static Object read(Object stats, String getter) {
