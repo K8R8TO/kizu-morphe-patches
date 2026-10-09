@@ -25,6 +25,27 @@ public final class DeletedMessagesSupport {
         }
     }
 
+    public static boolean shouldApplyVisualStyle() {
+        try {
+            return Settings.CHAT_DELETED_MESSAGES.get();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    public static SpannedString styleOriginalMessage(SpannedString original) {
+        if (original == null || original.length() == 0) return original;
+        try {
+            if (!shouldApplyVisualStyle()) return original;
+            SpannableStringBuilder builder = new SpannableStringBuilder(original);
+            applyStyle(builder, 0, builder.length());
+            return SpannedString.valueOf(builder);
+        } catch (Throwable ignored) {
+            return original;
+        }
+    }
+
+
     public static SpannedString recoverDeletedMessage(
             SpannedString message,
             Object[] spans
@@ -97,15 +118,11 @@ public final class DeletedMessagesSupport {
     private static String normalizeStyle() {
         try {
             String style = Settings.CHAT_DELETED_MESSAGES_STYLE.get();
-            if (style == null) return "mod";
-            style = style.trim().toLowerCase(Locale.ROOT);
-            if ("default".equals(style)) return "mod";
-            if ("strikethrough".equals(style)
-                    || "grey".equals(style)
-                    || "mod".equals(style)) return style;
+            if (style != null && "grey".equalsIgnoreCase(style.trim())) return "grey";
         } catch (Throwable ignored) {
         }
-        return "mod";
+        // Older "mod"/"default" values migrate to Strikethrough instead of plain text.
+        return "strikethrough";
     }
 
     private static SpannedString stripDuplicateChatterHeader(
