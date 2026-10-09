@@ -38,6 +38,7 @@ public final class GesturePlayerWrapper extends RelativeLayout {
     private boolean scrollMode;
     private float downY;
     private int startingVolume;
+    private int lastVolumeStep;
     private int startingBrightness;
     private int maxVolume;
     private int edgeIgnorePx;
@@ -79,6 +80,16 @@ public final class GesturePlayerWrapper extends RelativeLayout {
     private ViewGroup findGroup(String name) {
         View view = findNamedView(name);
         return view instanceof ViewGroup ? (ViewGroup) view : null;
+    }
+
+    /** Keep Twitch's nested player from disabling interception while collapse prevention is on. */
+    @Override public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+        if (Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT.get()
+                && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            super.requestDisallowInterceptTouchEvent(false);
+            return;
+        }
+        super.requestDisallowInterceptTouchEvent(disallowIntercept);
     }
 
     @Override public boolean onInterceptTouchEvent(MotionEvent event) {
@@ -132,6 +143,7 @@ public final class GesturePlayerWrapper extends RelativeLayout {
                     if (!blockCollapse) return;
                 } else {
                     startingVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
+                    lastVolumeStep = startingVolume;
                     maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
                     if (maxVolume <= 0 && !blockCollapse) return;
                 }
@@ -231,7 +243,13 @@ public final class GesturePlayerWrapper extends RelativeLayout {
             if (audio == null || maxVolume <= 0) return;
             int value = calculate(delta, startingVolume, maxVolume, playerOverlay.getHeight());
             try {
-                audio.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0);
+                // Use the live system level as the source of truth so the gesture and OSD can
+                // continue all the way to zero, even when starting at a nonzero phone volume.
+                if (value != lastVolumeStep || audio.getStreamVolume(AudioManager.STREAM_MUSIC) != value) {
+                    audio.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0);
+                    lastVolumeStep = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
+                }
+                value = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
             } catch (Throwable ignored) { return; }
             showProgress(value, maxVolume, false);
         }
@@ -286,6 +304,7 @@ public final class GesturePlayerWrapper extends RelativeLayout {
         brightnessSide = false;
         scrollMode = false;
         downY = -1f;
+        lastVolumeStep = 0;
     }
 
     private AudioManager audioManager() {

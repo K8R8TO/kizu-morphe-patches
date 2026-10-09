@@ -1,3 +1,11 @@
+# [1.9.3-beta.10](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.10) (2026-10-09)
+
+### Player Controls
+
+* keep the landscape gesture parent eligible when Twitch's nested player requests disallow-intercept, so the swipe-to-portrait guard can take ownership of vertical gestures
+* re-read the live Android media volume after each gesture update and keep the volume overlay synchronized with the actual system level
+* preserve the existing brightness gesture behavior, native Video Stats panel, and single-tap Reload Stream
+
 # [1.9.3-beta.9](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.9) (2026-10-09)
 
 ### Player Controls
