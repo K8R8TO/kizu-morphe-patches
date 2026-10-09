@@ -168,7 +168,7 @@ public final class GesturePlayerWrapper extends RelativeLayout {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 beginCandidate(event);
-                return candidate;
+                return false;
             case MotionEvent.ACTION_MOVE:
                 if (!intercepted) return false;
                 if (!candidate || event.getPointerCount() > 1) return true;
