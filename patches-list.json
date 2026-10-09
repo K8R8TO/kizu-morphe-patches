@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.4.4",
+  "version": "1.9.3-beta.5",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1, including a Reload Stream button beside Mute with single-tap reload. The native view binding retains its reload action host for reliable clicks.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1, including a live Video Stats panel beside Reload Stream and single-tap reload.",
       "default": true,
       "category": null,
       "dependencies": [
