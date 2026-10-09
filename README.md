@@ -286,3 +286,10 @@ Beta 4.1 visibility correction.
 - The panel refreshes only while open; existing single-tap Reload Stream behavior is retained.
 
 <!-- beta.4.4 native reload host lifetime fix -->
+
+
+### 1.9.3-beta.6
+- Routes the Kizu Video Stats button to Twitch 31.3.1's native `video_debug_info_button` click handler, opening Twitch's built-in in-player statistics overlay.
+- Uses Twitch's native presenter/model to render live values such as player, user path, selected quality, resolution, estimated/average bitrate, buffer size, HLS latency, dropped frames, codecs and protocol where available.
+- Removes the custom modal/polling renderer and the no-longer-needed controller-constructor hook, avoiding guessed or stale zero/unknown values.
+- Keeps the Kizu stats icon and button position, the independent Player Controls toggle, and the existing single-tap Reload Stream path unchanged.

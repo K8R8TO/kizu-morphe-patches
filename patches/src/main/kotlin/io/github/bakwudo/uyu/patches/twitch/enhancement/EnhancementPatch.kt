@@ -7,7 +7,6 @@ import io.github.bakwudo.uyu.patches.twitch.appearance.hidePromotionsPatch
 import io.github.bakwudo.uyu.patches.twitch.appearance.playerOverlayUiPatch
 import io.github.bakwudo.uyu.patches.twitch.reload.installReloadStream
 import io.github.bakwudo.uyu.patches.twitch.reload.nativeReloadPatch
-import io.github.bakwudo.uyu.patches.twitch.videostats.videoStatsPatch
 import io.github.bakwudo.uyu.patches.twitch.chat.showDeletedMessagesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerPatch
@@ -22,7 +21,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 @Suppress("unused")
 val twitchEnhancementPatch = bytecodePatch(
     name = "Twitch Enhancement",
-    description = "Kizu Twitch enhancements: third-party emotes, live ad blocking, appearance controls, deleted-message display, privacy controls, player controls including single-tap Reload Stream, Hide Stories, Go Ad-Free hiding, and patched-app compatibility.",
+    description = "Kizu Twitch enhancements: third-party emotes, live ad blocking, appearance controls, deleted-message display, privacy controls, player controls with Twitch native Video Stats and single-tap Reload Stream, Hide Stories, Go Ad-Free hiding, and patched-app compatibility.",
 ) {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(
@@ -35,7 +34,6 @@ val twitchEnhancementPatch = bytecodePatch(
         hidePromotionsPatch,
         playerOverlayUiPatch,
         nativeReloadPatch,
-        videoStatsPatch,
         showDeletedMessagesPatch,
         thirdPartyEmotesPatch,
         thirdPartyEmotePickerPatch,

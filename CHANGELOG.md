@@ -1,3 +1,20 @@
+# [1.9.3-beta.6](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.6) (2026-10-09)
+
+### Player Controls
+
+* route the Kizu Video Stats button to Twitch's own native in-player statistics panel
+* use Twitch's live player model and presenter instead of a custom reflection-based popup that showed missing or misleading values
+* preserve Kizu's stats icon, position, independent toggle, and the existing single-tap Reload Stream behavior
+* remove the no-longer-needed Video Stats controller-constructor hook
+
+# [1.9.3-beta.5](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.5) (2026-10-09)
+
+### Player Controls
+
+* add a Video Stats button immediately to the left of Reload Stream
+* add the Show Video Stats Button toggle under Player Controls
+* initially add a custom stats panel querying Twitch's VideoStats model
+
 # [1.9.3-beta.4.4](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.4.4) (2026-10-09)
 
 ### Player Controls
