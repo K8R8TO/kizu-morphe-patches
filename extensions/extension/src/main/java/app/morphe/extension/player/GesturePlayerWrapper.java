@@ -93,7 +93,8 @@ public final class GesturePlayerWrapper extends RelativeLayout {
                 if (intercepted) return true;
                 if (!candidate) return false;
                 if (event.getPointerCount() > 1) { candidate = false; return false; }
-                if (Math.abs(downY - event.getY()) > touchSlop && gestureEnabled()) {
+                if (Math.abs(downY - event.getY()) > touchSlop
+                        && (gestureEnabled() || Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT.get())) {
                     intercepted = true;
                     return true;
                 }
@@ -114,22 +115,30 @@ public final class GesturePlayerWrapper extends RelativeLayout {
                 || getResources().getConfiguration().orientation != Configuration.ORIENTATION_LANDSCAPE) return;
         downY = event.getY();
         brightnessSide = event.getX() < getWidth() / 2.0f;
-        if (!gestureEnabled() || !isTouchAreaAllowed(event.getX(), event.getY())) return;
+        boolean adjustGesture = gestureEnabled();
+        boolean blockCollapse = Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT.get();
+        if ((!adjustGesture && !blockCollapse) || !isTouchAreaAllowed(event.getX(), event.getY())) return;
         try {
-            if (brightnessSide) {
+            if (adjustGesture && brightnessSide) {
                 Activity activity = currentActivity();
-                if (activity == null) return;
-                startingBrightness = brightnessPercent(activity);
-            } else {
+                if (activity == null) {
+                    if (!blockCollapse) return;
+                } else {
+                    startingBrightness = brightnessPercent(activity);
+                }
+            } else if (adjustGesture) {
                 AudioManager audio = audioManager();
-                if (audio == null) return;
-                startingVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
-                maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-                if (maxVolume <= 0) return;
+                if (audio == null) {
+                    if (!blockCollapse) return;
+                } else {
+                    startingVolume = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
+                    maxVolume = audio.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                    if (maxVolume <= 0 && !blockCollapse) return;
+                }
             }
             candidate = true;
         } catch (Throwable ignored) {
-            candidate = false;
+            candidate = blockCollapse;
         }
     }
 
@@ -189,6 +198,12 @@ public final class GesturePlayerWrapper extends RelativeLayout {
     }
 
     private void updateGesture(float delta) {
+        // The swipe can still be consumed to block Twitch's collapse gesture when level control
+        // is disabled; in that case it must not alter device settings or show a fake progress bar.
+        if (!gestureEnabled()) {
+            hideProgressImmediately();
+            return;
+        }
         if (brightnessSide) {
             Activity activity = currentActivity();
             if (activity == null) return;
