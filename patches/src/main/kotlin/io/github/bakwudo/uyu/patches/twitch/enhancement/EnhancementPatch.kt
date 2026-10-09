@@ -22,7 +22,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 @Suppress("unused")
 val twitchEnhancementPatch = bytecodePatch(
     name = "Twitch Enhancement",
-    description = "Kizu Twitch enhancements: third-party emotes, live ad blocking, appearance controls, deleted-message display, privacy controls, native Video Stats and single-tap Reload Stream, PurpleTV-style landscape brightness/volume gestures, Hide Stories, Go Ad-Free hiding, and patched-app compatibility.",
+    description = "Kizu Twitch enhancements: third-party emotes, live ad blocking, appearance controls, deleted-message display, privacy controls, native Video Stats and single-tap Reload Stream, PurpleTV-style landscape brightness/volume gestures with swipe-to-portrait collapse prevention, Hide Stories, Go Ad-Free hiding, and patched-app compatibility.",
 ) {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(
