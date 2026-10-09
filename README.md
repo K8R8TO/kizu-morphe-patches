@@ -100,7 +100,15 @@ UYU and Hooman's projects identify ReVanced as upstream/reference work. The curr
 
 This README does **not** claim that every ReVanced implementation is present in this repository.
 
-#### 6. morphe-androidtv-patches
+##### 5. PurpleTV — 'NyanArchive/PurpleTV'
+
+**Repository:** https://github.com/NyanArchive/PurpleTV
+
+**Relationship:** Behavioral and UX reference for the landscape player gestures in beta.7.
+
+**Consulted for:** left-side brightness gestures, right-side media-volume gestures, landscape/touch-area exclusions, and the progress overlay's timing and visual treatment. Kizu's Twitch-specific wrapper and gesture handler are separately implemented for Twitch 31.3.1; this entry does not claim PurpleTV's source files were copied.
+
+### 6. morphe-androidtv-patches
 
 **Repository:** https://github.com/ajstrick81/morphe-androidtv-patches
 
@@ -293,3 +301,11 @@ Beta 4.1 visibility correction.
 - Uses Twitch's native presenter/model to render live values such as player, user path, selected quality, resolution, estimated/average bitrate, buffer size, HLS latency, dropped frames, codecs and protocol where available.
 - Removes the custom modal/polling renderer and the no-longer-needed controller-constructor hook, avoiding guessed or stale zero/unknown values.
 - Keeps the Kizu stats icon and button position, the independent Player Controls toggle, and the existing single-tap Reload Stream path unchanged.
+
+
+### 1.9.3-beta.7
+- Adds PurpleTV-style landscape-only vertical swipes: left half adjusts window brightness; right half adjusts media volume.
+- Adds a purple progress bar and centered value overlay with a 500 ms hold followed by a 500 ms fade.
+- Adds independent Brightness Swipe Gesture, Volume Swipe Gesture, and Gesture Progress Overlay settings under Player Controls.
+- Replaces only the verified Twitch 31.3.1 `player_wrapper` layout tag with Kizu's RelativeLayout subclass; preserves its native child hierarchy and excludes the chat/debug-stat hit areas and top/bottom edge zones.
+- Retains Twitch-native Video Stats and single-tap Reload Stream behavior.
