@@ -1,3 +1,11 @@
+# [1.9.3-beta.11](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.11) (2026-10-09)
+
+### Player Controls
+
+* include the top and bottom edges of the verified video pane in landscape swipe interception when collapse prevention is enabled
+* use rounded full-range media-volume targets and re-apply the target while Kizu owns the swipe, allowing the level to fall below the starting device volume
+* preserve the existing brightness gesture behavior, native Video Stats panel, and single-tap Reload Stream
+
 # [1.9.3-beta.10](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.10) (2026-10-09)
 
 ### Player Controls

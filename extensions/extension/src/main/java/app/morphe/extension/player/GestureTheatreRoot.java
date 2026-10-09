@@ -128,7 +128,10 @@ public final class GestureTheatreRoot extends ConstraintLayout {
         brightnessSide = isOnBrightnessSide(event.getX());
         boolean adjustGesture = gestureEnabled();
         boolean blockCollapse = Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT.get();
-        if ((!adjustGesture && !blockCollapse) || !isTouchAreaAllowed(event.getX(), event.getY())) return;
+        // When collapse prevention is enabled, also own vertical swipes that begin at the
+        // player's top/bottom edge. Twitch otherwise gets those edge gestures before Kizu.
+        if ((!adjustGesture && !blockCollapse)
+                || !isTouchAreaAllowed(event.getX(), event.getY(), blockCollapse)) return;
         try {
             if (adjustGesture && brightnessSide) {
                 Activity activity = currentActivity();
@@ -169,9 +172,9 @@ public final class GestureTheatreRoot extends ConstraintLayout {
         return brightnessSide ? Settings.BRIGHTNESS_GESTURE.get() : Settings.VOLUME_GESTURE.get();
     }
 
-    private boolean isTouchAreaAllowed(float x, float y) {
-        if (y <= edgeIgnorePx || !isPointInside(playerOverlay, x, y)) return false;
-        if (y >= localBottom(playerOverlay) - edgeIgnorePx) return false;
+    private boolean isTouchAreaAllowed(float x, float y, boolean includeEdges) {
+        if (!isPointInside(playerOverlay, x, y)) return false;
+        if (!includeEdges && (y <= edgeIgnorePx || y >= localBottom(playerOverlay) - edgeIgnorePx)) return false;
         if (oneChatOverlay != null && oneChatOverlay.isShown() && oneChatOverlay.getChildCount() > 0) return false;
         if (chatWrapper != null && chatWrapper.isShown() && isPointInside(chatWrapper, x, y)) return false;
         if (debugPanel != null && debugPanel.getChildCount() > 0 && debugList != null
@@ -243,12 +246,12 @@ public final class GestureTheatreRoot extends ConstraintLayout {
             if (audio == null || maxVolume <= 0) return;
             int value = calculate(delta, startingVolume, maxVolume, playerOverlay.getHeight());
             try {
-                // Use the live system level as the source of truth so the gesture and OSD can
-                // continue all the way to zero, even when starting at a nonzero phone volume.
-                if (value != lastVolumeStep || audio.getStreamVolume(AudioManager.STREAM_MUSIC) != value) {
-                    audio.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0);
-                    lastVolumeStep = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
-                }
+                // This is an absolute target based on the level captured at touch-down, not a
+                // relative ADJUST_LOWER operation. It must be allowed to cross the touch-down
+                // volume and reach zero. Re-apply the target while Kizu owns the swipe so Twitch
+                // cannot leave its own gesture's stale volume level in effect.
+                audio.setStreamVolume(AudioManager.STREAM_MUSIC, value, 0);
+                lastVolumeStep = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
                 value = audio.getStreamVolume(AudioManager.STREAM_MUSIC);
             } catch (Throwable ignored) { return; }
             showProgress(value, maxVolume, false);
@@ -259,7 +262,9 @@ public final class GestureTheatreRoot extends ConstraintLayout {
         if (max <= 0 || height <= 0) return oldStep;
         float step = (height * GESTURE_SCALE) / max;
         if (step <= 0f) return oldStep;
-        return Math.max(0, Math.min(max, oldStep + (int) (delta / step)));
+        // Round instead of truncating toward zero so downward swipes can reduce volume
+        // smoothly even when the starting media level is low.
+        return Math.max(0, Math.min(max, oldStep + Math.round(delta / step)));
     }
 
     private void showProgress(int value, int max, boolean brightness) {
