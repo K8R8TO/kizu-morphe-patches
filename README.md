@@ -304,8 +304,13 @@ Beta 4.1 visibility correction.
 
 
 ### 1.9.3-beta.7
-- Adds PurpleTV-style landscape-only vertical swipes: left half adjusts window brightness; right half adjusts media volume.
-- Adds a purple progress bar and centered value overlay with a 500 ms hold followed by a 500 ms fade.
-- Adds independent Brightness Swipe Gesture, Volume Swipe Gesture, and Gesture Progress Overlay settings under Player Controls.
-- Replaces only the verified Twitch 31.3.1 `player_wrapper` layout tag with Kizu's RelativeLayout subclass; preserves its native child hierarchy and excludes the chat/debug-stat hit areas and top/bottom edge zones.
+- Introduced the first landscape brightness/volume gesture implementation and progress overlay. Its initial hook only replaced `player_view.xml`, so it did not cover Twitch's full-screen theatre layout; beta.8 fixes that gap.
+- Retained Twitch-native Video Stats and single-tap Reload Stream behavior.
+
+
+### 1.9.3-beta.8
+- Fixes the missing landscape swipe controls by targeting the actual Twitch 31.3.1 full-screen theatre roots in both `theatre_coordinator.xml` and `theatre_coordinator_land.xml`, in addition to the older `player_view.xml` wrapper.
+- Adds the constraint-layout-compatible `GestureTheatreRoot`, bound to the verified `player_pane` container used in full-screen playback.
+- Adds **Prevent Swipe-to-Portrait Collapse** under Player Controls. When enabled, vertical swipes inside the landscape player are consumed before Twitch can collapse the view back to portrait; enabled brightness/volume gestures still adjust their respective level.
+- Keeps brightness/volume gestures landscape-only, preserves taps and player buttons until a vertical swipe crosses the movement threshold, and excludes chat/debug regions and top/bottom edge zones.
 - Retains Twitch-native Video Stats and single-tap Reload Stream behavior.
