@@ -1,3 +1,11 @@
+# [1.9.3-beta.4.4](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.4.4) (2026-10-09)
+
+### Player Controls
+
+* fix Reload Stream no-op clicks by retaining the native reload host for the button binding lifetime
+* keep one-tap reload behavior and the existing Player Controls toggle
+* preserve the button beside Mute and keep Reload Stream bundled inside Twitch Enhancement
+
 # [1.9.3-beta.4.3](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.4.3) (2026-10-09)
 
 ### Player Controls

@@ -51,13 +51,17 @@ public final class NativeReloadViews {
         private final WeakReference<View> root;
         private final WeakReference<View> button;
         private final WeakReference<View> volume;
+        // NativeReloadAction keeps its host weakly; retain this small adapter for the binding's lifetime.
+        // ViewReloadHost itself only holds weak references to the view and owner, so this does not pin them.
+        private final NativeReloadHost host;
         private final NativeReloadAction action;
 
         Binding(View root, View button, View volume, NativeReloadOwner owner) {
             this.root = new WeakReference<>(root);
             this.button = new WeakReference<>(button);
             this.volume = new WeakReference<>(volume);
-            this.action = NativeReloadAction.create(new ViewReloadHost(root, owner));
+            this.host = new ViewReloadHost(root, owner);
+            this.action = NativeReloadAction.create(host);
         }
 
         synchronized void refresh() {
