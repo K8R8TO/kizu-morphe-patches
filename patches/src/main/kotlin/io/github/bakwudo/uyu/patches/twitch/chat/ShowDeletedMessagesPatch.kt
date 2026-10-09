@@ -91,8 +91,8 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             )
         }
 
-        // Restore the previously working formatter interception: recover the original text
-        // directly from Twitch's deleted-message span and bypass its placeholder branch.
+        // Recover the original message from the deleted span before Twitch replaces it with the placeholder.
+        // This is the same proven structure used by the original Hooman patch for Twitch.
         formatter.addInstructionsWithLabels(
             arrayLengthIndex,
             """
@@ -121,7 +121,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         if (accessReads.size != 2) {
             throw PatchException(
-                "Twitch deleted messages: expected two access-flag reads, found ${accessReads.size}.",
+                "Twitch deleted messages: expected two access-flag reads, found \${accessReads.size}.",
             )
         }
 
