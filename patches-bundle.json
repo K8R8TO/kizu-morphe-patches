@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-09T17:25:00",
-  "description": "# [1.9.3-beta.29] Restore known-working deleted-message recovery and apply Mod/Strikethrough/Grey to recovered text",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.29/patches-1.9.3-beta.29.mpp",
+  "created_at": "2026-10-09T18:45:00",
+  "description": "# [1.9.3-beta.30] Test class-filtered direct-return recovery for deleted-message styling",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.30/patches-1.9.3-beta.30.mpp",
   "signature_download_url": "",
-  "version": "1.9.3-beta.29"
+  "version": "1.9.3-beta.30"
 }
