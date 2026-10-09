@@ -119,7 +119,8 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             """
                 array-length v$getSpansRegisterF, v$spanArrayRegister
                 if-eqz v$getSpansRegisterF, :kizu_deleted_messages_restore
-                invoke-static {v$getSpansRegisterC, v$spanArrayRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;[Ljava/lang/Object;)Landroid/text/SpannedString;
+                const-class v$getSpansRegisterF, ${DeletedMessageSpanCtorFingerprint.classDef.type}
+                invoke-static {v$getSpansRegisterC, v$spanArrayRegister, v$getSpansRegisterF}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;[Ljava/lang/Object;Ljava/lang/Class;)Landroid/text/SpannedString;
                 move-result-object v$getSpansRegisterF
                 if-nez v$getSpansRegisterF, :kizu_deleted_messages_return
                 :kizu_deleted_messages_restore
