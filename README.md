@@ -273,3 +273,9 @@ The current known-good baseline is documented in `reference/channel-points/BASEL
 - Fixes native player-control binding and mirrors the Mute control's visibility when playback controls appear or disappear.
 
 Beta 4.1 visibility correction.
+
+
+### 1.9.3-beta.4.4
+- Fixes Reload Stream clicks by retaining the native reload host for the full lifetime of the button binding, preventing the weakly referenced adapter from being garbage-collected.
+
+<!-- beta.4.4 native reload host lifetime fix -->
