@@ -3,7 +3,7 @@
 ## Current known-good state
 
 - Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.18`
+- Current prerelease: `1.9.3-beta.19`
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
@@ -99,6 +99,12 @@ Final implementation:
 - Reinstates the verified, earlier recovery control flow: inspect the exact deleted-span array, recover its stored original text, return the recovered message immediately when successful, and restore the original array/continue through Twitch's stock formatter only when recovery returns null.
 - Restores the span-specific support overload, so style handling runs only on a successfully recovered deleted message. Normal chat messages continue through Twitch's unmodified formatter.
 - The beta.18 build and metadata check status will be updated from the release workflow; runtime testing by the user is still required.
+
+### beta.19 — fix terminal continuation label in recovery injection
+- beta.18 could not be applied: Morphe's label assembler treated the final `:kizu_deleted_messages_continue` label as an external target, but no external-label mapping was supplied.
+- The injection now places a real `nop` at that label, keeping the continuation target inside the injected instruction block and allowing Twitch's original formatter to continue immediately afterward.
+- This addresses the reported apply-time `ArrayIndexOutOfBoundsException: length=0; index=0`.
+- Build, artifact publication, and runtime deleted-message behavior must each be verified separately; not runtime-verified yet.
 
 ## Morphe prerelease feed rule
 
