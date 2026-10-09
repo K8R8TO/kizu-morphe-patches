@@ -15,7 +15,7 @@ internal val videoStatsPatch = bytecodePatch {
     dependsOn(sharedExtensionPatch)
 
     execute {
-        val controller = classDefBy("Lsl2;")
+        val controller = mutableClassDefBy("Lsl2;")
         val expectedParameters = listOf(
             "Lqd;",
             "Lcs1;",
