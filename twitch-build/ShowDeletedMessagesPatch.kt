@@ -41,6 +41,23 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         )
 
         val formatter = DeletedMessageFormatterFingerprint.method
+
+        // Mirror PurpleTV's working approach: style the original message at the deleted-message
+        // factory boundary, before Twitch's formatter can normalize or discard custom spans.
+        formatter.addInstructionsWithLabels(
+            0,
+            """
+                invoke-static {p1}, $SUPPORT->styleDeletedMessage(Landroid/text/SpannedString;)Landroid/text/Spanned;
+                move-result-object v0
+                if-nez v0, :kizu_deleted_message_styled
+                goto :kizu_deleted_message_continue
+                :kizu_deleted_message_styled
+                return-object v0
+                :kizu_deleted_message_continue
+                nop
+            """,
+        )
+
         val formatterInstructions = formatter.instructions
 
         val getSpansIndex = formatterInstructions.indexOfFirst { instruction ->
