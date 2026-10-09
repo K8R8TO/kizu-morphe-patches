@@ -3,7 +3,7 @@
 ## Current known-good state
 
 - Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.17`
+- Current prerelease: `1.9.3-beta.18`
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
@@ -91,10 +91,14 @@ Final implementation:
 - Build and metadata checks passed, but the user reported that grey/strikethrough deleted-message styles regressed and the `Invalid register: v16` warning remained.
 - The one-argument deleted-message recovery bridge was reverted in beta.17; the original two-argument recovery path is restored.
 
-### beta.17 — preserve deleted-message styling and fix the actual high-register field access
-- Restores the original deleted-message recovery implementation and its `SpannedString + Object[]` call so grey/strikethrough handling is preserved. The constructor's single-argument `resolveAccess` call retains `invoke-static/range` encoding.
-- Fixes the player Create Clip hook in verified Twitch 31.3.1 `Lout.<init>`: this constructor has 23 registers, so `p0` aliases `v16`. The old `iget-object v0, p0, ...` is invalid for that instruction format. Beta.17 first moves `p0` with `move-object/from16 v0, p0`, then reads `Lout.j` through low register `v0`.
-- Build/release status is recorded by GitHub Actions; runtime verification remains pending.
+### beta.17 — actual high-register field access fixed; deleted-message recovery regressed
+- The `Lout.<init>` Create Clip hook now moves `p0` (which aliases `v16` in the 23-register constructor) through `move-object/from16 v0, p0` before reading `Lout.j`. The user confirmed the `Invalid register: v16` warning disappeared.
+- The formatter recovery still continued into Twitch's original placeholder logic after replacing the message, and the user reported deleted-message display/styles were broken. This is superseded by beta.18.
+
+### beta.18 — restore early-return deleted-message recovery
+- Reinstates the verified, earlier recovery control flow: inspect the exact deleted-span array, recover its stored original text, return the recovered message immediately when successful, and restore the original array/continue through Twitch's stock formatter only when recovery returns null.
+- Restores the span-specific support overload, so style handling runs only on a successfully recovered deleted message. Normal chat messages continue through Twitch's unmodified formatter.
+- The beta.18 build and metadata check status will be updated from the release workflow; runtime testing by the user is still required.
 
 ## Morphe prerelease feed rule
 

@@ -27,36 +27,46 @@ public final class DeletedMessagesSupport {
 
     public static SpannedString recoverDeletedMessage(
             SpannedString message,
-            Object[] spans
+            ClickableSpan deletedSpan
     ) {
-        if (message == null || spans == null || spans.length == 0) return message;
         try {
-            if (!Settings.CHAT_DELETED_MESSAGES.get()) return message;
-
-            for (Object candidate : spans) {
-                if (!(candidate instanceof ClickableSpan)) continue;
-                ClickableSpan deletedSpan = (ClickableSpan) candidate;
-                int spanStart = message.getSpanStart(deletedSpan);
-                int spanEnd = message.getSpanEnd(deletedSpan);
-                if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) continue;
-
-                SpannedString original = findOriginalMessage(deletedSpan);
-                if (original == null || original.length() == 0) continue;
-
-                SpannableStringBuilder builder = new SpannableStringBuilder(message);
-                SpannedString recovered = stripDuplicateChatterHeader(
-                        message, deletedSpan, spanStart, original
-                );
-                if (recovered.length() == 0) continue;
-
-                builder.replace(spanStart, spanEnd, recovered);
-                builder.removeSpan(deletedSpan);
-                applyStyle(builder, spanStart, spanStart + recovered.length());
-                return SpannedString.valueOf(builder);
+            if (message == null
+                    || deletedSpan == null
+                    || !Settings.CHAT_DELETED_MESSAGES.get()) {
+                return null;
             }
+
+            int spanStart = message.getSpanStart(deletedSpan);
+            int spanEnd = message.getSpanEnd(deletedSpan);
+            if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) {
+                return null;
+            }
+
+            SpannedString original = findOriginalMessage(deletedSpan);
+            if (original == null || original.length() == 0) {
+                return null;
+            }
+
+            SpannableStringBuilder builder = new SpannableStringBuilder(message);
+            SpannedString recovered = stripDuplicateChatterHeader(
+                    message,
+                    deletedSpan,
+                    spanStart,
+                    original
+            );
+            if (recovered.length() == 0) {
+                return null;
+            }
+
+            builder.replace(spanStart, spanEnd, recovered);
+            builder.removeSpan(deletedSpan);
+
+            int recoveredEnd = spanStart + recovered.length();
+            applyStyle(builder, spanStart, recoveredEnd);
+            return SpannedString.valueOf(builder);
         } catch (Throwable ignored) {
+            return null;
         }
-        return message;
     }
 
     private static SpannedString findOriginalMessage(ClickableSpan deletedSpan) {
