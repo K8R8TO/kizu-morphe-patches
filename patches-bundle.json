@@ -1,6 +1,6 @@
 {
   "created_at": "2026-10-06T13:06:39",
-  "description": "# [1.9.2] Stable release",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.2/patches-1.9.2.mpp",
-  "version": "1.9.2"
+  "description": "# [1.9.3-beta.24] Restore previously working deleted-message recovery",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.24/patches-1.9.3-beta.24.mpp",
+  "version": "1.9.3-beta.24"
 }
