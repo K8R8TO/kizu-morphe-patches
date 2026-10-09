@@ -287,6 +287,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addPlayerSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.SHOW_VIDEO_STATS_BUTTON, "Show Video Stats Button",
+                "Show Twitch's live playback statistics panel immediately to the left of Reload Stream.");
         addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
                 "Hide Twitch's Create Clip button in the player.");
     }
