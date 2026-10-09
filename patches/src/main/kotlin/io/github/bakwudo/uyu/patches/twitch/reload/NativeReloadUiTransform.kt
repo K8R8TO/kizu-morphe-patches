@@ -57,9 +57,6 @@ internal fun BytecodePatchContext.installNativeReloadUi(ui: NativeReloadUiHooks,
         invoke-static {p0}, $NATIVE_ACTION->forVolume(Ljava/lang/Object;)$NATIVE_ACTION
         move-result-object v7
         if-eqz v7, :done
-        invoke-virtual {v7}, $NATIVE_ACTION->available()Z
-        move-result v0
-        if-eqz v0, :done
         const-string v0, "Reload stream"
         const v1, $nativeReloadIcon
         const/4 v2, 0x0
