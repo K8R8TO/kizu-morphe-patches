@@ -179,7 +179,48 @@ public final class GestureTheatreRoot extends ConstraintLayout {
         if (chatWrapper != null && chatWrapper.isShown() && isPointInside(chatWrapper, x, y)) return false;
         if (debugPanel != null && debugPanel.getChildCount() > 0 && debugList != null
                 && debugList.isShown() && isPointInside(debugList, x, y)) return false;
+        // Never steal vertical swipes that start on Twitch's own settings/quality menus,
+        // scroll containers, sliders, or compact player controls.
+        if (isInteractiveControlAt(this, x, y, true)) return false;
         return true;
+    }
+
+    private boolean isInteractiveControlAt(View view, float x, float y, boolean root) {
+        if (view == null || !view.isShown() || !isPointInside(view, x, y)) return false;
+        if (!root && view != progressView && view != playerOverlay) {
+            String idName = "";
+            int id = view.getId();
+            if (id != View.NO_ID) {
+                try { idName = getResources().getResourceEntryName(id).toLowerCase(java.util.Locale.ROOT); }
+                catch (Throwable ignored) { }
+            }
+            if (idName.contains("quality") || idName.contains("setting")
+                    || idName.contains("menu") || idName.contains("sheet")
+                    || idName.contains("dialog") || idName.contains("seek")
+                    || idName.contains("slider") || idName.contains("list")) return true;
+
+            String className = view.getClass().getName().toLowerCase(java.util.Locale.ROOT);
+            if (className.contains("scrollview") || className.contains("recyclerview")
+                    || className.contains("abslistview") || className.contains("seekbar")
+                    || className.contains("slider")) return true;
+            try {
+                if (view.canScrollVertically(-1) || view.canScrollVertically(1)) return true;
+            } catch (Throwable ignored) { }
+
+            long viewArea = (long) view.getWidth() * (long) view.getHeight();
+            long paneArea = playerOverlay == null ? 0L
+                    : (long) playerOverlay.getWidth() * (long) playerOverlay.getHeight();
+            if ((view.isClickable() || view.isLongClickable())
+                    && paneArea > 0L && viewArea > 0L && viewArea * 4L < paneArea) return true;
+        }
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = group.getChildCount() - 1; i >= 0; i--) {
+                View child = group.getChildAt(i);
+                if (isInteractiveControlAt(child, x, y, false)) return true;
+            }
+        }
+        return false;
     }
 
     private float localBottom(View view) {
