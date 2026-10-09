@@ -5,6 +5,7 @@ import org.w3c.dom.Document
 import org.w3c.dom.Element
 
 internal const val RELOAD_VIEW_TAG = "twitchpatches_reload_button"
+internal const val VIDEO_STATS_VIEW_TAG = "twitchpatches_video_stats_button"
 
 internal fun insertNativeReloadLayout(document: Document, constrained: Boolean) {
     val nodes = document.getElementsByTagName("ImageView")
@@ -14,16 +15,29 @@ internal fun insertNativeReloadLayout(document: Document, constrained: Boolean) 
     val volume = volumes.single()
     if (constrained && volume.getAttribute("app:layout_constraintEnd_toStartOf") != "@id/fullscreen_button")
         throw PatchException("Reload stream: native volume alignment changed.")
+
     val button = volume.cloneNode(true) as Element
     button.setAttribute("android:id", "@+id/$RELOAD_VIEW_TAG")
     button.setAttribute("android:tag", RELOAD_VIEW_TAG)
     button.setAttribute("android:src", "@drawable/ic_refresh_white_24dp")
     button.setAttribute("android:contentDescription", "Reload stream")
     button.setAttribute("android:visibility", "gone")
+
+    val statsButton = volume.cloneNode(true) as Element
+    statsButton.setAttribute("android:id", "@+id/$VIDEO_STATS_VIEW_TAG")
+    statsButton.setAttribute("android:tag", VIDEO_STATS_VIEW_TAG)
+    statsButton.setAttribute("android:src", "@drawable/kizu_video_stats")
+    statsButton.setAttribute("android:contentDescription", "Video stats")
+    statsButton.setAttribute("android:visibility", "gone")
+
     if (constrained) {
         button.setAttribute("app:layout_constraintEnd_toStartOf", "@id/mute_button")
         button.removeAttribute("app:layout_constraintStart_toStartOf")
         button.removeAttribute("app:layout_constraintStart_toEndOf")
+        statsButton.setAttribute("app:layout_constraintEnd_toStartOf", "@id/$RELOAD_VIEW_TAG")
+        statsButton.removeAttribute("app:layout_constraintStart_toStartOf")
+        statsButton.removeAttribute("app:layout_constraintStart_toEndOf")
     }
     volume.parentNode.insertBefore(button, volume)
+    volume.parentNode.insertBefore(statsButton, button)
 }
