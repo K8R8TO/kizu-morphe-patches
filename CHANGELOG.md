@@ -1,3 +1,12 @@
+# [1.9.3-beta.4.3](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.4.3) (2026-10-09)
+
+### Player Controls
+
+* fix reload button binding to the live player instead of relying on a mismatched Compose callback owner
+* keep the XML player control synchronized with Mute visibility as controls appear and disappear
+* refresh button visibility on player layout changes
+* preserve single-tap reload and the single Twitch Enhancement bundle
+
 # [1.9.3-beta.4.2](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.4.2) (2026-10-09)
 
 ### Player Controls
