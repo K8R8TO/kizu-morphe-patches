@@ -4,17 +4,15 @@ import android.graphics.Color;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
+import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StrikethroughSpan;
-import android.text.style.ClickableSpan;
 
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 import java.util.Locale;
 
 public final class DeletedMessagesSupport {
-    private static final ThreadLocal<Boolean> VISUAL_STYLE_PENDING = new ThreadLocal<>();
-
     private DeletedMessagesSupport() {
     }
 
@@ -27,40 +25,57 @@ public final class DeletedMessagesSupport {
         }
     }
 
-    public static boolean shouldApplyVisualStyle() {
+    public static SpannedString recoverDeletedMessage(
+            SpannedString message,
+            Object[] spans
+    ) {
+        if (message == null || spans == null || spans.length == 0) return message;
         try {
-            if (!Settings.CHAT_DELETED_MESSAGES.get()) return false;
-            String style = normalizeStyle();
-            return "strikethrough".equals(style) || "grey".equals(style);
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) return message;
 
-    public static void markVisualStylePending() {
-        VISUAL_STYLE_PENDING.set(Boolean.TRUE);
-    }
+            for (Object candidate : spans) {
+                if (!(candidate instanceof ClickableSpan)) continue;
+                ClickableSpan deletedSpan = (ClickableSpan) candidate;
+                int spanStart = message.getSpanStart(deletedSpan);
+                int spanEnd = message.getSpanEnd(deletedSpan);
+                if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) continue;
 
-    public static void clearVisualStylePending() {
-        VISUAL_STYLE_PENDING.remove();
-    }
+                SpannedString original = findOriginalMessage(deletedSpan);
+                if (original == null || original.length() == 0) continue;
 
-    /** Apply styles only after Twitch finishes rebuilding the returned Spanned row. */
-    public static Spanned applyVisualStyleToResult(Spanned formatted) {
-        boolean pending = Boolean.TRUE.equals(VISUAL_STYLE_PENDING.get());
-        VISUAL_STYLE_PENDING.remove();
-        if (formatted == null) return null;
-        try {
-            if (!pending || !Settings.CHAT_DELETED_MESSAGES.get()
-                    || "mod".equals(normalizeStyle())) {
-                return formatted;
+                SpannableStringBuilder builder = new SpannableStringBuilder(message);
+                SpannedString recovered = stripDuplicateChatterHeader(
+                        message, deletedSpan, spanStart, original
+                );
+                if (recovered.length() == 0) continue;
+
+                builder.replace(spanStart, spanEnd, recovered);
+                builder.removeSpan(deletedSpan);
+                applyStyle(builder, spanStart, spanStart + recovered.length());
+                return SpannedString.valueOf(builder);
             }
-            SpannableStringBuilder builder = new SpannableStringBuilder(formatted);
-            applyStyle(builder, 0, builder.length());
-            return SpannedString.valueOf(builder);
         } catch (Throwable ignored) {
-            return formatted;
         }
+        return message;
+    }
+
+    private static SpannedString findOriginalMessage(ClickableSpan deletedSpan) {
+        try {
+            Class<?> type = deletedSpan.getClass();
+            while (type != null) {
+                for (java.lang.reflect.Field field : type.getDeclaredFields()) {
+                    if (field.getType() != SpannedString.class) continue;
+                    field.setAccessible(true);
+                    Object value = field.get(deletedSpan);
+                    if (value instanceof SpannedString) {
+                        return (SpannedString) value;
+                    }
+                }
+                type = type.getSuperclass();
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private static void applyStyle(SpannableStringBuilder builder, int start, int end) {
@@ -85,11 +100,9 @@ public final class DeletedMessagesSupport {
             if (style == null) return "mod";
             style = style.trim().toLowerCase(Locale.ROOT);
             if ("default".equals(style)) return "mod";
-            if ("mod".equals(style)
-                    || "strikethrough".equals(style)
-                    || "grey".equals(style)) {
-                return style;
-            }
+            if ("strikethrough".equals(style)
+                    || "grey".equals(style)
+                    || "mod".equals(style)) return style;
         } catch (Throwable ignored) {
         }
         return "mod";

@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-09T17:25:00",
-  "description": "# [1.9.3-beta.28] Apply Strikethrough/Grey after Twitch finishes formatting deleted messages",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.28/patches-1.9.3-beta.28.mpp",
+  "description": "# [1.9.3-beta.29] Restore known-working deleted-message recovery and apply Mod/Strikethrough/Grey to recovered text",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.29/patches-1.9.3-beta.29.mpp",
   "signature_download_url": "",
-  "version": "1.9.3-beta.28"
+  "version": "1.9.3-beta.29"
 }
