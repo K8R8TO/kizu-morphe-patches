@@ -3,7 +3,7 @@
 ## Current known-good state
 
 - Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.20`
+- Current prerelease: `1.9.3-beta.21`
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
@@ -111,6 +111,13 @@ Final implementation:
 - Successful recovery returns the styled original immediately. If no candidate can be recovered or the setting is off, the helper returns null; the injected hook restores the original class register and span-array result before continuing through Twitch's stock formatter.
 - Added guarded failure handling and diagnostic logging around Kizu settings-screen construction and styling so a settings UI exception does not automatically take down the entire Activity. This is crash containment, not proof the underlying settings exception is eliminated.
 - Build/release verification and on-device runtime behavior must be tracked separately. Not runtime-verified yet.
+
+### beta.21 — restore stable chat hook and protect landscape settings scrolling
+- Reverted the deleted-message bytecode hook to the stable 1.9.2 structure: it calls recovery and replaces the formatter's message register, without injected early returns, external labels, or manual re-invocation of Twitch getSpans. This avoids the beta.16–20 control-flow rewrite that was implicated in chat-menu instability.
+- Recovery scans all span candidates and now returns the original formatter input when no deleted span can be recovered or the setting is disabled.
+- Both landscape gesture roots now avoid intercepting touches on scrollable/settings/quality surfaces, sliders, and compact player controls, so quality-menu swipes should reach Twitch's scroll handler instead of changing volume.
+- Wrapped the Kizu settings entry click handler in Throwable handling with diagnostic logging.
+- Build/release checks are not a substitute for device runtime testing; no runtime behavior claimed as verified.
 
 ## Morphe prerelease feed rule
 
