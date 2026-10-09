@@ -13,6 +13,8 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 import java.util.Locale;
 
 public final class DeletedMessagesSupport {
+    private static final ThreadLocal<Boolean> VISUAL_STYLE_PENDING = new ThreadLocal<>();
+
     private DeletedMessagesSupport() {
     }
 
@@ -35,11 +37,22 @@ public final class DeletedMessagesSupport {
         }
     }
 
+    public static void markVisualStylePending() {
+        VISUAL_STYLE_PENDING.set(Boolean.TRUE);
+    }
+
+    public static void clearVisualStylePending() {
+        VISUAL_STYLE_PENDING.remove();
+    }
+
     /** Apply styles only after Twitch finishes rebuilding the returned Spanned row. */
     public static Spanned applyVisualStyleToResult(Spanned formatted) {
+        boolean pending = Boolean.TRUE.equals(VISUAL_STYLE_PENDING.get());
+        VISUAL_STYLE_PENDING.remove();
         if (formatted == null) return null;
         try {
-            if (!Settings.CHAT_DELETED_MESSAGES.get() || "mod".equals(normalizeStyle())) {
+            if (!pending || !Settings.CHAT_DELETED_MESSAGES.get()
+                    || "mod".equals(normalizeStyle())) {
                 return formatted;
             }
             SpannableStringBuilder builder = new SpannableStringBuilder(formatted);

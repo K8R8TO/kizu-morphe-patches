@@ -88,6 +88,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 const/4 v$scratchRegister, 0x0
                 aget-object v$scratchRegister, v$arrayRegister, v$scratchRegister
                 iget-object p1, v$scratchRegister, $originalMessageField
+                invoke-static {}, $SUPPORT->markVisualStylePending()V
                 const/4 p4, 0x1
                 const/4 v$scratchRegister, 0x0
                 new-array v$arrayRegister, v$scratchRegister, [$spanType
@@ -115,6 +116,11 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 """,
             )
         }
+
+        formatter.addInstructions(
+            0,
+            "invoke-static {}, $SUPPORT->clearVisualStylePending()V",
+        )
 
         // Twitch can reset this flag after construction; filter both later reads as well.
         val accessReads = spanClass.methods.flatMap { method ->
