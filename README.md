@@ -277,3 +277,5 @@ The current known-good baseline is documented in `reference/channel-points/BASEL
 ### 1.9.3-beta.4
 - Adds a single-tap Reload Stream button immediately to the left of the player mute control.
 
+
+Beta 4.1 visibility correction.
