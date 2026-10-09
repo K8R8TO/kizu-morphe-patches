@@ -1,7 +1,7 @@
 {
-  "created_at": "2026-10-09T15:05:00",
-  "description": "# [1.9.3-beta.21] Restore early-return deleted-message recovery and scoped styling",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.21/patches-1.9.3-beta.21.mpp",
+  "created_at": "2026-10-09T15:30:00",
+  "description": "# [1.9.3-beta.22] Restore volume gestures and safely bypass deleted-message placeholder",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v1.9.3-beta.22/patches-1.9.3-beta.22.mpp",
   "signature_download_url": "",
-  "version": "1.9.3-beta.21"
+  "version": "1.9.3-beta.22"
 }
