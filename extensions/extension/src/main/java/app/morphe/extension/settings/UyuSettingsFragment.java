@@ -330,6 +330,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 "In landscape, swipe vertically on the right half of the player to change media volume.");
         addSwitch(screen, Settings.GESTURE_OSD, "Gesture Progress Overlay",
                 "Show the PurpleTV-style progress bar and value while adjusting brightness or volume.");
+        addSwitch(screen, Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT, "Prevent Swipe-to-Portrait Collapse",
+                "In landscape, prevent vertical swipes on the player from collapsing it back to portrait. Enabled-side swipes still adjust brightness or volume.");
         addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
                 "Hide Twitch's Create Clip button in the player.");
         addSwitch(screen, Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON, "Hide Live Share Button",
