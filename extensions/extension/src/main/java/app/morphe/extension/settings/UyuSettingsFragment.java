@@ -320,6 +320,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addPlayerSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.SHOW_VIDEO_STATS_BUTTON, "Show Video Stats Button",
+                "Show Twitch's live playback statistics panel immediately to the left of Reload Stream.");
         addSwitch(screen, Settings.SHOW_REFRESH_BUTTON, "Show Reload Stream Button",
                 "Show a single-tap reload button immediately to the left of the mute control.");
         addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
