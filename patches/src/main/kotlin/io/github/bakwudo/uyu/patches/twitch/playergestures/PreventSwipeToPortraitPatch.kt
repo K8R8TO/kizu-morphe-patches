@@ -11,6 +11,8 @@ import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 
 private const val SUPPORT_CLASS = "Lapp/morphe/extension/player/GestureSettingsSupport;"
+private const val DRAGGABLE_LAYOUT_CLASS =
+    "Ltv/twitch/android/shared/ui/elements/draggable/DraggableConstraintLayout;"
 private const val CONTAINER_CLASS =
     "Ltv/twitch/android/shared/ui/elements/draggable/ConstraintTheatreContainerView;"
 
@@ -36,11 +38,65 @@ internal object NativeLandscapeSwipeTouchFingerprint : Fingerprint(
     returnType = "Z",
 )
 
+internal object NativeLandscapeParentInterceptFingerprint : Fingerprint(
+    definingClass = DRAGGABLE_LAYOUT_CLASS,
+    name = "onInterceptTouchEvent",
+    parameters = listOf("Landroid/view/MotionEvent;"),
+    returnType = "Z",
+)
+
 internal val preventSwipeToPortraitPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(settingsPatch)
 
     execute {
+        // Guard the exact parent method that Android calls before the nested player root.
+        // The supplied Twitch 31.3.1 classes2.dex shows this method calls p(MotionEvent)
+        // virtually; inserting only in the child root or subclass p() has proved insufficient
+        // on-device, so take the decision away at the parent's interception boundary.
+        val parentIntercept = NativeLandscapeParentInterceptFingerprint.method
+        val parentCalls = parentIntercept.instructions.mapNotNull { instruction ->
+            (instruction as? ReferenceInstruction)?.reference as? MethodReference
+        }
+        fun parentHasCall(owner: String, name: String, parameters: List<String>, result: String) =
+            parentCalls.any { reference ->
+                reference.definingClass == owner &&
+                    reference.name == name &&
+                    reference.parameterTypes.map { it.toString() } == parameters &&
+                    reference.returnType == result
+            }
+        if (
+            !parentHasCall(
+                DRAGGABLE_LAYOUT_CLASS,
+                "p",
+                listOf("Landroid/view/MotionEvent;"),
+                "Z",
+            ) ||
+            !parentHasCall(
+                "Landroid/view/ViewGroup;",
+                "onInterceptTouchEvent",
+                listOf("Landroid/view/MotionEvent;"),
+                "Z",
+            )
+        ) {
+            throw PatchException(
+                "Twitch swipe guard: DraggableConstraintLayout.onInterceptTouchEvent() no longer matches the verified 31.3.1 parent handler.",
+            )
+        }
+        parentIntercept.addInstructionsWithLabels(
+            0,
+            """
+                instance-of v0, p0, $CONTAINER_CLASS
+                if-eqz v0, :kizu_continue_native_parent_interception
+                invoke-static/range { p0 .. p0 }, $SUPPORT_CLASS->shouldSuppressNativeLandscapeSwipe(Landroid/view/View;)Z
+                move-result v0
+                if-eqz v0, :kizu_continue_native_parent_interception
+                const/4 v0, 0x0
+                return v0
+                :kizu_continue_native_parent_interception
+            """,
+        )
+
         val decision = NativeLandscapeSwipeDecisionFingerprint.method
         val decisionCalls = decision.instructions.mapNotNull { instruction ->
             (instruction as? ReferenceInstruction)?.reference as? MethodReference

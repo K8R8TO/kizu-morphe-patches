@@ -1,3 +1,11 @@
+# [1.9.3-beta.13](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.13) (2026-10-09)
+
+### Player Controls
+
+* short-circuit Twitch's verified `DraggableConstraintLayout.onInterceptTouchEvent(MotionEvent)` before its native drag-decision call when landscape collapse prevention is enabled
+* limit the new parent guard to the verified `ConstraintTheatreContainerView` class and retain beta.12's exact decision/touch guards as a second layer
+* preserve the existing landscape brightness/volume controls, Video Stats panel, and single-tap Reload Stream
+
 # [1.9.3-beta.12](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.3-beta.12) (2026-10-09)
 
 ### Player Controls

@@ -142,13 +142,17 @@ Target artifact: the supplied Twitch 31.3.1 APKM (build code 3103016). These ide
 
 - DEX: `classes2.dex`
 - Parent container: `Ltv/twitch/android/shared/ui/elements/draggable/ConstraintTheatreContainerView;`
-- Interception decision: `p(Landroid/view/MotionEvent;)Z`, code-item offset `0x65105c`; 7 registers and 86 code units
+- Parent interception method: `Ltv/twitch/android/shared/ui/elements/draggable/DraggableConstraintLayout;->onInterceptTouchEvent(Landroid/view/MotionEvent;)Z`, code-item offset `0x651b70`; 3 registers and 28 code units
+- The parent interception method calls its virtual `p(MotionEvent)Z` decision at code-unit offset `0x0a`, so the early guard is inserted before the parent asks whether it should take the gesture.
+- Subclass interception decision: `p(Landroid/view/MotionEvent;)Z`, code-item offset `0x65105c`; 7 registers and 86 code units
 - Fallback touch handler: `onTouchEvent(Landroid/view/MotionEvent;)Z`, code-item offset `0x650fdc`; 5 registers and 55 code units
 - The decision method references the container's `k(MotionEvent)Z`, `MotionEvent.getRawY()F`, and `Lv880;.s(MotionEvent)Z` drag-helper path.
 - The fallback handler calls both `DraggableConstraintLayout.onTouchEvent(MotionEvent)` and `ScaleGestureDetector.onTouchEvent(MotionEvent)`.
 - Layout resources `twitch_rn_theatre_fragment.xml` and `theatre_container_layout.xml` instantiate this custom draggable container. It can intercept before the nested `theatre_root_container`; changing only that inner layout cannot prevent the parent from taking the gesture first.
 
 ### Guard strategy
+
+Beta.13 adds an earlier guard directly to the verified superclass `DraggableConstraintLayout.onInterceptTouchEvent(MotionEvent)`. It only short-circuits when the runtime object is a `ConstraintTheatreContainerView`, the user toggle is ON, and the device is in landscape; this is before Twitch invokes its drag decision. Beta.12's subclass decision and fallback-touch guards remain as defense-in-depth.
 
 The patch checks the existing `disable_landscape_swipe_to_portrait` setting at runtime. When the setting is ON and the container is in landscape, it makes the parent's interception decision return false and prevents any fallback touch events handled by the outer container from reaching Twitch's drag helper. When the setting is OFF or orientation is not landscape, the original methods continue unchanged. Kizu's child-level brightness and volume handling remains in place.
 
