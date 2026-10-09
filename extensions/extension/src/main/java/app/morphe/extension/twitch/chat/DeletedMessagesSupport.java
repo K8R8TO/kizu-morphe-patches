@@ -27,9 +27,7 @@ public final class DeletedMessagesSupport {
 
     public static boolean shouldApplyVisualStyle() {
         try {
-            if (!Settings.CHAT_DELETED_MESSAGES.get()) return false;
-            String style = normalizeStyle();
-            return "strikethrough".equals(style) || "grey".equals(style);
+            return Settings.CHAT_DELETED_MESSAGES.get();
         } catch (Throwable ignored) {
             return false;
         }
@@ -120,15 +118,11 @@ public final class DeletedMessagesSupport {
     private static String normalizeStyle() {
         try {
             String style = Settings.CHAT_DELETED_MESSAGES_STYLE.get();
-            if (style == null) return "mod";
-            style = style.trim().toLowerCase(Locale.ROOT);
-            if ("default".equals(style)) return "mod";
-            if ("strikethrough".equals(style)
-                    || "grey".equals(style)
-                    || "mod".equals(style)) return style;
+            if (style != null && "grey".equalsIgnoreCase(style.trim())) return "grey";
         } catch (Throwable ignored) {
         }
-        return "mod";
+        // Older "mod"/"default" values migrate to Strikethrough instead of plain text.
+        return "strikethrough";
     }
 
     private static SpannedString stripDuplicateChatterHeader(
