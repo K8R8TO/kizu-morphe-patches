@@ -27,46 +27,43 @@ public final class DeletedMessagesSupport {
 
     public static SpannedString recoverDeletedMessage(
             SpannedString message,
-            ClickableSpan deletedSpan
+            Object[] spans
     ) {
+        if (message == null || spans == null || spans.length == 0) return null;
         try {
-            if (message == null
-                    || deletedSpan == null
-                    || !Settings.CHAT_DELETED_MESSAGES.get()) {
-                return null;
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) return null;
+
+            // Twitch may return multiple spans. Never assume index 0 is the deleted-message span.
+            for (Object candidate : spans) {
+                if (!(candidate instanceof ClickableSpan)) continue;
+                ClickableSpan deletedSpan = (ClickableSpan) candidate;
+                int spanStart = message.getSpanStart(deletedSpan);
+                int spanEnd = message.getSpanEnd(deletedSpan);
+                if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) continue;
+
+                SpannedString original = findOriginalMessage(deletedSpan);
+                if (original == null || original.length() == 0) continue;
+
+                SpannableStringBuilder builder = new SpannableStringBuilder(message);
+                SpannedString recovered = stripDuplicateChatterHeader(
+                        message,
+                        deletedSpan,
+                        spanStart,
+                        original
+                );
+                if (recovered.length() == 0) continue;
+
+                builder.replace(spanStart, spanEnd, recovered);
+                builder.removeSpan(deletedSpan);
+
+                int recoveredEnd = spanStart + recovered.length();
+                applyStyle(builder, spanStart, recoveredEnd);
+                return SpannedString.valueOf(builder);
             }
-
-            int spanStart = message.getSpanStart(deletedSpan);
-            int spanEnd = message.getSpanEnd(deletedSpan);
-            if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) {
-                return null;
-            }
-
-            SpannedString original = findOriginalMessage(deletedSpan);
-            if (original == null || original.length() == 0) {
-                return null;
-            }
-
-            SpannableStringBuilder builder = new SpannableStringBuilder(message);
-            SpannedString recovered = stripDuplicateChatterHeader(
-                    message,
-                    deletedSpan,
-                    spanStart,
-                    original
-            );
-            if (recovered.length() == 0) {
-                return null;
-            }
-
-            builder.replace(spanStart, spanEnd, recovered);
-            builder.removeSpan(deletedSpan);
-
-            int recoveredEnd = spanStart + recovered.length();
-            applyStyle(builder, spanStart, recoveredEnd);
-            return SpannedString.valueOf(builder);
         } catch (Throwable ignored) {
-            return null;
         }
+        // Null tells the injected hook to restore Twitch's registers and run its stock formatter.
+        return null;
     }
 
     private static SpannedString findOriginalMessage(ClickableSpan deletedSpan) {
