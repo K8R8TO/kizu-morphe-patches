@@ -173,13 +173,60 @@ public final class DeletedMessagesSupport {
     private static void reportEntryOnce(String message) {
         if (!ENTRY_TOAST_SHOWN.compareAndSet(false, true)) return;
         Log.i(DIAGNOSTIC_TAG, "ENTRY: " + message);
-        showDiagnosticToast("Kizu diag: " + message);
+        showDiagnosticToast(summarizeEntry(message));
     }
 
     private static void reportOutcomeOnce(String message) {
         if (!OUTCOME_TOAST_SHOWN.compareAndSet(false, true)) return;
         Log.i(DIAGNOSTIC_TAG, "OUTCOME: " + message);
-        showDiagnosticToast("Kizu diag: " + message);
+        showDiagnosticToast(summarizeOutcome(message));
+    }
+
+    // Keep on-screen diagnostics brief enough to read. Full details remain in Logcat.
+    private static String summarizeEntry(String message) {
+        String enabled = valueAfter(message, "enabled=", ";");
+        String style = valueAfter(message, "styleSetting=", ";");
+        String count = valueAfter(message, "spanCount=", ";");
+        return "Kizu D1: on=" + ("true".equals(enabled) ? "1" : "false".equals(enabled) ? "0" : "?")
+                + " style=" + compactStyle(style)
+                + " spans=" + (count == null ? "?" : count);
+    }
+
+    private static String summarizeOutcome(String message) {
+        if (message.startsWith("recovered;")) {
+            String style = valueAfter(message, "style=", ";");
+            String strike = valueAfter(message, "resultStrikethroughSpans=", ";");
+            String grey = valueAfter(message, "resultForegroundSpans=", null);
+            return "Kizu D2: OK style=" + compactStyle(style)
+                    + " strike=" + (strike == null ? "?" : strike)
+                    + " grey=" + (grey == null ? "?" : grey);
+        }
+        if (message.startsWith("possible deleted span class mismatch")) return "Kizu D2: CLASS MISMATCH";
+        if (message.startsWith("target class matched but range is invalid")) return "Kizu D2: BAD RANGE";
+        if (message.startsWith("target class matched but original SpannedString was not found")) return "Kizu D2: NO ORIGINAL";
+        if (message.startsWith("target class matched; recovered text was empty")) return "Kizu D2: EMPTY TEXT";
+        if (message.startsWith("recovery disabled")) return "Kizu D2: FEATURE OFF";
+        if (message.startsWith("target class matched but is not a ClickableSpan")) return "Kizu D2: BAD SPAN";
+        if (message.startsWith("recovery threw")) return "Kizu D2: ERROR";
+        return "Kizu D2: NO MATCH";
+    }
+
+    private static String compactStyle(String style) {
+        if (style == null) return "?";
+        String value = style.trim().toLowerCase(Locale.ROOT);
+        if ("strikethrough".equals(value)) return "st";
+        if ("grey".equals(value)) return "gy";
+        if ("mod".equals(value) || "default".equals(value)) return "mod";
+        return "?";
+    }
+
+    private static String valueAfter(String source, String key, String terminator) {
+        int start = source.indexOf(key);
+        if (start < 0) return null;
+        start += key.length();
+        int end = terminator == null ? source.length() : source.indexOf(terminator, start);
+        if (end < 0) end = source.length();
+        return source.substring(start, end).trim();
     }
 
     private static void showDiagnosticToast(String message) {
