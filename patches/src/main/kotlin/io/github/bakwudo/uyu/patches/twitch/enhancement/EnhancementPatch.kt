@@ -1,6 +1,7 @@
 package io.github.bakwudo.uyu.patches.twitch.enhancement
 
 import app.morphe.patcher.patch.bytecodePatch
+import io.github.bakwudo.uyu.patches.twitch.playergestures.playerGesturesResourcePatch
 import io.github.bakwudo.uyu.patches.twitch.ads.blockAdsPatch
 import io.github.bakwudo.uyu.patches.twitch.channelpoints.autoClaimChannelPointsPatch
 import io.github.bakwudo.uyu.patches.twitch.appearance.hidePromotionsPatch
@@ -21,7 +22,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 @Suppress("unused")
 val twitchEnhancementPatch = bytecodePatch(
     name = "Twitch Enhancement",
-    description = "Kizu Twitch enhancements: third-party emotes, live ad blocking, appearance controls, deleted-message display, privacy controls, player controls with Twitch native Video Stats and single-tap Reload Stream, Hide Stories, Go Ad-Free hiding, and patched-app compatibility.",
+    description = "Kizu Twitch enhancements: third-party emotes, live ad blocking, appearance controls, deleted-message display, privacy controls, native Video Stats and single-tap Reload Stream, PurpleTV-style landscape brightness/volume gestures, Hide Stories, Go Ad-Free hiding, and patched-app compatibility.",
 ) {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(
@@ -39,6 +40,7 @@ val twitchEnhancementPatch = bytecodePatch(
         thirdPartyEmotePickerPatch,
         thirdPartyEmotePickerUrlPatch,
         privacyPatch,
+        playerGesturesResourcePatch,
     )
     execute {
         installReloadStream()
