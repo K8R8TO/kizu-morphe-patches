@@ -27,6 +27,51 @@ public final class DeletedMessagesSupport {
     private DeletedMessagesSupport() {
     }
 
+    /**
+     * Styles the original message at Twitch's deleted-message factory boundary.
+     * Returning null leaves Twitch's native deleted-message handling untouched.
+     */
+    public static android.text.Spanned styleDeletedMessage(SpannedString message) {
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get() || message == null) return null;
+
+            String style = normalizeStyle();
+            if ("mod".equals(style)) return message;
+            if (message.length() == 0) return message;
+
+            SpannableStringBuilder builder = new SpannableStringBuilder(message);
+            if ("grey".equals(style)) {
+                ForegroundColorSpan[] colors =
+                        builder.getSpans(0, builder.length(), ForegroundColorSpan.class);
+                for (ForegroundColorSpan color : colors) builder.removeSpan(color);
+                builder.setSpan(new ForegroundColorSpan(Color.GRAY), 0, builder.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if ("strikethrough".equals(style)) {
+                int start = 0;
+                ClickableSpan[] spans = builder.getSpans(0, builder.length(), ClickableSpan.class);
+                for (ClickableSpan span : spans) {
+                    if (!"ClickableUsernameSpan".equals(span.getClass().getSimpleName())) continue;
+                    int end = builder.getSpanEnd(span);
+                    if (end <= 0 || end > builder.length()) continue;
+                    start = end;
+                    if (start + 2 <= builder.length()
+                            && ": ".contentEquals(builder.subSequence(start, start + 2))) {
+                        start += 2;
+                    }
+                    break;
+                }
+                if (start < builder.length()) {
+                    builder.setSpan(new StrikethroughSpan(), start, builder.length(),
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+            return SpannedString.valueOf(builder);
+        } catch (Throwable failure) {
+            Log.e("KizuDeletedStyle", "could not style original deleted message", failure);
+            return null;
+        }
+    }
+
     public static boolean resolveAccess(boolean original) {
         try {
             if (!Settings.CHAT_DELETED_MESSAGES.get()) return original;
