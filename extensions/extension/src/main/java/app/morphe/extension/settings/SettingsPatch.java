@@ -92,7 +92,7 @@ public final class SettingsPatch {
                     .add(container, UyuSettingsFragment.create(section), tag)
                     .addToBackStack(tag)
                     .commit();
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             Utils.logError("Failed to open uyu settings", ex);
         }
     }
