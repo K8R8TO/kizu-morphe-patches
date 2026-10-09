@@ -6,6 +6,8 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
+import app.morphe.extension.videostats.NativeVideoStatsViews;
+import app.morphe.extension.videostats.VideoStatsRuntime;
 
 public final class NativeReloadViews {
     private static final String TAG = "twitchpatches_reload_button";
@@ -22,6 +24,15 @@ public final class NativeReloadViews {
                 ? (ViewGroup) volume.getParent() : null;
         int id = root.getResources().getIdentifier(TAG, "id", root.getContext().getPackageName());
         View button = parent == null || id == 0 ? null : parent.findViewById(id);
+
+        // Bind stats to this live player context as well as the controller-constructor fallback.
+        VideoStatsRuntime.bindPlayerContext(((NativeReloadOwner) owner).reloadControlsOwner());
+        int statsId = root.getResources().getIdentifier(
+                "twitchpatches_video_stats_button", "id", root.getContext().getPackageName());
+        View statsButton = parent == null || statsId == 0 ? null : parent.findViewById(statsId);
+        if (statsButton != null && volume != null) {
+            NativeVideoStatsViews.install(root, statsButton, volume);
+        }
 
         Log.i(LOG_TAG, "reload view install: root=" + (root != null)
                 + " volume=" + (volume != null) + " button=" + (button != null));
