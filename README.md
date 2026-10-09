@@ -278,4 +278,11 @@ Beta 4.1 visibility correction.
 ### 1.9.3-beta.4.4
 - Fixes Reload Stream clicks by retaining the native reload host for the full lifetime of the button binding, preventing the weakly referenced adapter from being garbage-collected.
 
+
+### 1.9.3-beta.5
+- Adds a Video Stats button immediately to the left of Reload Stream.
+- Adds a Show Video Stats Button toggle under Player Controls.
+- The panel queries Twitch 31.3.1's own VideoStats factory while open and displays quality, resolution, display resolution, estimated bitrate, buffer, latency, dropped frames, codecs, and protocol.
+- The panel refreshes only while open; existing single-tap Reload Stream behavior is retained.
+
 <!-- beta.4.4 native reload host lifetime fix -->
