@@ -197,21 +197,16 @@ public final class GesturePlayerWrapper extends RelativeLayout {
             if (idName.contains("quality") || idName.contains("setting")
                     || idName.contains("menu") || idName.contains("sheet")
                     || idName.contains("dialog") || idName.contains("seek")
-                    || idName.contains("slider") || idName.contains("list")) return true;
+                    || idName.contains("slider") || idName.contains("dropdown")
+                    || idName.contains("popup")) return true;
 
+            // Only reject known scroll-widget classes here. A generic canScrollVertically()
+            // check also matches Twitch's normal player overlay and suppresses volume gestures
+            // across the video pane, even when no settings menu is open.
             String className = view.getClass().getName().toLowerCase(java.util.Locale.ROOT);
             if (className.contains("scrollview") || className.contains("recyclerview")
                     || className.contains("abslistview") || className.contains("seekbar")
                     || className.contains("slider")) return true;
-            try {
-                if (view.canScrollVertically(-1) || view.canScrollVertically(1)) return true;
-            } catch (Throwable ignored) { }
-
-            long viewArea = (long) view.getWidth() * (long) view.getHeight();
-            long paneArea = playerOverlay == null ? 0L
-                    : (long) playerOverlay.getWidth() * (long) playerOverlay.getHeight();
-            if ((view.isClickable() || view.isLongClickable())
-                    && paneArea > 0L && viewArea > 0L && viewArea * 4L < paneArea) return true;
         }
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
