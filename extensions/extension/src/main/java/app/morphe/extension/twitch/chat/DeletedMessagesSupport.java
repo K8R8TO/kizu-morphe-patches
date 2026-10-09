@@ -25,6 +25,29 @@ public final class DeletedMessagesSupport {
         }
     }
 
+    public static boolean shouldApplyVisualStyle() {
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) return false;
+            String style = normalizeStyle();
+            return "strikethrough".equals(style) || "grey".equals(style);
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    public static SpannedString styleOriginalMessage(SpannedString original) {
+        if (original == null || original.length() == 0) return original;
+        try {
+            if (!shouldApplyVisualStyle()) return original;
+            SpannableStringBuilder builder = new SpannableStringBuilder(original);
+            applyStyle(builder, 0, builder.length());
+            return SpannedString.valueOf(builder);
+        } catch (Throwable ignored) {
+            return original;
+        }
+    }
+
+
     public static SpannedString recoverDeletedMessage(
             SpannedString message,
             Object[] spans
