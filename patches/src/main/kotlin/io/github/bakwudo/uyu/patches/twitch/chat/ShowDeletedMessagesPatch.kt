@@ -2,10 +2,12 @@ package io.github.bakwudo.uyu.patches.twitch.chat
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
+import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import com.android.tools.smali.dexlib2.iface.reference.TypeReference
@@ -66,7 +68,10 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             "Twitch deleted messages: formatter getSpans move-result-object was not found.",
         )
 
-val injectionIndex = formatterInstructions.indices.firstOrNull { index ->
+        val spanArrayRegister =
+            formatter.getInstruction<OneRegisterInstruction>(moveResultIndex).registerA
+
+        val injectionIndex = formatterInstructions.indices.firstOrNull { index ->
             index > moveResultIndex && formatterInstructions[index].opcode == Opcode.CHECK_CAST
         }?.let { checkCastIndex ->
             formatterInstructions.indices.firstOrNull { index ->
@@ -79,7 +84,7 @@ val injectionIndex = formatterInstructions.indices.firstOrNull { index ->
         formatter.addInstructions(
             injectionIndex,
             """
-                invoke-static/range { p1 .. p1 }, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;)Landroid/text/SpannedString;
+                invoke-static {p1, v$spanArrayRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;[Ljava/lang/Object;)Landroid/text/SpannedString;
                 move-result-object p1
             """,
         )

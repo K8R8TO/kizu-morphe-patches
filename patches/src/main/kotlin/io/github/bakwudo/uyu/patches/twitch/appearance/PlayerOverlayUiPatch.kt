@@ -66,7 +66,8 @@ internal val playerOverlayUiPatch = bytecodePatch {
             val index = matches.single().index
             addInstructions(
                 index + 1,
-                "iget-object v0, p0, Lout;->j:Landroidx/compose/ui/platform/ComposeView;\n" +
+                "move-object/from16 v0, p0\n" +
+                    "iget-object v0, v0, Lout;->j:Landroidx/compose/ui/platform/ComposeView;\n" +
                     "invoke-static {v0}, $SUPPORT_CLASS->bind(Landroid/view/View;)V",
             )
         }

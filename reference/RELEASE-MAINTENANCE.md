@@ -3,7 +3,7 @@
 ## Current known-good state
 
 - Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.16`
+- Current prerelease: `1.9.3-beta.17`
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
@@ -87,10 +87,14 @@ Final implementation:
 - Create Clip exact binding remains in place.
 - Visibility is enforced by `HiddenView.attach(...)`.
 
-### beta.16 — high-register Smali invoke fix
-- Replaced dynamically targeted single-register invokes with `invoke-static/range` where the target register can be above `v15`.
-- Changed deleted-message recovery to pass only the message into the extension bridge; the bridge retrieves spans itself, avoiding a two-register non-range invoke that could reject `v16+`.
-- Validation: the beta.16 workflow and release asset establish build/metadata status; runtime behavior still requires user verification.
+### beta.16 — high-register Smali invoke attempt
+- Build and metadata checks passed, but the user reported that grey/strikethrough deleted-message styles regressed and the `Invalid register: v16` warning remained.
+- The one-argument deleted-message recovery bridge was reverted in beta.17; the original two-argument recovery path is restored.
+
+### beta.17 — preserve deleted-message styling and fix the actual high-register field access
+- Restores the original deleted-message recovery implementation and its `SpannedString + Object[]` call so grey/strikethrough handling is preserved. The constructor's single-argument `resolveAccess` call retains `invoke-static/range` encoding.
+- Fixes the player Create Clip hook in verified Twitch 31.3.1 `Lout.<init>`: this constructor has 23 registers, so `p0` aliases `v16`. The old `iget-object v0, p0, ...` is invalid for that instruction format. Beta.17 first moves `p0` with `move-object/from16 v0, p0`, then reads `Lout.j` through low register `v0`.
+- Build/release status is recorded by GitHub Actions; runtime verification remains pending.
 
 ## Morphe prerelease feed rule
 
