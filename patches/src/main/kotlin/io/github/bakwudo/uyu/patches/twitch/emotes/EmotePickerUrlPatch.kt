@@ -42,8 +42,8 @@ internal val thirdPartyEmotePickerUrlPatch = bytecodePatch {
         target.addInstructions(
             0,
             """
-                invoke-static {p0}, $PICKER_BRIDGE->saveUrlContext($CONTEXT)V
-                invoke-static {p1}, $PICKER_BRIDGE->getEmoteUrl($STRING)$STRING
+                invoke-static/range { p0 .. p0 }, $PICKER_BRIDGE->saveUrlContext($CONTEXT)V
+                invoke-static/range { p1 .. p1 }, $PICKER_BRIDGE->getEmoteUrl($STRING)$STRING
                 move-result-object p0
                 if-eqz p0, :kizu_emote_url_fallback
                 return-object p0

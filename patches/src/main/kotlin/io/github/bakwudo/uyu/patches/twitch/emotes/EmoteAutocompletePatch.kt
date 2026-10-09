@@ -29,7 +29,7 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
         val register = "p" + (listIndex + 1)
         method.addInstructions(
             0,
-            "invoke-static {" + register + "}, " + BRIDGE + "->addAutocomplete(Ljava/lang/Object;)V",
+            "invoke-static/range { " + register + " .. " + register + " }, " + BRIDGE + "->addAutocomplete(Ljava/lang/Object;)V",
         )
     }
 }

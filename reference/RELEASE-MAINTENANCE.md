@@ -3,7 +3,7 @@
 ## Current known-good state
 
 - Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.3.9`
+- Current prerelease: `1.9.3-beta.16`
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
@@ -86,6 +86,11 @@ Final implementation:
 - Kizu binds each exact visible view immediately after every verified field load in that state method.
 - Create Clip exact binding remains in place.
 - Visibility is enforced by `HiddenView.attach(...)`.
+
+### beta.16 — high-register Smali invoke fix
+- Replaced dynamically targeted single-register invokes with `invoke-static/range` where the target register can be above `v15`.
+- Changed deleted-message recovery to pass only the message into the extension bridge; the bridge retrieves spans itself, avoiding a two-register non-range invoke that could reject `v16+`.
+- Validation: the beta.16 workflow and release asset establish build/metadata status; runtime behavior still requires user verification.
 
 ## Morphe prerelease feed rule
 

@@ -25,6 +25,21 @@ public final class DeletedMessagesSupport {
         }
     }
 
+    /**
+     * Register-safe bridge used by the bytecode patch. The caller passes only the message;
+     * collect the spans here so an invoke-range can address high parameter registers safely.
+     */
+    public static SpannedString recoverDeletedMessage(SpannedString message) {
+        if (message == null) return null;
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) return message;
+            Object[] spans = message.getSpans(0, message.length(), Object.class);
+            return recoverDeletedMessage(message, spans);
+        } catch (Throwable ignored) {
+            return message;
+        }
+    }
+
     public static SpannedString recoverDeletedMessage(
             SpannedString message,
             Object[] spans

@@ -20,7 +20,7 @@ internal val thirdPartyEmotePickerPatch = bytecodePatch {
         // Observe the native picker-open event only. Twitch owns the picker UI.
         EmotePickerOpenFingerprint.method.addInstructions(
             0,
-            "invoke-static {p1}, $PICKER_BRIDGE->onPickerOpened(Ljava/lang/Object;)V",
+            "invoke-static/range { p1 .. p1 }, $PICKER_BRIDGE->onPickerOpened(Ljava/lang/Object;)V",
         )
 
         // Augment the existing native ALL picker model. No replacement dialog/UI is created.
@@ -37,7 +37,7 @@ internal val thirdPartyEmotePickerPatch = bytecodePatch {
         builderMethod.addInstructions(
             returnIndex,
             """
-                invoke-static {v$reg}, $PICKER_BRIDGE->mergeGlobal(Ljava/lang/Object;)Ljava/lang/Object;
+                invoke-static/range { v$reg .. v$reg }, $PICKER_BRIDGE->mergeGlobal(Ljava/lang/Object;)Ljava/lang/Object;
                 move-result-object v$reg
                 check-cast v$reg, $MTF_DESCRIPTOR
             """.trimIndent(),
