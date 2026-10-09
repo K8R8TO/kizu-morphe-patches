@@ -36,7 +36,7 @@ public final class DeletedMessagesSupport {
             if (!Settings.CHAT_DELETED_MESSAGES.get() || message == null) return null;
 
             String style = normalizeStyle();
-            if ("mod".equals(style)) return message;
+            if ("mod".equals(style)) return null;
             if (message.length() == 0) return message;
 
             SpannableStringBuilder builder = new SpannableStringBuilder(message);
