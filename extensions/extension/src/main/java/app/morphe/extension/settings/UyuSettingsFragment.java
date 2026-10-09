@@ -19,6 +19,7 @@ import android.widget.TextView;
 import java.util.Locale;
 
 
+import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.danmaku.DanmakuPreview;
 
 @SuppressWarnings("deprecation")
@@ -83,21 +84,39 @@ public class UyuSettingsFragment extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getPreferenceManager().setSharedPreferencesName(Setting.PREFERENCES_NAME);
-        Bundle arguments = getArguments();
-        section = arguments == null ? null : arguments.getString(ARG_SECTION);
-        PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(getActivity());
-        setPreferenceScreen(screen);
-        if (section == null) addSectionLinks(screen);
-        else if (section.equals(SECTION_GENERAL)) addGeneralSettings(screen);
-        else if (section.equals(SECTION_APPEARANCE)) addAppearanceSettings(screen);
-        else if (section.equals(SECTION_DANMAKU)) addDanmakuSettings(screen);
-        else if (section.equals(SECTION_ADS)) addAdsSettings(screen);
-        else if (section.equals(SECTION_EMOTES)) addEmoteSettings(screen);
-        else if (section.equals(SECTION_CHAT)) addChatSettings(screen);
-        else if (section.equals(SECTION_PRIVACY)) addPrivacySettings(screen);
-        else if (section.equals(SECTION_HOME)) addHomeSettings(screen);
-        else if (section.equals(SECTION_PLAYER)) addPlayerSettings(screen);
+        try {
+            getPreferenceManager().setSharedPreferencesName(Setting.PREFERENCES_NAME);
+            Bundle arguments = getArguments();
+            section = arguments == null ? null : arguments.getString(ARG_SECTION);
+            PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(getActivity());
+            setPreferenceScreen(screen);
+            if (section == null) addSectionLinks(screen);
+            else if (section.equals(SECTION_GENERAL)) addGeneralSettings(screen);
+            else if (section.equals(SECTION_APPEARANCE)) addAppearanceSettings(screen);
+            else if (section.equals(SECTION_DANMAKU)) addDanmakuSettings(screen);
+            else if (section.equals(SECTION_ADS)) addAdsSettings(screen);
+            else if (section.equals(SECTION_EMOTES)) addEmoteSettings(screen);
+            else if (section.equals(SECTION_CHAT)) addChatSettings(screen);
+            else if (section.equals(SECTION_PRIVACY)) addPrivacySettings(screen);
+            else if (section.equals(SECTION_HOME)) addHomeSettings(screen);
+            else if (section.equals(SECTION_PLAYER)) addPlayerSettings(screen);
+        } catch (Throwable error) {
+            Utils.logError("Failed to build Kizu settings screen (section=" + section + ")", error);
+            try {
+                Activity activity = getActivity();
+                if (activity != null) {
+                    PreferenceScreen fallback = getPreferenceManager().createPreferenceScreen(activity);
+                    Preference diagnostic = new Preference(activity);
+                    diagnostic.setTitle("Kizu settings could not be loaded");
+                    diagnostic.setSummary("The failure was logged. Close and reopen Settings.");
+                    diagnostic.setSelectable(false);
+                    fallback.addPreference(diagnostic);
+                    setPreferenceScreen(fallback);
+                }
+            } catch (Throwable fallbackError) {
+                Utils.logError("Failed to show Kizu settings fallback", fallbackError);
+            }
+        }
     }
 
     private void addSectionLinks(PreferenceScreen screen) {
@@ -386,7 +405,11 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     @Override public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        SettingsUi.applySettingsView(view);
+        try {
+            SettingsUi.applySettingsView(view);
+        } catch (Throwable error) {
+            Utils.logError("Failed to apply Kizu settings appearance", error);
+        }
         view.setClickable(true);
     }
 
@@ -400,20 +423,29 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     @Override public void onResume() {
         super.onResume();
-        View settingsView = getView();
-        if (settingsView != null) SettingsUi.applySettingsView(settingsView);
-        Activity activity = getActivity();
-        TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
-        if (title == null) return;
-        if (previousTitle == null) previousTitle = title.getText();
-        title.setText(title(section));
+        try {
+            View settingsView = getView();
+            if (settingsView != null) SettingsUi.applySettingsView(settingsView);
+            Activity activity = getActivity();
+            TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
+            if (title == null) return;
+            if (previousTitle == null) previousTitle = title.getText();
+            title.setText(title(section));
+        } catch (Throwable error) {
+            Utils.logError("Failed to resume Kizu settings screen", error);
+        }
     }
 
     @Override public void onDestroyView() {
-        Activity activity = getActivity();
-        TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
-        if (title != null && previousTitle != null) title.setText(previousTitle);
-        super.onDestroyView();
+        try {
+            Activity activity = getActivity();
+            TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
+            if (title != null && previousTitle != null) title.setText(previousTitle);
+        } catch (Throwable error) {
+            Utils.logError("Failed to restore Twitch settings title", error);
+        } finally {
+            super.onDestroyView();
+        }
     }
 
     private static String title(String section) {
