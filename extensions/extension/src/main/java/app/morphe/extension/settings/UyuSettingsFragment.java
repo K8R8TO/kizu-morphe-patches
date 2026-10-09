@@ -321,9 +321,15 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     private void addPlayerSettings(PreferenceScreen screen) {
         addSwitch(screen, Settings.SHOW_VIDEO_STATS_BUTTON, "Show Video Stats Button",
-                "Show Twitch's live playback statistics panel immediately to the left of Reload Stream.");
+                "Show Twitch's native live playback statistics panel immediately to the left of Reload Stream.");
         addSwitch(screen, Settings.SHOW_REFRESH_BUTTON, "Show Reload Stream Button",
                 "Show a single-tap reload button immediately to the left of the mute control.");
+        addSwitch(screen, Settings.BRIGHTNESS_GESTURE, "Brightness Swipe Gesture",
+                "In landscape, swipe vertically on the left half of the player to change screen brightness.");
+        addSwitch(screen, Settings.VOLUME_GESTURE, "Volume Swipe Gesture",
+                "In landscape, swipe vertically on the right half of the player to change media volume.");
+        addSwitch(screen, Settings.GESTURE_OSD, "Gesture Progress Overlay",
+                "Show the PurpleTV-style progress bar and value while adjusting brightness or volume.");
         addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
                 "Hide Twitch's Create Clip button in the player.");
         addSwitch(screen, Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON, "Hide Live Share Button",
@@ -331,7 +337,6 @@ public class UyuSettingsFragment extends PreferenceFragment {
         addSwitch(screen, Settings.HIDE_CAST_BUTTON, "Hide Cast Button",
                 "Hide Twitch's Cast button in the player.");
     }
-
     private void addHomeSettings(PreferenceScreen screen) {
         addHomeSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
                 "Hide Twitch's Go Ad-Free/Turbo control in the Following feed.");
