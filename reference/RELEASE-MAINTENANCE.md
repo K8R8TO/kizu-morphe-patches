@@ -3,7 +3,7 @@
 ## Current known-good state
 
 - Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.22`
+- Current prerelease: `1.9.3-beta.23`
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
@@ -216,3 +216,10 @@ Keep reverse-engineering records separate from user-facing README prose. Do not 
 - Gesture handling no longer treats every descendant that reports `canScrollVertically()` or every small clickable view as a settings surface. Only named quality/settings/menu controls and known scroll-widget classes are excluded, restoring normal player-area gestures while protecting the quality menu.
 - Deleted-message recovery again returns a recovered message directly from Twitch's formatter so the placeholder path is bypassed. The hook uses the exact receiver register from the verified `SpannedString.getSpans` invocation and preserves Twitch's original span-array register. It uses the existing Class-argument register as scratch space, restores it before falling through, and does not re-run `getSpans`.
 - A null recovery result continues through Twitch's original formatter; a successful result returns immediately. Build verification and user runtime confirmation remain separate.
+
+
+### beta.23 — target the actual Twitch deleted-message span
+- beta.22 user test: volume and brightness gestures still did not work, and deleted messages still were not restored as intended. This beta focuses only on deleted-message recovery, as requested; gesture changes are not part of this beta.
+- The formatter hook now passes the exact runtime class selected by `DeletedMessageSpanCtorFingerprint` into the recovery helper. The helper ignores unrelated clickable spans (such as username links) and reads the original-message field only from an instance of that exact deleted-message span class.
+- On successful recovery, the formatter returns the recovered message. If no matching span or original text is available, the hook restores Twitch's original `getSpans` class register and continues the stock formatter. The implementation does not re-run `getSpans`.
+- Build/release verification does not establish runtime correctness; device testing is still required.
