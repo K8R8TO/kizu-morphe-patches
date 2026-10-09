@@ -110,6 +110,9 @@ public final class Settings {
     // Player.
     public static final BooleanSetting SHOW_REFRESH_BUTTON =
             new BooleanSetting("show_refresh_button", true);
+    /** Controls the custom live Video Stats button beside Reload Stream. */
+    public static final BooleanSetting SHOW_VIDEO_STATS_BUTTON =
+            new BooleanSetting("show_video_stats_button", true);
     public static final BooleanSetting VOLUME_GESTURE =
             new BooleanSetting("volume_gesture", true);
     public static final BooleanSetting BRIGHTNESS_GESTURE =
