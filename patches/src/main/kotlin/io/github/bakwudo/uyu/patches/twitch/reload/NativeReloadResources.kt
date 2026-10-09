@@ -33,6 +33,24 @@ internal val nativeReloadResources = resourcePatch {
         nativeReloadIcon = id("drawable", "ic_refresh_white_24dp").toInt()
         nativeMuteButton = id("id", "mute_button").toInt()
         nativePlaybackContainer = id("id", "playback_view_container").toInt()
+
+        // A small, self-contained bar-chart icon for the custom Video Stats button.
+        val statsIcon = get("res/drawable/kizu_video_stats.xml")
+        statsIcon.parentFile?.mkdirs()
+        statsIcon.writeText(
+            """<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3,3h4v18H3zM10,8h4v13h-4zM17,13h4v8h-4z" />
+</vector>
+""",
+        )
+
         for ((name, constrained) in listOf("bottom_player_overlay_controls" to true,
             "bottom_player_control_overlay_widget" to false)) {
             val file = get("res/layout/$name.xml")
