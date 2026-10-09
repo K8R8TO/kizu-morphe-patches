@@ -1,7 +1,6 @@
 package io.github.bakwudo.uyu.patches.twitch.chat
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
-import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.PatchException
@@ -34,7 +33,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         constructor.addInstructions(
             constructor.instructions.lastIndex,
             """
-                invoke-static/range { p3 .. p3 }, $SUPPORT->resolveAccess(Z)Z
+                invoke-static {p3}, $SUPPORT->resolveAccess(Z)Z
                 move-result p3
                 iput-boolean p3, p0, $accessField
             """,
@@ -72,67 +71,21 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         val spanArrayRegister =
             formatter.getInstruction<OneRegisterInstruction>(moveResultIndex).registerA
 
-        val checkCastIndex = formatterInstructions.indices.firstOrNull { index ->
-            index > moveResultIndex && formatterInstructions[index].opcode == Opcode.CHECK_CAST
-        } ?: throw PatchException(
-            "Twitch deleted messages: formatter deleted-span array check-cast was not found.",
-        )
-
         val injectionIndex = formatterInstructions.indices.firstOrNull { index ->
-            index > checkCastIndex && formatterInstructions[index].opcode == Opcode.ARRAY_LENGTH
+            index > moveResultIndex && formatterInstructions[index].opcode == Opcode.CHECK_CAST
+        }?.let { checkCastIndex ->
+            formatterInstructions.indices.firstOrNull { index ->
+                index > checkCastIndex && formatterInstructions[index].opcode == Opcode.ARRAY_LENGTH
+            }
         } ?: throw PatchException(
-            "Twitch deleted messages: formatter array-length check was not found.",
+            "Twitch deleted messages: formatter span-array length check was not found.",
         )
 
-        val getSpansRegisterC = getSpans.registerC
-        val getSpansRegisterD = getSpans.registerD
-        val getSpansRegisterE = getSpans.registerE
-        val getSpansRegisterF = getSpans.registerF
-
-        if (spanArrayRegister == getSpansRegisterF) {
-            throw PatchException(
-                "Twitch deleted messages: getSpans result register aliases its Class argument register.",
-            )
-        }
-
-        val classRegisterRestore = formatterInstructions
-            .subList(0, getSpansIndex)
-            .indexOfLast { instruction ->
-                instruction.opcode == Opcode.CONST_CLASS &&
-                    (instruction as? OneRegisterInstruction)?.registerA == getSpansRegisterF
-            }
-
-        if (classRegisterRestore < 0) {
-            throw PatchException(
-                "Twitch deleted messages: could not locate the getSpans Class-register initializer.",
-            )
-        }
-
-        val classInit = formatterInstructions[classRegisterRestore] as ReferenceInstruction
-        val classType = (classInit.reference as? TypeReference)?.type
-            ?: throw PatchException(
-                "Twitch deleted messages: getSpans Class-register initializer is not a type reference.",
-            )
-
-        val deletedSpanRegister = getSpansRegisterF
-
-        formatter.addInstructionsWithLabels(
+        formatter.addInstructions(
             injectionIndex,
             """
-                array-length v$deletedSpanRegister, v$spanArrayRegister
-                if-eqz v$deletedSpanRegister, :kizu_deleted_messages_restore
                 invoke-static {p1, v$spanArrayRegister}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;[Ljava/lang/Object;)Landroid/text/SpannedString;
-                move-result-object v$spanArrayRegister
-                if-nez v$spanArrayRegister, :kizu_deleted_messages_return
-                :kizu_deleted_messages_restore
-                const-class v$deletedSpanRegister, $classType
-                invoke-virtual {v$getSpansRegisterC, v$getSpansRegisterD, v$getSpansRegisterE, v$getSpansRegisterF}, Landroid/text/SpannedString;->getSpans(IILjava/lang/Class;)[Ljava/lang/Object;
-                move-result-object v$spanArrayRegister
-                goto :kizu_deleted_messages_continue
-                :kizu_deleted_messages_return
-                return-object v$spanArrayRegister
-                :kizu_deleted_messages_continue
-                nop
+                move-result-object p1
             """,
         )
     }
