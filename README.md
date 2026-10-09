@@ -43,7 +43,6 @@ This project is a derivative work assembled from several open-source projects, u
 - Login compatibility implementation.
 - Notification compatibility implementation.
 - Ad blocking / promotion handling and related runtime hooks.
-- Danmaku/chat overlay implementation where retained.
 - Channel Points patch structure and Twitch Channel Points model fingerprints.
 - Shared extension/runtime utilities and constants.
 - Morphe extension packaging and Twitch compatibility plumbing.
@@ -100,12 +99,6 @@ The following projects are **not claimed as direct copied source for the current
 UYU and Hooman's projects identify ReVanced as upstream/reference work. The current project therefore preserves that attribution lineage for inherited patching patterns and concepts.
 
 This README does **not** claim that every ReVanced implementation is present in this repository.
-
-#### 5. niconico-yt-morphe-patches
-
-**Repository:** https://github.com/david419kr/niconico-yt-morphe-patches
-
-UYU credits this project as a reference for the danmaku overlay design. Any retained danmaku functionality therefore carries that upstream reference.
 
 #### 6. morphe-androidtv-patches
 
@@ -214,7 +207,6 @@ There are several different kinds of dependencies in this project:
 | Hooman's Morphe Patches | **Directly adapted for third-party emotes** |
 | Morphe / Morphe Patcher / template | **Build and patch framework** |
 | ReVanced | **Indirect upstream lineage/reference** |
-| niconico-yt-morphe-patches | **Indirect danmaku reference via UYU** |
 | morphe-androidtv-patches | **Indirect ad-blocking reference via UYU** |
 | bttv-android | **Independent technical reference for emotes/auto-claim** |
 | Twitch Android | **Reverse-engineering target; proprietary, not copied as source** |
@@ -277,5 +269,7 @@ The current known-good baseline is documented in `reference/channel-points/BASEL
 ### 1.9.3-beta.4
 - Adds a single-tap Reload Stream button immediately to the left of the player mute control.
 
+### 1.9.3-beta.4.3
+- Fixes native player-control binding and mirrors the Mute control's visibility when playback controls appear or disappear.
 
 Beta 4.1 visibility correction.
