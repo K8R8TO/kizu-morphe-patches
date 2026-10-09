@@ -18,11 +18,9 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.WeakHashMap;
-import app.morphe.extension.settings.Settings;
 
 /** Adds the optional Video Stats button and a lightweight, live-updating player stats panel. */
 public final class NativeVideoStatsViews {
-    private static final String TAG = "twitchpatches_video_stats_button";
     private static final Map<View, Binding> BINDINGS = new WeakHashMap<>();
 
     private NativeVideoStatsViews() {}
@@ -44,12 +42,6 @@ public final class NativeVideoStatsViews {
     public static synchronized void refreshPreferences() {
         for (Binding binding : new ArrayList<>(BINDINGS.values())) {
             if (binding != null) binding.refresh();
-        }
-    }
-
-    private static synchronized void refreshOpenPanels() {
-        for (Binding binding : new ArrayList<>(BINDINGS.values())) {
-            if (binding != null) binding.refreshPanel();
         }
     }
 
