@@ -55,7 +55,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         } else {
             factoryOwner
         }
-        val companionPrefix = outerOwner.removeSuffix(";") + "$"
+        val companionPrefix = outerOwner.removeSuffix(";") + "\$"
 
         fun isFactorySignature(parameters: List<String>, returnType: String): Boolean =
             returnType == "Landroid/text/Spanned;" &&
@@ -152,7 +152,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 val expectedCount = if (isStatic) 5 else 6
                 if (instruction.registerCount != expectedCount) {
                     throw PatchException(
-                        "Kizu deleted messages: unexpected factory argument count \${instruction.registerCount}.",
+                        "Kizu deleted messages: unexpected factory argument count ${instruction.registerCount}.",
                     )
                 }
                 // Instance companion calls have a receiver first; static calls do not.
@@ -240,10 +240,10 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 caller.addInstructionsWithLabels(
                     site.callIndex + 2,
                     """
-                        invoke-static/range {v\${site.messageRegister} .. v\${site.messageRegister}}, $SUPPORT->styleDeletedMessage(Landroid/text/Spanned;)Landroid/text/Spanned;
-                        move-result-object v\${site.scratchRegister}
-                        if-eqz v\${site.scratchRegister}, $label
-                        move-object v\${site.resultRegister}, v\${site.scratchRegister}
+                        invoke-static/range {v${site.messageRegister} .. v${site.messageRegister}}, $SUPPORT->styleDeletedMessage(Landroid/text/Spanned;)Landroid/text/Spanned;
+                        move-result-object v${site.scratchRegister}
+                        if-eqz v${site.scratchRegister}, $label
+                        move-object v${site.resultRegister}, v${site.scratchRegister}
                         $label
                         nop
                     """,
