@@ -153,41 +153,12 @@ public final class DeletedMessagesSupport {
 
                 int recoveredEnd = spanStart + recovered.length();
                 String normalizedStyle = normalizeStyle();
+
+                // Restore the original text first, then use beta.34's proven styling path
+                // on exactly the recovered range. Do not infer success from unrelated spans.
+                applyStyle(builder, spanStart, recoveredEnd);
                 SpannedString result = SpannedString.valueOf(builder);
-
-                // Recovery comes first. Only style the restored original text, never the
-                // literal "<message deleted>" placeholder that Twitch may supply.
-                Spanned styledMessage = styleDeletedMessage(result);
-                if (styledMessage != null) {
-                    result = SpannedString.valueOf(styledMessage);
-                }
-
-                // Keep the established recovered-range styling as a safety net. The helper above
-                // can safely return without styling; do not let that silently turn custom styles
-                // into Mod style.
                 int checkEnd = Math.min(result.length(), recoveredEnd);
-                boolean styleApplied = false;
-                if (checkEnd > spanStart) {
-                    if ("strikethrough".equals(normalizedStyle)) {
-                        styleApplied = result.getSpans(
-                                spanStart, checkEnd, StrikethroughSpan.class
-                        ).length > 0;
-                    } else if ("grey".equals(normalizedStyle)) {
-                        ForegroundColorSpan[] appliedColors =
-                                result.getSpans(spanStart, checkEnd, ForegroundColorSpan.class);
-                        for (ForegroundColorSpan appliedColor : appliedColors) {
-                            if (appliedColor.getForegroundColor() == Color.GRAY) {
-                                styleApplied = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                if (!styleApplied && !"mod".equals(normalizedStyle)) {
-                    applyStyle(builder, spanStart, Math.min(builder.length(), recoveredEnd));
-                    result = SpannedString.valueOf(builder);
-                    checkEnd = Math.min(result.length(), recoveredEnd);
-                }
                 int strikeCount = checkEnd > spanStart
                         ? result.getSpans(spanStart, checkEnd, StrikethroughSpan.class).length : 0;
                 int greyCount = checkEnd > spanStart
@@ -250,13 +221,11 @@ public final class DeletedMessagesSupport {
     private static void reportEntryOnce(String message) {
         if (!ENTRY_TOAST_SHOWN.compareAndSet(false, true)) return;
         Log.i(DIAGNOSTIC_TAG, "ENTRY: " + message);
-        showDiagnosticToast(summarizeEntry(message));
     }
 
     private static void reportOutcomeOnce(String message) {
         if (!OUTCOME_TOAST_SHOWN.compareAndSet(false, true)) return;
         Log.i(DIAGNOSTIC_TAG, "OUTCOME: " + message);
-        showDiagnosticToast(summarizeOutcome(message));
     }
 
     // Keep on-screen diagnostics brief enough to read. Full details remain in Logcat.
