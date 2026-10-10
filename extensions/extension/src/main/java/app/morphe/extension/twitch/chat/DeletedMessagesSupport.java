@@ -153,8 +153,15 @@ public final class DeletedMessagesSupport {
 
                 int recoveredEnd = spanStart + recovered.length();
                 String normalizedStyle = normalizeStyle();
-                applyStyle(builder, spanStart, recoveredEnd);
                 SpannedString result = SpannedString.valueOf(builder);
+
+                // Recovery comes first. Only style the restored original text, never the
+                // literal "<message deleted>" placeholder that Twitch may supply.
+                Spanned styledMessage = styleDeletedMessage(result);
+                if (styledMessage != null) {
+                    result = SpannedString.valueOf(styledMessage);
+                }
+
                 int checkEnd = Math.min(result.length(), recoveredEnd);
                 int strikeCount = checkEnd > spanStart
                         ? result.getSpans(spanStart, checkEnd, StrikethroughSpan.class).length : 0;
