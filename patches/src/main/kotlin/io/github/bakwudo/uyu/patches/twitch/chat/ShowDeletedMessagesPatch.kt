@@ -41,6 +41,25 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         )
 
         val formatter = DeletedMessageFormatterFingerprint.method
+
+        // Preserve the original native return sites before adding Kizu's early-return hooks.
+        // When the early hook defers a literal placeholder, Twitch may return the visible
+        // original message through its native path; apply the configured style to that result.
+        val nativeReturnSites = formatter.instructions.mapIndexedNotNull { index, instruction ->
+            if (instruction.opcode != Opcode.RETURN_OBJECT) return@mapIndexedNotNull null
+            val register = (instruction as? OneRegisterInstruction)?.registerA
+                ?: throw PatchException("Twitch deleted messages: formatter return register was not found.")
+            index to register
+        }
+        nativeReturnSites.sortedByDescending { it.first }.forEach { (index, register) ->
+            formatter.addInstructions(
+                index,
+                """
+                    invoke-static {v$register}, $SUPPORT->styleNativeDeletedResult(Landroid/text/Spanned;)Landroid/text/Spanned;
+                    move-result-object v$register
+                """,
+            )
+        }
         // Keep beta.34's known-working factory-boundary style path, but let literal deleted
         // placeholders continue into span recovery instead of styling the placeholder itself.
         formatter.addInstructionsWithLabels(
