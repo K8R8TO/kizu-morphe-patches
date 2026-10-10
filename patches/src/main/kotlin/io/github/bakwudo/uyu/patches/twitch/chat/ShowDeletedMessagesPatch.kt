@@ -3,6 +3,7 @@ package io.github.bakwudo.uyu.patches.twitch.chat
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
+import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
@@ -52,11 +53,16 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             index to register
         }
         nativeReturnSites.sortedByDescending { it.first }.forEach { (index, register) ->
-            formatter.addInstructions(
+            // Replace the return itself so branches targeting it land on the styling hook.
+            formatter.replaceInstruction(
                 index,
+                "invoke-static {v$register}, $SUPPORT->styleNativeDeletedResult(Landroid/text/Spanned;)Landroid/text/Spanned;",
+            )
+            formatter.addInstructions(
+                index + 1,
                 """
-                    invoke-static {v$register}, $SUPPORT->styleNativeDeletedResult(Landroid/text/Spanned;)Landroid/text/Spanned;
                     move-result-object v$register
+                    return-object v$register
                 """,
             )
         }
