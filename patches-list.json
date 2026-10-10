@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.37",
+  "version": "1.9.3-beta.38",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.37 recovers deleted messages first and applies the established styling path directly; diagnostic toasts removed.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.38 applies PurpleTV-style deleted-message styling at the original-message call site.",
       "default": true,
       "category": null,
       "dependencies": [
