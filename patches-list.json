@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.35",
+  "version": "1.9.3-beta.36",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.35 attempts deleted-message recovery before applying the configured visual style.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.36 recovers deleted messages first and falls back to the established styling path when needed.",
       "default": true,
       "category": null,
       "dependencies": [

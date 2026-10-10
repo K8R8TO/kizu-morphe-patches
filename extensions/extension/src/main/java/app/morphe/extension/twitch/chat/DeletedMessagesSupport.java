@@ -162,7 +162,32 @@ public final class DeletedMessagesSupport {
                     result = SpannedString.valueOf(styledMessage);
                 }
 
+                // Keep the established recovered-range styling as a safety net. The helper above
+                // can safely return without styling; do not let that silently turn custom styles
+                // into Mod style.
                 int checkEnd = Math.min(result.length(), recoveredEnd);
+                boolean styleApplied = false;
+                if (checkEnd > spanStart) {
+                    if ("strikethrough".equals(normalizedStyle)) {
+                        styleApplied = result.getSpans(
+                                spanStart, checkEnd, StrikethroughSpan.class
+                        ).length > 0;
+                    } else if ("grey".equals(normalizedStyle)) {
+                        ForegroundColorSpan[] appliedColors =
+                                result.getSpans(spanStart, checkEnd, ForegroundColorSpan.class);
+                        for (ForegroundColorSpan appliedColor : appliedColors) {
+                            if (appliedColor.getForegroundColor() == Color.GRAY) {
+                                styleApplied = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (!styleApplied && !"mod".equals(normalizedStyle)) {
+                    applyStyle(builder, spanStart, Math.min(builder.length(), recoveredEnd));
+                    result = SpannedString.valueOf(builder);
+                    checkEnd = Math.min(result.length(), recoveredEnd);
+                }
                 int strikeCount = checkEnd > spanStart
                         ? result.getSpans(spanStart, checkEnd, StrikethroughSpan.class).length : 0;
                 int greyCount = checkEnd > spanStart
