@@ -55,7 +55,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         } else {
             factoryOwner
         }
-        val companionOwner = outerOwner.removeSuffix(";") + COMPANION_SUFFIX
+        val companionPrefix = outerOwner.removeSuffix(";") + "$"
 
         fun isFactorySignature(parameters: List<String>, returnType: String): Boolean =
             returnType == "Landroid/text/Spanned;" &&
@@ -66,14 +66,22 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 parameters[3] == EVENT_DISPATCHER &&
                 parameters[4] == "Z"
 
-        val companionNames = classDefByOrNull(companionOwner)
-            ?.methods
-            ?.filter { method ->
-                isFactorySignature(method.parameterTypes.map { it.toString() }, method.returnType)
+        // R8 may rename Kotlin's $Companion class (for example, to Lr93$a;).
+        // Discover it from the actual owner family and signature rather than guessing its name.
+        val companionNamesByOwner = mutableMapOf<String, Set<String>>()
+        classDefForEach { classDef ->
+            if (classDef.type.startsWith(companionPrefix) && classDef.type != outerOwner) {
+                val names = classDef.methods
+                    .filter { method ->
+                        isFactorySignature(method.parameterTypes.map { it.toString() }, method.returnType)
+                    }
+                    .map { it.name }
+                    .toSet()
+                if (names.isNotEmpty()) companionNamesByOwner[classDef.type] = names
             }
-            ?.map { it.name }
-            ?.toSet()
-            ?: emptySet()
+        }
+        val companionOwners = companionNamesByOwner.keys
+        val excludedOwners = companionOwners + setOf(factoryOwner, outerOwner)
 
         fun isFactoryCall(reference: MethodReference): Boolean {
             val parameters = reference.parameterTypes.map { it.toString() }
@@ -86,8 +94,9 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                     reference.returnType == factory.returnType
 
             val isCompanionFactory =
-                reference.definingClass == companionOwner &&
-                    (reference.name == factory.name || reference.name in companionNames)
+                reference.definingClass in companionOwners &&
+                    (reference.name == factory.name ||
+                        reference.name in companionNamesByOwner[reference.definingClass].orEmpty())
 
             return isDirectFactory || isCompanionFactory
         }
@@ -165,7 +174,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         val callSites = mutableListOf<CallSite>()
 
         classDefForEach { classDef ->
-            if (classDef.type != factoryOwner && classDef.type != companionOwner) {
+            if (classDef.type !in excludedOwners) {
                 for (method in classDef.methods) {
                     val implementation = method.implementation ?: continue
                     val instructions = implementation.instructions.toList()
