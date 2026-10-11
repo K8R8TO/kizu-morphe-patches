@@ -5,6 +5,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLa
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
@@ -200,28 +201,29 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 methodSignature(it) == site.methodSignature
             } ?: throw PatchException("Kizu deleted messages: fingerprinted factory caller disappeared.")
 
-            // Place an exit target after the original factory result, then branch around
-            // native factory creation only when PurpleTV's custom-style helper returns a message.
-            caller.addInstructionsWithLabels(
-                site.callIndex + 2,
-                """
-                    :kizu_after_deleted_factory_${id}
-                    nop
-                """,
-            )
+            // Anchor the skip target to the actual existing instruction immediately after the
+            // original invoke/move-result pair. ExternalLabel binds the new branch to that exact
+            // instruction, avoiding unresolved labels across separately inserted code blocks.
+            val originalInstructions = caller.implementation!!.instructions
+            val afterFactory = originalInstructions.getOrNull(site.callIndex + 2)
+                ?: throw PatchException("Kizu deleted messages: factory call has no following instruction.")
+            val afterFactoryLabel = "kizu_after_deleted_factory_$id"
+            val nativeFactoryLabel = "kizu_native_deleted_factory_$id"
 
             caller.addInstructionsWithLabels(
                 site.callIndex,
                 """
                     invoke-static/range {v${site.sourceRegister} .. v${site.sourceRegister}}, $SUPPORT->styleDeletedMessageFromRow(Landroid/text/Spanned;)Landroid/text/Spanned;
                     move-result-object v${site.scratchRegister}
-                    if-eqz v${site.scratchRegister}, :kizu_native_deleted_factory_${id}
+                    if-eqz v${site.scratchRegister}, :${nativeFactoryLabel}
                     move-object/16 v${site.resultRegister}, v${site.scratchRegister}
-                    goto :kizu_after_deleted_factory_${id}
-                    :kizu_native_deleted_factory_${id}
+                    goto :${afterFactoryLabel}
+                    :${nativeFactoryLabel}
                     nop
                 """,
+                ExternalLabel(afterFactoryLabel, afterFactory),
             )
+        }
         }
     }
 }
