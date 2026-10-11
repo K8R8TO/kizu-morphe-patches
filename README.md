@@ -43,6 +43,15 @@ Kizu's goal is simple: add useful Twitch enhancements, privacy/cleanup controls,
 - Built-in proxy choices and a custom proxy URL.
 - Proxy fallback behavior for supported playback paths.
 
+### Player Controls
+
+- Hide Create Clip Button
+- Hide Cast
+- Hide Live Share
+- Brightness Gesture
+- Volume Gesture
+- Video Quality Menu compatibility fix
+
 ### Third-party emotes
 
 - **7TV** emotes.
