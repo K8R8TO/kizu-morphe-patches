@@ -136,10 +136,42 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         val callSites = mutableListOf<CallSite>()
 
-        // Search every DEX class/method for a call to the resolved native factory.
-        // This avoids assuming that PurpleTV's replacement MessageRecyclerItem class is
-        // present under that name in Twitch's obfuscated APK.
+        // Identify RecyclerView.ViewHolder from the APK's own class structure, not a
+        // guessed PurpleTV source name or Twitch's obfuscated holder class name.
+        val superclassByType = mutableMapOf<String, String?>()
+        val recyclerViewHolderRoots = mutableSetOf<String>()
         classDefForEach { classDef ->
+            superclassByType[classDef.type] = classDef.superclass
+            val fieldTypes = classDef.fields.map { it.type }.toSet()
+            if (classDef.superclass == "Ljava/lang/Object;" &&
+                "Landroid/view/View;" in fieldTypes &&
+                "Ljava/lang/ref/WeakReference;" in fieldTypes &&
+                "Landroidx/recyclerview/widget/RecyclerView;" in fieldTypes
+            ) {
+                recyclerViewHolderRoots += classDef.type
+            }
+        }
+
+        if (recyclerViewHolderRoots.size != 1) {
+            throw PatchException(
+                "Kizu deleted messages: could not uniquely identify the RecyclerView.ViewHolder base from APK structure.",
+            )
+        }
+
+        fun isRecyclerViewHolder(classType: String): Boolean {
+            var current = classType
+            val visited = mutableSetOf<String>()
+            while (visited.add(current)) {
+                if (current in recyclerViewHolderRoots) return true
+                current = superclassByType[current] ?: return false
+            }
+            return false
+        }
+
+        // PurpleTV hooks the factory at the row binder. In the Twitch APK, resolve that
+        // caller by its inheritance from RecyclerView.ViewHolder, then require one match.
+        classDefForEach { classDef ->
+            if (!isRecyclerViewHolder(classDef.type)) return@classDefForEach
             for (method in classDef.methods) {
                 val implementation = method.implementation ?: continue
                 val instructions = implementation.instructions.toList()
@@ -191,7 +223,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         if (callSites.size != 1) {
             throw PatchException(
-                "Kizu deleted messages: expected exactly one DEX call to the fingerprinted native factory, found ${callSites.size}.",
+                "Kizu deleted messages: expected exactly one native factory call under a RecyclerView.ViewHolder, found ${callSites.size}.",
             )
         }
 
