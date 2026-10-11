@@ -198,7 +198,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             val callerClass = mutableClassDefBy(site.classType)
             val caller = callerClass.methods.singleOrNull {
                 methodSignature(it) == site.methodSignature
-            } ?: throw PatchException("Kizu deleted messages: row-binding caller method disappeared.")
+            } ?: throw PatchException("Kizu deleted messages: fingerprinted factory caller disappeared.")
 
             // Place an exit target after the original factory result, then branch around
             // native factory creation only when PurpleTV's custom-style helper returns a message.
