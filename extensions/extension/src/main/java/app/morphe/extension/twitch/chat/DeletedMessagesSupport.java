@@ -1,6 +1,11 @@
 package app.morphe.extension.twitch.chat;
 
+import android.content.Context;
 import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.widget.Toast;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
@@ -8,12 +13,188 @@ import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StrikethroughSpan;
 
+import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DeletedMessagesSupport {
+    private static final String DIAGNOSTIC_TAG = "KizuDeletedStyle";
+    private static final AtomicBoolean ENTRY_TOAST_SHOWN = new AtomicBoolean(false);
+    private static final AtomicBoolean OUTCOME_TOAST_SHOWN = new AtomicBoolean(false);
+
     private DeletedMessagesSupport() {
+    }
+
+    /**
+     * Styles the original message at Twitch's deleted-message factory boundary.
+     * Returning null leaves Twitch's native deleted-message handling untouched.
+     */
+    public static android.text.Spanned styleDeletedMessage(SpannedString message) {
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get() || message == null) return null;
+
+            // Twitch can pass its literal deletion placeholder instead of the original text.
+            // Do not style that placeholder at the method entry; allow the existing span-based
+            // recovery path later in the formatter to restore and style the original message.
+            if (message.toString().toLowerCase(Locale.ROOT).contains("<message deleted>")) {
+                return null;
+            }
+
+            String style = normalizeStyle();
+            if ("mod".equals(style)) return null;
+            if (message.length() == 0) return message;
+
+            SpannableStringBuilder builder = new SpannableStringBuilder(message);
+            if ("grey".equals(style)) {
+                ForegroundColorSpan[] colors =
+                        builder.getSpans(0, builder.length(), ForegroundColorSpan.class);
+                for (ForegroundColorSpan color : colors) builder.removeSpan(color);
+                builder.setSpan(new ForegroundColorSpan(Color.GRAY), 0, builder.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if ("strikethrough".equals(style)) {
+                int start = 0;
+                ClickableSpan[] spans = builder.getSpans(0, builder.length(), ClickableSpan.class);
+                for (ClickableSpan span : spans) {
+                    if (!"ClickableUsernameSpan".equals(span.getClass().getSimpleName())) continue;
+                    int end = builder.getSpanEnd(span);
+                    if (end <= 0 || end > builder.length()) continue;
+                    start = end;
+                    if (start + 2 <= builder.length()
+                            && ": ".contentEquals(builder.subSequence(start, start + 2))) {
+                        start += 2;
+                    }
+                    break;
+                }
+                if (start < builder.length()) {
+                    builder.setSpan(new StrikethroughSpan(), start, builder.length(),
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            }
+            return SpannedString.valueOf(builder);
+        } catch (Throwable failure) {
+            Log.e("KizuDeletedStyle", "could not style original deleted message", failure);
+            return null;
+        }
+    }
+
+    /**
+     * PurpleTV-style entry point at MessageRecyclerItem's deleted-message call site.
+     * A null result means keep Twitch's native deleted-message rendering (Mod style or
+     * the feature disabled); a non-null result replaces that call's output with the
+     * original message carrying the requested style.
+     */
+    public static Spanned styleDeletedMessageFromRow(Spanned message) {
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get() || message == null) return null;
+
+            String style = normalizeStyle();
+            if ("mod".equals(style)) return null;
+            if (message.length() == 0) return message;
+
+            SpannableStringBuilder builder = new SpannableStringBuilder(message);
+            if ("grey".equals(style)) {
+                ForegroundColorSpan[] colors =
+                        builder.getSpans(0, builder.length(), ForegroundColorSpan.class);
+                for (ForegroundColorSpan color : colors) builder.removeSpan(color);
+                builder.setSpan(new ForegroundColorSpan(Color.GRAY), 0, builder.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if ("strikethrough".equals(style)) {
+                int start = 0;
+                ClickableSpan[] spans =
+                        builder.getSpans(0, builder.length(), ClickableSpan.class);
+                for (ClickableSpan span : spans) {
+                    if (!"ClickableUsernameSpan".equals(span.getClass().getSimpleName())) continue;
+                    int end = builder.getSpanEnd(span);
+                    if (end <= 0 || end > builder.length()) continue;
+                    start = end;
+                    if (start + 2 <= builder.length()
+                            && ": ".contentEquals(builder.subSequence(start, start + 2))) {
+                        start += 2;
+                    }
+                    break;
+                }
+                if (start < builder.length()) {
+                    builder.setSpan(new StrikethroughSpan(), start, builder.length(),
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            } else {
+                return null;
+            }
+            return SpannedString.valueOf(builder);
+        } catch (Throwable failure) {
+            Log.e("KizuDeletedStyle", "could not style deleted message at row call site", failure);
+            return null;
+        }
+    }
+
+    /**
+     * Styles Twitch's native formatter result when the early hook deferred a literal
+     * placeholder. At this stage the native result exists, so a no-op must return it,
+     * not null (null means "fall through" only for styleDeletedMessage).
+     */
+    public static Spanned styleNativeDeletedResult(Spanned message) {
+        if (message == null) return null;
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) return message;
+
+            String text = message.toString();
+            if (text.toLowerCase(Locale.ROOT).contains("<message deleted>")) return message;
+
+            String style = normalizeStyle();
+            if ("mod".equals(style) || message.length() == 0) return message;
+
+            SpannableStringBuilder builder = new SpannableStringBuilder(message);
+            if ("grey".equals(style)) {
+                ForegroundColorSpan[] colors =
+                        builder.getSpans(0, builder.length(), ForegroundColorSpan.class);
+                for (ForegroundColorSpan color : colors) {
+                    int start = builder.getSpanStart(color);
+                    int end = builder.getSpanEnd(color);
+                    if (color.getForegroundColor() == Color.GRAY && start <= 0
+                            && end >= builder.length()) {
+                        return message;
+                    }
+                }
+                for (ForegroundColorSpan color : colors) builder.removeSpan(color);
+                builder.setSpan(new ForegroundColorSpan(Color.GRAY), 0, builder.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else if ("strikethrough".equals(style)) {
+                int start = 0;
+                ClickableSpan[] spans =
+                        builder.getSpans(0, builder.length(), ClickableSpan.class);
+                for (ClickableSpan span : spans) {
+                    if (!"ClickableUsernameSpan".equals(span.getClass().getSimpleName())) continue;
+                    int end = builder.getSpanEnd(span);
+                    if (end <= 0 || end > builder.length()) continue;
+                    start = end;
+                    if (start + 2 <= builder.length()
+                            && ": ".contentEquals(builder.subSequence(start, start + 2))) {
+                        start += 2;
+                    }
+                    break;
+                }
+
+                if (start >= builder.length()) return message;
+                StrikethroughSpan[] existing =
+                        builder.getSpans(start, builder.length(), StrikethroughSpan.class);
+                for (StrikethroughSpan span : existing) {
+                    if (builder.getSpanStart(span) <= start
+                            && builder.getSpanEnd(span) >= builder.length()) {
+                        return message;
+                    }
+                }
+                builder.setSpan(new StrikethroughSpan(), start, builder.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                return message;
+            }
+            return SpannedString.valueOf(builder);
+        } catch (Throwable failure) {
+            Log.e("KizuDeletedStyle", "could not style native deleted-message result", failure);
+            return message;
+        }
     }
 
     public static boolean resolveAccess(boolean original) {
@@ -30,23 +211,55 @@ public final class DeletedMessagesSupport {
             Object[] spans,
             Class<?> deletedSpanClass
     ) {
+        String rawStyle = readRawStyleForDiagnostics();
+        boolean enabled = readEnabledForDiagnostics();
+        reportEntryOnce(
+                "helper entered; enabled=" + enabled
+                        + "; styleSetting=" + rawStyle
+                        + "; spanCount=" + (spans == null ? -1 : spans.length)
+                        + "; expectedClass=" + className(deletedSpanClass)
+        );
+
         if (message == null || spans == null || spans.length == 0 || deletedSpanClass == null) return null;
         try {
-            if (!Settings.CHAT_DELETED_MESSAGES.get()) return null;
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) {
+                reportOutcomeOnce("recovery disabled by CHAT_DELETED_MESSAGES setting");
+                return null;
+            }
 
-            // Twitch may return multiple spans. Never assume index 0 is the deleted-message span.
+            String possibleMismatch = null;
             for (Object candidate : spans) {
-                // Twitch's formatter returns many span types. Only inspect the exact class
-                // matched by DeletedMessageSpanCtorFingerprint, never usernames or emote spans.
-                if (candidate == null || !deletedSpanClass.isInstance(candidate)) continue;
-                if (!(candidate instanceof ClickableSpan)) continue;
+                if (candidate == null) continue;
+                boolean exactClass = deletedSpanClass.isInstance(candidate);
+                if (!exactClass) {
+                    if (candidate instanceof ClickableSpan && hasSpannedStringField(candidate)) {
+                        possibleMismatch = "possible deleted span class mismatch; actual="
+                                + className(candidate.getClass())
+                                + "; expected=" + className(deletedSpanClass)
+                                + "; styleSetting=" + rawStyle;
+                    }
+                    continue;
+                }
+                if (!(candidate instanceof ClickableSpan)) {
+                    reportOutcomeOnce("target class matched but is not a ClickableSpan: "
+                            + className(candidate.getClass()));
+                    continue;
+                }
+
                 ClickableSpan deletedSpan = (ClickableSpan) candidate;
                 int spanStart = message.getSpanStart(deletedSpan);
                 int spanEnd = message.getSpanEnd(deletedSpan);
-                if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) continue;
+                if (spanStart < 0 || spanEnd <= spanStart || spanEnd > message.length()) {
+                    reportOutcomeOnce("target class matched but range is invalid; start=" + spanStart
+                            + "; end=" + spanEnd + "; messageLength=" + message.length());
+                    continue;
+                }
 
                 SpannedString original = findOriginalMessage(deletedSpan);
-                if (original == null || original.length() == 0) continue;
+                if (original == null || original.length() == 0) {
+                    reportOutcomeOnce("target class matched but original SpannedString was not found");
+                    continue;
+                }
 
                 SpannableStringBuilder builder = new SpannableStringBuilder(message);
                 SpannedString recovered = stripDuplicateChatterHeader(
@@ -55,20 +268,148 @@ public final class DeletedMessagesSupport {
                         spanStart,
                         original
                 );
-                if (recovered.length() == 0) continue;
+                if (recovered.length() == 0) {
+                    reportOutcomeOnce("target class matched; recovered text was empty");
+                    continue;
+                }
 
                 builder.replace(spanStart, spanEnd, recovered);
                 builder.removeSpan(deletedSpan);
 
                 int recoveredEnd = spanStart + recovered.length();
+                String normalizedStyle = normalizeStyle();
+
+                // Restore the original text first, then use beta.34's proven styling path
+                // on exactly the recovered range. Do not infer success from unrelated spans.
                 applyStyle(builder, spanStart, recoveredEnd);
-                return SpannedString.valueOf(builder);
+                SpannedString result = SpannedString.valueOf(builder);
+                int checkEnd = Math.min(result.length(), recoveredEnd);
+                int strikeCount = checkEnd > spanStart
+                        ? result.getSpans(spanStart, checkEnd, StrikethroughSpan.class).length : 0;
+                int greyCount = checkEnd > spanStart
+                        ? result.getSpans(spanStart, checkEnd, ForegroundColorSpan.class).length : 0;
+                reportOutcomeOnce(
+                        "recovered; style=" + normalizedStyle
+                                + "; range=" + spanStart + "-" + recoveredEnd
+                                + "; resultStrikethroughSpans=" + strikeCount
+                                + "; resultForegroundSpans=" + greyCount
+                );
+                return result;
+            }
+
+            if (possibleMismatch != null) {
+                reportOutcomeOnce(possibleMismatch);
+            }
+        } catch (Throwable failure) {
+            Log.e(DIAGNOSTIC_TAG, "exception in recoverDeletedMessage", failure);
+            reportOutcomeOnce("recovery threw " + failure.getClass().getSimpleName()
+                    + ": " + String.valueOf(failure.getMessage()));
+        }
+        return null;
+    }
+
+    private static boolean hasSpannedStringField(Object candidate) {
+        try {
+            Class<?> type = candidate.getClass();
+            while (type != null) {
+                for (java.lang.reflect.Field field : type.getDeclaredFields()) {
+                    if (field.getType() == SpannedString.class) return true;
+                }
+                type = type.getSuperclass();
             }
         } catch (Throwable ignored) {
         }
-        // Null tells the bytecode hook to restore Twitch's Class register and continue the
-        // stock formatter. A non-null result is returned immediately to bypass the placeholder.
-        return null;
+        return false;
+    }
+
+    private static String className(Class<?> type) {
+        return type == null ? "null" : type.getName();
+    }
+
+    private static String readRawStyleForDiagnostics() {
+        try {
+            String value = Settings.CHAT_DELETED_MESSAGES_STYLE.get();
+            return value == null ? "null" : value;
+        } catch (Throwable failure) {
+            return "<error:" + failure.getClass().getSimpleName() + ">";
+        }
+    }
+
+    private static boolean readEnabledForDiagnostics() {
+        try {
+            return Settings.CHAT_DELETED_MESSAGES.get();
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static void reportEntryOnce(String message) {
+        if (!ENTRY_TOAST_SHOWN.compareAndSet(false, true)) return;
+        Log.i(DIAGNOSTIC_TAG, "ENTRY: " + message);
+    }
+
+    private static void reportOutcomeOnce(String message) {
+        if (!OUTCOME_TOAST_SHOWN.compareAndSet(false, true)) return;
+        Log.i(DIAGNOSTIC_TAG, "OUTCOME: " + message);
+    }
+
+    // Keep on-screen diagnostics brief enough to read. Full details remain in Logcat.
+    private static String summarizeEntry(String message) {
+        String enabled = valueAfter(message, "enabled=", ";");
+        String style = valueAfter(message, "styleSetting=", ";");
+        String count = valueAfter(message, "spanCount=", ";");
+        return "Kizu D1: on=" + ("true".equals(enabled) ? "1" : "false".equals(enabled) ? "0" : "?")
+                + " style=" + compactStyle(style)
+                + " spans=" + (count == null ? "?" : count);
+    }
+
+    private static String summarizeOutcome(String message) {
+        if (message.startsWith("recovered;")) {
+            String style = valueAfter(message, "style=", ";");
+            String strike = valueAfter(message, "resultStrikethroughSpans=", ";");
+            String grey = valueAfter(message, "resultForegroundSpans=", null);
+            return "Kizu D2: OK style=" + compactStyle(style)
+                    + " strike=" + (strike == null ? "?" : strike)
+                    + " grey=" + (grey == null ? "?" : grey);
+        }
+        if (message.startsWith("possible deleted span class mismatch")) return "Kizu D2: CLASS MISMATCH";
+        if (message.startsWith("target class matched but range is invalid")) return "Kizu D2: BAD RANGE";
+        if (message.startsWith("target class matched but original SpannedString was not found")) return "Kizu D2: NO ORIGINAL";
+        if (message.startsWith("target class matched; recovered text was empty")) return "Kizu D2: EMPTY TEXT";
+        if (message.startsWith("recovery disabled")) return "Kizu D2: FEATURE OFF";
+        if (message.startsWith("target class matched but is not a ClickableSpan")) return "Kizu D2: BAD SPAN";
+        if (message.startsWith("recovery threw")) return "Kizu D2: ERROR";
+        return "Kizu D2: NO MATCH";
+    }
+
+    private static String compactStyle(String style) {
+        if (style == null) return "?";
+        String value = style.trim().toLowerCase(Locale.ROOT);
+        if ("strikethrough".equals(value)) return "st";
+        if ("grey".equals(value)) return "gy";
+        if ("mod".equals(value) || "default".equals(value)) return "mod";
+        return "?";
+    }
+
+    private static String valueAfter(String source, String key, String terminator) {
+        int start = source.indexOf(key);
+        if (start < 0) return null;
+        start += key.length();
+        int end = terminator == null ? source.length() : source.indexOf(terminator, start);
+        if (end < 0) end = source.length();
+        return source.substring(start, end).trim();
+    }
+
+    private static void showDiagnosticToast(String message) {
+        try {
+            Context context = Utils.getContext();
+            if (context == null) return;
+            new Handler(Looper.getMainLooper()).post(
+                    () -> Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            );
+        } catch (Throwable failure) {
+            Log.w(DIAGNOSTIC_TAG, "could not show diagnostic toast", failure);
+        }
     }
 
     private static SpannedString findOriginalMessage(ClickableSpan deletedSpan) {

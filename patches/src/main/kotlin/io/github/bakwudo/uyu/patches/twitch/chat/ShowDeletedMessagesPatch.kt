@@ -3,18 +3,23 @@ package io.github.bakwudo.uyu.patches.twitch.chat
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
-import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.util.smali.ExternalLabel
 import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.Instruction
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ThreeRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
-import com.android.tools.smali.dexlib2.iface.reference.TypeReference
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 
 private const val SUPPORT = "Lapp/morphe/extension/twitch/chat/DeletedMessagesSupport;"
+private const val SPANNED = "Landroid/text/Spanned;"
 private const val SPANNED_STRING = "Landroid/text/SpannedString;"
 
 internal val showDeletedMessagesPatch = bytecodePatch {
@@ -22,14 +27,13 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
     execute {
         val spanClass = mutableClassDefBy(DeletedMessageSpanCtorFingerprint.classDef)
-
         val accessField = spanClass.fields.singleOrNull { field -> field.type == "Z" }
             ?: throw PatchException("Twitch deleted messages: access flag field was not found uniquely.")
 
-        spanClass.fields.singleOrNull { field ->
-            field.type == SPANNED_STRING
-        } ?: throw PatchException("Twitch deleted messages: original-message field was not found uniquely.")
+        spanClass.fields.singleOrNull { field -> field.type == SPANNED_STRING }
+            ?: throw PatchException("Twitch deleted messages: original-message field was not found uniquely.")
 
+        // Preserve the existing behaviour that lets non-moderators see deleted messages.
         val constructor = DeletedMessageSpanCtorFingerprint.method
         constructor.addInstructions(
             constructor.instructions.lastIndex,
@@ -40,97 +44,217 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             """,
         )
 
-        val formatter = DeletedMessageFormatterFingerprint.method
-        val formatterInstructions = formatter.instructions
+        // Bind to the resolved factory method fingerprint, not a source class name that
+        // PurpleTV injects into its own fork and which is absent from Twitch's original DEX.
+        val factoryMethod = DeletedMessageFormatterFingerprint.method
+        val factoryOwner = DeletedMessageFormatterFingerprint.classDef.type
+        val factoryName = factoryMethod.name
+        val factoryParameters = factoryMethod.parameterTypes.map { it.toString() }
+        val factoryReturn = factoryMethod.returnType
 
-        val getSpansIndex = formatterInstructions.indexOfFirst { instruction ->
-            val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
-            reference?.definingClass == SPANNED_STRING &&
-                reference.name == "getSpans" &&
-                reference.returnType == "[Ljava/lang/Object;"
-        }
+        fun isDeletedFactory(reference: MethodReference): Boolean =
+            reference.definingClass == factoryOwner &&
+                reference.name == factoryName &&
+                reference.parameterTypes.map { it.toString() } == factoryParameters &&
+                reference.returnType == factoryReturn &&
+                factoryReturn == SPANNED &&
+                factoryParameters == listOf(
+                    "Ljava/lang/String;",
+                    SPANNED_STRING,
+                    "Landroid/content/Context;",
+                    "Ltv/twitch/android/core/mvp/viewdelegate/EventDispatcher;",
+                    "Z",
+                )
 
-        if (getSpansIndex < 0) {
-            throw PatchException("Twitch deleted messages: formatter getSpans call was not found.")
-        }
+        fun methodSignature(method: Method): String =
+            method.name + "(" + method.parameterTypes.joinToString("") { it.toString() } + ")" + method.returnType
 
-        val getSpans = formatterInstructions[getSpansIndex] as? FiveRegisterInstruction
-            ?: throw PatchException("Twitch deleted messages: formatter getSpans invocation is not five-register form.")
-
-        if (getSpans.registerCount != 4) {
-            throw PatchException(
-                "Twitch deleted messages: formatter getSpans expected 4 arguments, found ${getSpans.registerCount}.",
-            )
-        }
-
-        val moveResultIndex = formatterInstructions.indices.firstOrNull { index ->
-            index > getSpansIndex && formatterInstructions[index].opcode == Opcode.MOVE_RESULT_OBJECT
-        } ?: throw PatchException(
-            "Twitch deleted messages: formatter getSpans move-result-object was not found.",
-        )
-
-        val spanArrayRegister =
-            formatter.getInstruction<OneRegisterInstruction>(moveResultIndex).registerA
-
-        val injectionIndex = formatterInstructions.indices.firstOrNull { index ->
-            index > moveResultIndex && formatterInstructions[index].opcode == Opcode.CHECK_CAST
-        }?.let { checkCastIndex ->
-            formatterInstructions.indices.firstOrNull { index ->
-                index > checkCastIndex && formatterInstructions[index].opcode == Opcode.ARRAY_LENGTH
+        fun collectRegisters(instruction: Instruction, target: MutableSet<Int>) {
+            when (instruction) {
+                is RegisterRangeInstruction -> {
+                    for (register in instruction.startRegister until instruction.startRegister + instruction.registerCount) {
+                        target.add(register)
+                    }
+                }
+                is FiveRegisterInstruction -> {
+                    val registers = listOf(
+                        instruction.registerC,
+                        instruction.registerD,
+                        instruction.registerE,
+                        instruction.registerF,
+                        instruction.registerG,
+                    )
+                    target.addAll(registers.take(instruction.registerCount))
+                }
+                is ThreeRegisterInstruction -> {
+                    target.add(instruction.registerA)
+                    target.add(instruction.registerB)
+                    target.add(instruction.registerC)
+                }
+                is TwoRegisterInstruction -> {
+                    target.add(instruction.registerA)
+                    target.add(instruction.registerB)
+                }
+                is OneRegisterInstruction -> target.add(instruction.registerA)
             }
-        } ?: throw PatchException(
-            "Twitch deleted messages: formatter span-array length check was not found.",
-        )
-
-        val getSpansRegisterC = getSpans.registerC
-        val getSpansRegisterF = getSpans.registerF
-
-        if (spanArrayRegister == getSpansRegisterF) {
-            throw PatchException(
-                "Twitch deleted messages: getSpans result register aliases its Class argument register.",
-            )
         }
 
-        val classRegisterRestore = formatterInstructions
-            .subList(0, getSpansIndex)
-            .indexOfLast { instruction ->
-                instruction.opcode == Opcode.CONST_CLASS &&
-                    (instruction as? OneRegisterInstruction)?.registerA == getSpansRegisterF
+        fun messageRegister(instruction: Instruction): Int {
+            val isStatic = instruction.opcode == Opcode.INVOKE_STATIC ||
+                instruction.opcode == Opcode.INVOKE_STATIC_RANGE
+
+            if (instruction is FiveRegisterInstruction) {
+                if (!isStatic || instruction.registerCount != 5) {
+                    throw PatchException("Kizu deleted messages: unexpected five-register factory call layout.")
+                }
+                // Static arguments: message ID, original Spanned, Context, dispatcher, mod-access.
+                return instruction.registerD
             }
 
-        if (classRegisterRestore < 0) {
+            if (instruction is RegisterRangeInstruction) {
+                val expectedCount = if (isStatic) 5 else 6
+                if (instruction.registerCount != expectedCount) {
+                    throw PatchException(
+                        "Kizu deleted messages: unexpected factory argument count ${instruction.registerCount}.",
+                    )
+                }
+                // An instance call has its receiver before the five declared parameters.
+                return instruction.startRegister + if (isStatic) 1 else 2
+            }
+
+            throw PatchException("Kizu deleted messages: unsupported deleted-message factory invoke format.")
+        }
+
+        data class CallSite(
+            val classType: String,
+            val methodSignature: String,
+            val callIndex: Int,
+            val sourceRegister: Int,
+            val resultRegister: Int,
+            val scratchRegister: Int,
+        )
+
+        val callSites = mutableListOf<CallSite>()
+
+        // Identify RecyclerView.ViewHolder from the APK's own class structure, not a
+        // guessed PurpleTV source name or Twitch's obfuscated holder class name.
+        val superclassByType = mutableMapOf<String, String?>()
+        val recyclerViewHolderRoots = mutableSetOf<String>()
+        classDefForEach { classDef ->
+            superclassByType[classDef.type] = classDef.superclass
+            val fieldTypes = classDef.fields.map { it.type }.toSet()
+            if (classDef.superclass == "Ljava/lang/Object;" &&
+                "Landroid/view/View;" in fieldTypes &&
+                "Ljava/lang/ref/WeakReference;" in fieldTypes &&
+                "Landroidx/recyclerview/widget/RecyclerView;" in fieldTypes
+            ) {
+                recyclerViewHolderRoots += classDef.type
+            }
+        }
+
+        if (recyclerViewHolderRoots.size != 1) {
             throw PatchException(
-                "Twitch deleted messages: could not locate the getSpans Class-register initializer.",
+                "Kizu deleted messages: could not uniquely identify the RecyclerView.ViewHolder base from APK structure.",
             )
         }
 
-        val classInit = formatterInstructions[classRegisterRestore] as ReferenceInstruction
-        val classType = (classInit.reference as? TypeReference)?.type
-            ?: throw PatchException(
-                "Twitch deleted messages: getSpans Class-register initializer is not a type reference.",
-            )
+        fun isRecyclerViewHolder(classType: String): Boolean {
+            var current = classType
+            val visited = mutableSetOf<String>()
+            while (visited.add(current)) {
+                if (current in recyclerViewHolderRoots) return true
+                current = superclassByType[current] ?: return false
+            }
+            return false
+        }
 
-        // Keep Twitch's original span array intact. Use only its Class-argument register as
-        // scratch space, and restore that register on every path that continues into Twitch.
-        // This avoids the old implementation's second getSpans invocation and avoids clobbering
-        // the formatter's message/array registers.
-        formatter.addInstructionsWithLabels(
-            injectionIndex,
-            """
-                array-length v$getSpansRegisterF, v$spanArrayRegister
-                if-eqz v$getSpansRegisterF, :kizu_deleted_messages_restore
-                const-class v$getSpansRegisterF, ${DeletedMessageSpanCtorFingerprint.classDef.type}
-                invoke-static {v$getSpansRegisterC, v$spanArrayRegister, v$getSpansRegisterF}, $SUPPORT->recoverDeletedMessage(Landroid/text/SpannedString;[Ljava/lang/Object;Ljava/lang/Class;)Landroid/text/SpannedString;
-                move-result-object v$getSpansRegisterF
-                if-nez v$getSpansRegisterF, :kizu_deleted_messages_return
-                :kizu_deleted_messages_restore
-                const-class v$getSpansRegisterF, $classType
-                goto :kizu_deleted_messages_continue
-                :kizu_deleted_messages_return
-                return-object v$getSpansRegisterF
-                :kizu_deleted_messages_continue
-                nop
-            """,
-        )
+        // PurpleTV hooks the factory at the row binder. In the Twitch APK, resolve that
+        // caller by its inheritance from RecyclerView.ViewHolder, then require one match.
+        classDefForEach { classDef ->
+            if (!isRecyclerViewHolder(classDef.type)) return@classDefForEach
+            for (method in classDef.methods) {
+                val implementation = method.implementation ?: continue
+                val instructions = implementation.instructions.toList()
+
+                for ((index, instruction) in instructions.withIndex()) {
+                    val reference = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+                        ?: continue
+                    if (!isDeletedFactory(reference)) continue
+
+                    val moveResultIndex = index + 1
+                    val moveResult = instructions.getOrNull(moveResultIndex)
+                    if (moveResult?.opcode != Opcode.MOVE_RESULT_OBJECT) {
+                        throw PatchException("Kizu deleted messages: row factory call has no immediate move-result-object.")
+                    }
+                    val resultRegister = (moveResult as? OneRegisterInstruction)?.registerA
+                        ?: throw PatchException("Kizu deleted messages: row factory result register was not found.")
+                    val sourceRegister = messageRegister(instruction)
+
+                    val callRegisters = mutableSetOf<Int>()
+                    collectRegisters(instruction, callRegisters)
+                    val liveAfter = mutableSetOf<Int>()
+                    for (suffixIndex in moveResultIndex + 1 until instructions.size) {
+                        collectRegisters(instructions[suffixIndex], liveAfter)
+                    }
+
+                    // The native call may reuse the message register for its result. Save the
+                    // original input before that call, in a dead non-argument register.
+                    val scratchRegister = (0 until implementation.registerCount).firstOrNull { register ->
+                        register <= 255 &&
+                            register != sourceRegister &&
+                            register != resultRegister &&
+                            register !in callRegisters &&
+                            register !in liveAfter
+                    } ?: throw PatchException(
+                        "Kizu deleted messages: no safe scratch register is available at the row factory call.",
+                    )
+
+                    callSites += CallSite(
+                        classDef.type,
+                        methodSignature(method),
+                        index,
+                        sourceRegister,
+                        resultRegister,
+                        scratchRegister,
+                    )
+                }
+            }
+        }
+
+        if (callSites.size != 1) {
+            throw PatchException(
+                "Kizu deleted messages: expected exactly one native factory call under a RecyclerView.ViewHolder, found ${callSites.size}.",
+            )
+        }
+
+        callSites.sortedByDescending { it.callIndex }.forEachIndexed { id, site ->
+            val callerClass = mutableClassDefBy(site.classType)
+            val caller = callerClass.methods.singleOrNull {
+                methodSignature(it) == site.methodSignature
+            } ?: throw PatchException("Kizu deleted messages: fingerprinted factory caller disappeared.")
+
+            // Anchor the skip target to the actual existing instruction immediately after the
+            // original invoke/move-result pair. ExternalLabel binds the new branch to that exact
+            // instruction, avoiding unresolved labels across separately inserted code blocks.
+            val originalInstructions = caller.implementation!!.instructions
+            val afterFactory = originalInstructions.getOrNull(site.callIndex + 2)
+                ?: throw PatchException("Kizu deleted messages: factory call has no following instruction.")
+            val afterFactoryLabel = "kizu_after_deleted_factory_$id"
+            val nativeFactoryLabel = "kizu_native_deleted_factory_$id"
+
+            caller.addInstructionsWithLabels(
+                site.callIndex,
+                """
+                    invoke-static/range {v${site.sourceRegister} .. v${site.sourceRegister}}, $SUPPORT->styleDeletedMessageFromRow(Landroid/text/Spanned;)Landroid/text/Spanned;
+                    move-result-object v${site.scratchRegister}
+                    if-eqz v${site.scratchRegister}, :${nativeFactoryLabel}
+                    move-object/16 v${site.resultRegister}, v${site.scratchRegister}
+                    goto :${afterFactoryLabel}
+                    :${nativeFactoryLabel}
+                    nop
+                """,
+                ExternalLabel(afterFactoryLabel, afterFactory),
+            )
+        }
     }
 }

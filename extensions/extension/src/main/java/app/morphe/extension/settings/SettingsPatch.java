@@ -57,15 +57,20 @@ public final class SettingsPatch {
             wrapper.addView(settingsView, new LinearLayout.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
             return wrapper;
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             Utils.logError("Failed to add the uyu settings entry", ex);
             return settingsView;
         }
     }
 
     private static void openSettings(View entry) {
-        Activity activity = Utils.findActivity(entry.getContext());
-        if (activity != null) showScreen(activity, null);
+        try {
+            Activity activity = Utils.findActivity(entry.getContext());
+            if (activity != null) showScreen(activity, null);
+            else Utils.logInfo("Unable to open Kizu settings: Activity context was not found");
+        } catch (Throwable error) {
+            Utils.logError("Failed to handle Kizu settings click", error);
+        }
     }
 
     /**
@@ -92,7 +97,7 @@ public final class SettingsPatch {
                     .add(container, UyuSettingsFragment.create(section), tag)
                     .addToBackStack(tag)
                     .commit();
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             Utils.logError("Failed to open uyu settings", ex);
         }
     }

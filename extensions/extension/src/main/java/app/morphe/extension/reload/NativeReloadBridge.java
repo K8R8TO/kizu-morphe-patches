@@ -1,0 +1,10 @@
+package app.morphe.extension.reload;
+
+// Injected Compose bridge.
+public final class NativeReloadBridge {
+    public static volatile Object state;
+    private NativeReloadBridge() {}
+    public static void update(boolean enabled) {
+        throw new IllegalStateException("Native reload state bridge was not resolved");
+    }
+}

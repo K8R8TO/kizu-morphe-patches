@@ -3,14 +3,14 @@ name: Pre-release
 on:
   push:
     branches:
-      - beta
+      - dev
   pull_request_target:
     types:
       - opened
       - synchronize
   workflow_dispatch:
 concurrency:
-  group: kizu-prerelease-beta11
+  group: kizu-prerelease-dev-v6
   cancel-in-progress: true
 jobs:
   prerelease:
@@ -22,10 +22,10 @@ jobs:
       attestations: write
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout beta
+      - name: Checkout dev
         uses: actions/checkout@v5
         with:
-          ref: beta
+          ref: dev
           fetch-depth: 0
       - name: Setup Java
         uses: actions/setup-java@v5
@@ -82,12 +82,18 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           test -f "patches/build/libs/patches-$VERSION.mpp"
+      - name: Pin pre-release tag to this build
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git tag -f "v$VERSION" "$GITHUB_SHA"
+          git push origin "refs/tags/v$VERSION" --force
       - name: Publish GitHub pre-release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: v${{ steps.version.outputs.version }} (Pre-release)
-          target_commitish: beta
+          target_commitish: dev
           body: |
             Kizu Twitch Patches v${{ steps.version.outputs.version }} pre-release.
             Testing channel only. This is not the stable release.

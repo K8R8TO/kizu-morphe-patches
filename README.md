@@ -4,7 +4,7 @@ Morphe-compatible patches for the **Twitch Android app**.
 
 Kizu's goal is simple: add useful Twitch enhancements, privacy/cleanup controls, and third-party emote support while keeping the patch focused on the features that are actually supported and tested.
 
-**Current stable:** [v1.9.2](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v1.9.2)  
+**Current stable:** [v2.0.0](https://github.com/K8R8TO/kizu-morphe-patches/releases/tag/v2.0.0)  
 **Target:** Twitch Android **31.3.1** (tv.twitch.android.app)  
 **Format:** Morphe .mpp patch bundle
 

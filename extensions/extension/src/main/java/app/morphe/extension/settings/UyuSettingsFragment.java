@@ -19,6 +19,7 @@ import android.widget.TextView;
 import java.util.Locale;
 
 
+import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.danmaku.DanmakuPreview;
 
 @SuppressWarnings("deprecation")
@@ -31,6 +32,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
     static final String SECTION_CHAT = "chat";
     static final String SECTION_PRIVACY = "privacy";
     static final String SECTION_HOME = "home";
+    static final String SECTION_PLAYER = "player";
     private static final String ARG_SECTION = "section";
     private static final String[] WEIGHT_NAMES = {
             "Thin", "Extra light", "Light", "Regular", "Medium", "Semi bold", "Bold", "Extra bold", "Black",
@@ -82,20 +84,39 @@ public class UyuSettingsFragment extends PreferenceFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getPreferenceManager().setSharedPreferencesName(Setting.PREFERENCES_NAME);
-        Bundle arguments = getArguments();
-        section = arguments == null ? null : arguments.getString(ARG_SECTION);
-        PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(getActivity());
-        setPreferenceScreen(screen);
-        if (section == null) addSectionLinks(screen);
-        else if (section.equals(SECTION_GENERAL)) addGeneralSettings(screen);
-        else if (section.equals(SECTION_APPEARANCE)) addAppearanceSettings(screen);
-        else if (section.equals(SECTION_DANMAKU)) addDanmakuSettings(screen);
-        else if (section.equals(SECTION_ADS)) addAdsSettings(screen);
-        else if (section.equals(SECTION_EMOTES)) addEmoteSettings(screen);
-        else if (section.equals(SECTION_CHAT)) addChatSettings(screen);
-        else if (section.equals(SECTION_PRIVACY)) addPrivacySettings(screen);
-        else if (section.equals(SECTION_HOME)) addHomeSettings(screen);
+        try {
+            getPreferenceManager().setSharedPreferencesName(Setting.PREFERENCES_NAME);
+            Bundle arguments = getArguments();
+            section = arguments == null ? null : arguments.getString(ARG_SECTION);
+            PreferenceScreen screen = getPreferenceManager().createPreferenceScreen(getActivity());
+            setPreferenceScreen(screen);
+            if (section == null) addSectionLinks(screen);
+            else if (section.equals(SECTION_GENERAL)) addGeneralSettings(screen);
+            else if (section.equals(SECTION_APPEARANCE)) addAppearanceSettings(screen);
+            else if (section.equals(SECTION_DANMAKU)) addDanmakuSettings(screen);
+            else if (section.equals(SECTION_ADS)) addAdsSettings(screen);
+            else if (section.equals(SECTION_EMOTES)) addEmoteSettings(screen);
+            else if (section.equals(SECTION_CHAT)) addChatSettings(screen);
+            else if (section.equals(SECTION_PRIVACY)) addPrivacySettings(screen);
+            else if (section.equals(SECTION_HOME)) addHomeSettings(screen);
+            else if (section.equals(SECTION_PLAYER)) addPlayerSettings(screen);
+        } catch (Throwable error) {
+            Utils.logError("Failed to build Kizu settings screen (section=" + section + ")", error);
+            try {
+                Activity activity = getActivity();
+                if (activity != null) {
+                    PreferenceScreen fallback = getPreferenceManager().createPreferenceScreen(activity);
+                    Preference diagnostic = new Preference(activity);
+                    diagnostic.setTitle("Kizu settings could not be loaded");
+                    diagnostic.setSummary("The failure was logged. Close and reopen Settings.");
+                    diagnostic.setSelectable(false);
+                    fallback.addPreference(diagnostic);
+                    setPreferenceScreen(fallback);
+                }
+            } catch (Throwable fallbackError) {
+                Utils.logError("Failed to show Kizu settings fallback", fallbackError);
+            }
+        }
     }
 
     private void addSectionLinks(PreferenceScreen screen) {
@@ -109,6 +130,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
         addSectionLink(screen, SECTION_EMOTES, "7TV, BTTV, FFZ and animated emotes");
         addSectionLink(screen, SECTION_CHAT, "Chat controls");
         addSectionLink(screen, SECTION_HOME, "Home & navigation controls");
+        addSectionLink(screen, SECTION_PLAYER, "Player Controls");
         addSectionLink(screen, SECTION_PRIVACY, "Privacy");
     }
 
@@ -305,17 +327,35 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private static int deletedMessageStyleIndex(String value) {
         if ("strikethrough".equalsIgnoreCase(value)) return 1;
         if ("grey".equalsIgnoreCase(value)) return 2;
-        // "default" is a legacy value and is equivalent to Mod.
         return 0;
     }
 
     private static String deletedMessageStyleName(String value) {
         if ("strikethrough".equalsIgnoreCase(value)) return "Strikethrough";
         if ("grey".equalsIgnoreCase(value)) return "Grey";
-        // "default" is a legacy value and is equivalent to Mod.
         return "Mod";
     }
 
+    private void addPlayerSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.SHOW_VIDEO_STATS_BUTTON, "Show Video Stats Button",
+                "Show Twitch's native live playback statistics panel immediately to the left of Reload Stream.");
+        addSwitch(screen, Settings.SHOW_REFRESH_BUTTON, "Show Reload Stream Button",
+                "Show a single-tap reload button immediately to the left of the mute control.");
+        addSwitch(screen, Settings.BRIGHTNESS_GESTURE, "Brightness Swipe Gesture",
+                "In landscape, swipe vertically on the left half of the video pane to change screen brightness.");
+        addSwitch(screen, Settings.VOLUME_GESTURE, "Volume Swipe Gesture",
+                "In landscape, swipe vertically on the right half of the video pane to change media volume.");
+        addSwitch(screen, Settings.GESTURE_OSD, "Gesture Progress Overlay",
+                "Show the PurpleTV-style progress bar and value while adjusting brightness or volume.");
+        addSwitch(screen, Settings.DISABLE_LANDSCAPE_SWIPE_TO_PORTRAIT, "Prevent Swipe-to-Portrait Collapse",
+                "Blocks Twitch from collapsing landscape playback during vertical swipes on the video pane. Turn this off to restore Twitch’s default behavior.");
+        addSwitch(screen, Settings.HIDE_PLAYER_CREATE_CLIP_BUTTON, "Hide Create Clip Button",
+                "Hide Twitch's Create Clip button in the player.");
+        addSwitch(screen, Settings.HIDE_PLAYER_LIVE_SHARE_BUTTON, "Hide Live Share Button",
+                "Hide Twitch's Share button in the player.");
+        addSwitch(screen, Settings.HIDE_CAST_BUTTON, "Hide Cast Button",
+                "Hide Twitch's Cast button in the player.");
+    }
     private void addHomeSettings(PreferenceScreen screen) {
         addHomeSwitch(screen, Settings.HIDE_TURBO_UPSELL, "Hide Go Ad-Free",
                 "Hide Twitch's Go Ad-Free/Turbo control in the Following feed.");
@@ -363,7 +403,11 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     @Override public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        SettingsUi.applySettingsView(view);
+        try {
+            SettingsUi.applySettingsView(view);
+        } catch (Throwable error) {
+            Utils.logError("Failed to apply Kizu settings appearance", error);
+        }
         view.setClickable(true);
     }
 
@@ -377,20 +421,29 @@ public class UyuSettingsFragment extends PreferenceFragment {
 
     @Override public void onResume() {
         super.onResume();
-        View settingsView = getView();
-        if (settingsView != null) SettingsUi.applySettingsView(settingsView);
-        Activity activity = getActivity();
-        TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
-        if (title == null) return;
-        if (previousTitle == null) previousTitle = title.getText();
-        title.setText(title(section));
+        try {
+            View settingsView = getView();
+            if (settingsView != null) SettingsUi.applySettingsView(settingsView);
+            Activity activity = getActivity();
+            TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
+            if (title == null) return;
+            if (previousTitle == null) previousTitle = title.getText();
+            title.setText(title(section));
+        } catch (Throwable error) {
+            Utils.logError("Failed to resume Kizu settings screen", error);
+        }
     }
 
     @Override public void onDestroyView() {
-        Activity activity = getActivity();
-        TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
-        if (title != null && previousTitle != null) title.setText(previousTitle);
-        super.onDestroyView();
+        try {
+            Activity activity = getActivity();
+            TextView title = activity == null ? null : SettingsPatch.findToolbarTitle(activity);
+            if (title != null && previousTitle != null) title.setText(previousTitle);
+        } catch (Throwable error) {
+            Utils.logError("Failed to restore Twitch settings title", error);
+        } finally {
+            super.onDestroyView();
+        }
     }
 
     private static String title(String section) {
@@ -404,6 +457,7 @@ public class UyuSettingsFragment extends PreferenceFragment {
             case SECTION_CHAT: return "Chat";
             case SECTION_PRIVACY: return "Privacy";
             case SECTION_HOME: return "Home & navigation";
+            case SECTION_PLAYER: return "Player Controls";
             default: return SettingsPatch.TITLE;
         }
     }

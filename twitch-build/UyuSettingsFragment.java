@@ -262,14 +262,12 @@ public class UyuSettingsFragment extends PreferenceFragment {
     private static int deletedMessageStyleIndex(String value) {
         if ("strikethrough".equalsIgnoreCase(value)) return 1;
         if ("grey".equalsIgnoreCase(value)) return 2;
-        // "default" is a legacy value and is equivalent to Mod.
         return 0;
     }
 
     private static String deletedMessageStyleName(String value) {
         if ("strikethrough".equalsIgnoreCase(value)) return "Strikethrough";
         if ("grey".equalsIgnoreCase(value)) return "Grey";
-        // "default" is a legacy value and is equivalent to Mod.
         return "Mod";
     }
 
