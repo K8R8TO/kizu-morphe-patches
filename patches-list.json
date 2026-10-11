@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "1.9.3-beta.40",
+  "version": "1.9.3-beta.41",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.40 keeps placeholder recovery and styles Twitch's native formatter return when the early style hook defers.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.41 applies custom deleted-message styling at the MessageRecyclerItem row call site, saving the original Spanned input before Twitch can reuse its register.",
       "default": true,
       "category": null,
       "dependencies": [
