@@ -186,23 +186,18 @@ public final class GestureTheatreRoot extends ConstraintLayout {
     }
 
     private boolean isInteractiveControlAt(View view, float x, float y, boolean root) {
-        // VISIBLE views can remain in Twitch's hierarchy at alpha 0 during menu transitions.
-        // Do not let an invisible settings overlay permanently disable player gestures.
         if (view == null || !view.isShown() || view.getAlpha() <= 0.01f
                 || !isPointInside(view, x, y)) return false;
-        if (!root && view != progressView && view != playerOverlay) {
-            String idName = "";
-            int id = view.getId();
-            if (id != View.NO_ID) {
-                try { idName = getResources().getResourceEntryName(id).toLowerCase(java.util.Locale.ROOT); }
-                catch (Throwable ignored) { }
-            }
 
-            // Use Twitch 31.3.1's actual settings/quality resource IDs. Do not reject every
-            // RecyclerView/ScrollView in the player tree: unrelated or overlapping scroll
-            // containers were suppressing brightness and volume gestures even outside the menu.
-            if (idName.startsWith("settings_menu") || idName.startsWith("quality_options")) return true;
-        }
+        String idName = resourceIdName(view);
+        if (!root && view != progressView && view != playerOverlay
+                && isSettingsOrQualityMenuId(idName)) return true;
+
+        // Twitch's quality list contains blank/padded regions that do not have their own
+        // resource ID. If a scroll container contains settings/quality menu rows, leave the
+        // whole container's touch stream to Twitch instead of intercepting only over the rows.
+        if (!root && isMenuScrollContainer(view) && containsSettingsOrQualityMenu(view)) return true;
+
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = group.getChildCount() - 1; i >= 0; i--) {
@@ -211,6 +206,44 @@ public final class GestureTheatreRoot extends ConstraintLayout {
             }
         }
         return false;
+    }
+
+    private String resourceIdName(View view) {
+        int id = view.getId();
+        if (id == View.NO_ID) return "";
+        try {
+            return view.getResources().getResourceEntryName(id).toLowerCase(java.util.Locale.ROOT);
+        } catch (Throwable ignored) {
+            return "";
+        }
+    }
+
+    private boolean isSettingsOrQualityMenuId(String idName) {
+        return idName.startsWith("settings_menu")
+                || idName.startsWith("quality_options")
+                || idName.startsWith("simple_quality")
+                || idName.startsWith("quality_config");
+    }
+
+    private boolean containsSettingsOrQualityMenu(View view) {
+        if (view == null || !view.isShown() || view.getAlpha() <= 0.01f) return false;
+        if (isSettingsOrQualityMenuId(resourceIdName(view))) return true;
+        if (view instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) view;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                if (containsSettingsOrQualityMenu(group.getChildAt(i))) return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isMenuScrollContainer(View view) {
+        String className = view.getClass().getName().toLowerCase(java.util.Locale.ROOT);
+        return className.contains("recyclerview")
+                || className.contains("scrollview")
+                || className.contains("nestedscrollview")
+                || className.contains("abslistview")
+                || className.contains("listview");
     }
 
     private float localBottom(View view) {
