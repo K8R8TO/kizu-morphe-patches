@@ -4,7 +4,7 @@
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.42 resolves the deleted-message factory by its APK fingerprint, searches the actual DEX call sites rather than assuming PurpleTV's replacement class exists, and skips native factory creation for custom deleted-message styles.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.42 resolves the deleted-message factory by its APK fingerprint and locates PurpleTV's equivalent row-binding call through RecyclerView.ViewHolder class structure, rather than assuming PurpleTV's injected class name exists in Twitch.",
       "default": true,
       "category": null,
       "dependencies": [
