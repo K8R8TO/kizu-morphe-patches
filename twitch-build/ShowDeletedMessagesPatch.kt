@@ -20,8 +20,6 @@ import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITC
 private const val SUPPORT = "Lapp/morphe/extension/twitch/chat/DeletedMessagesSupport;"
 private const val SPANNED = "Landroid/text/Spanned;"
 private const val SPANNED_STRING = "Landroid/text/SpannedString;"
-private const val ROW_BINDER = "Ltv/twitch/android/shared/chat/messages/ui/MessageRecyclerItem\$ViewHolder;"
-private const val ROW_BIND_METHOD = "onBindDataItem"
 
 internal val showDeletedMessagesPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
@@ -45,16 +43,27 @@ internal val showDeletedMessagesPatch = bytecodePatch {
             """,
         )
 
-        fun isDeletedFactory(reference: MethodReference): Boolean {
-            val parameters = reference.parameterTypes.map { it.toString() }
-            return reference.returnType == SPANNED &&
-                parameters.size == 5 &&
-                parameters[0] == "Ljava/lang/String;" &&
-                (parameters[1] == SPANNED || parameters[1] == SPANNED_STRING) &&
-                parameters[2] == "Landroid/content/Context;" &&
-                parameters[3] == "Ltv/twitch/android/core/mvp/viewdelegate/EventDispatcher;" &&
-                parameters[4] == "Z"
-        }
+        // Bind to the resolved factory method fingerprint, not a source class name that
+        // PurpleTV injects into its own fork and which is absent from Twitch's original DEX.
+        val factoryMethod = DeletedMessageFormatterFingerprint.method
+        val factoryOwner = DeletedMessageFormatterFingerprint.classDef.type
+        val factoryName = factoryMethod.name
+        val factoryParameters = factoryMethod.parameterTypes.map { it.toString() }
+        val factoryReturn = factoryMethod.returnType
+
+        fun isDeletedFactory(reference: MethodReference): Boolean =
+            reference.definingClass == factoryOwner &&
+                reference.name == factoryName &&
+                reference.parameterTypes.map { it.toString() } == factoryParameters &&
+                reference.returnType == factoryReturn &&
+                factoryReturn == SPANNED &&
+                factoryParameters == listOf(
+                    "Ljava/lang/String;",
+                    SPANNED_STRING,
+                    "Landroid/content/Context;",
+                    "Ltv/twitch/android/core/mvp/viewdelegate/EventDispatcher;",
+                    "Z",
+                )
 
         fun methodSignature(method: Method): String =
             method.name + "(" + method.parameterTypes.joinToString("") { it.toString() } + ")" + method.returnType
@@ -126,13 +135,11 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         val callSites = mutableListOf<CallSite>()
 
-        // PurpleTV handles the message in MessageRecyclerItem.ViewHolder.onBindDataItem,
-        // where the original Spanned object is an argument to the native deleted-message factory.
+        // Search every DEX class/method for a call to the resolved native factory.
+        // This avoids assuming that PurpleTV's replacement MessageRecyclerItem class is
+        // present under that name in Twitch's obfuscated APK.
         classDefForEach { classDef ->
-            if (classDef.type != ROW_BINDER) return@classDefForEach
-
             for (method in classDef.methods) {
-                if (method.name != ROW_BIND_METHOD || method.returnType != "V") continue
                 val implementation = method.implementation ?: continue
                 val instructions = implementation.instructions.toList()
 
@@ -183,7 +190,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
 
         if (callSites.size != 1) {
             throw PatchException(
-                "Kizu deleted messages: expected exactly one native factory call in MessageRecyclerItem row binding, found ${callSites.size}.",
+                "Kizu deleted messages: expected exactly one DEX call to the fingerprinted native factory, found ${callSites.size}.",
             )
         }
 
@@ -193,25 +200,27 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 methodSignature(it) == site.methodSignature
             } ?: throw PatchException("Kizu deleted messages: row-binding caller method disappeared.")
 
-            // Use the styled original message when a custom appearance is selected. A null
-            // helper result preserves Twitch's own formatter output (Mod style / feature off).
+            // Place an exit target after the original factory result, then branch around
+            // native factory creation only when PurpleTV's custom-style helper returns a message.
             caller.addInstructionsWithLabels(
                 site.callIndex + 2,
                 """
-                    invoke-static/range {v${site.scratchRegister} .. v${site.scratchRegister}}, $SUPPORT->styleDeletedMessageFromRow(Landroid/text/Spanned;)Landroid/text/Spanned;
-                    move-result-object v${site.scratchRegister}
-                    if-eqz v${site.scratchRegister}, :kizu_keep_native_deleted_result_${id}
-                    move-object/16 v${site.resultRegister}, v${site.scratchRegister}
-                    :kizu_keep_native_deleted_result_${id}
+                    :kizu_after_deleted_factory_${id}
                     nop
                 """,
             )
 
-            // Must be inserted before the factory call: its move-result may overwrite
-            // the original message's register (the bug in beta.38's call-site hook).
-            caller.addInstructions(
+            caller.addInstructionsWithLabels(
                 site.callIndex,
-                "move-object/16 v${site.scratchRegister}, v${site.sourceRegister}",
+                """
+                    invoke-static/range {v${site.sourceRegister} .. v${site.sourceRegister}}, $SUPPORT->styleDeletedMessageFromRow(Landroid/text/Spanned;)Landroid/text/Spanned;
+                    move-result-object v${site.scratchRegister}
+                    if-eqz v${site.scratchRegister}, :kizu_native_deleted_factory_${id}
+                    move-object/16 v${site.resultRegister}, v${site.scratchRegister}
+                    goto :kizu_after_deleted_factory_${id}
+                    :kizu_native_deleted_factory_${id}
+                    nop
+                """,
             )
         }
     }
