@@ -186,7 +186,10 @@ public final class GestureTheatreRoot extends ConstraintLayout {
     }
 
     private boolean isInteractiveControlAt(View view, float x, float y, boolean root) {
-        if (view == null || !view.isShown() || !isPointInside(view, x, y)) return false;
+        // VISIBLE views can remain in Twitch's hierarchy at alpha 0 during menu transitions.
+        // Do not let an invisible settings overlay permanently disable player gestures.
+        if (view == null || !view.isShown() || view.getAlpha() <= 0.01f
+                || !isPointInside(view, x, y)) return false;
         if (!root && view != progressView && view != playerOverlay) {
             String idName = "";
             int id = view.getId();
@@ -194,19 +197,11 @@ public final class GestureTheatreRoot extends ConstraintLayout {
                 try { idName = getResources().getResourceEntryName(id).toLowerCase(java.util.Locale.ROOT); }
                 catch (Throwable ignored) { }
             }
-            if (idName.contains("quality") || idName.contains("setting")
-                    || idName.contains("menu") || idName.contains("sheet")
-                    || idName.contains("dialog") || idName.contains("seek")
-                    || idName.contains("slider") || idName.contains("dropdown")
-                    || idName.contains("popup")) return true;
 
-            // Only reject known scroll-widget classes here. A generic canScrollVertically()
-            // check also matches Twitch's normal player overlay and suppresses volume gestures
-            // across the video pane, even when no settings menu is open.
-            String className = view.getClass().getName().toLowerCase(java.util.Locale.ROOT);
-            if (className.contains("scrollview") || className.contains("recyclerview")
-                    || className.contains("abslistview") || className.contains("seekbar")
-                    || className.contains("slider")) return true;
+            // Use Twitch 31.3.1's actual settings/quality resource IDs. Do not reject every
+            // RecyclerView/ScrollView in the player tree: unrelated or overlapping scroll
+            // containers were suppressing brightness and volume gestures even outside the menu.
+            if (idName.startsWith("settings_menu") || idName.startsWith("quality_options")) return true;
         }
         if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
