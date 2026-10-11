@@ -72,8 +72,8 @@ Kizu's third-party picker is kept separate from Twitch's native emote picker. Tw
 - Show **deleted messages**.
 - Deleted-message styles:
   - Mod
-  - Strikethrough (breaks in fast chats)
-  - Grey (breaks in fast chats)
+  - Strikethrough (breaks in rapid chats)
+  - Grey (breaks in rapid chats)
 - **Chat timestamps**.
 - **Mention highlighting**.
 - Custom mention highlight color.
