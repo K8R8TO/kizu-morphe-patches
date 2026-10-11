@@ -224,6 +224,5 @@ internal val showDeletedMessagesPatch = bytecodePatch {
                 ExternalLabel(afterFactoryLabel, afterFactory),
             )
         }
-        }
     }
 }
