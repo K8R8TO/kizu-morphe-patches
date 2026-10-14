@@ -57,20 +57,6 @@ internal val thirdPartyEmotesPatch = bytecodePatch {
                 ),
             ),
         )
-        channelConstructor.addInstruction(
-            returnIndex + 2,
-            BuilderInstruction35c(
-                Opcode.INVOKE_STATIC,
-                0, 0, 0, 0, 0, 0,
-                ImmutableMethodReference(
-                    PICKER_BRIDGE,
-                    "ensureComposerButton",
-                    emptyList(),
-                    "V",
-                ),
-            ),
-        )
-
         // Locate Twitch's chat-row binder structurally. R8 class/method names are
         // not stable across Twitch releases, while the MessageRecyclerItem signature and
         // TextView.setText call provide a useful behavioral fingerprint.

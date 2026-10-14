@@ -17,12 +17,6 @@ internal val thirdPartyEmotePickerPatch = bytecodePatch {
     dependsOn(sharedExtensionPatch)
 
     execute {
-        // Observe the native picker-open event only. Twitch owns the picker UI.
-        EmotePickerOpenFingerprint.method.addInstructions(
-            0,
-            "invoke-static/range { p1 .. p1 }, $PICKER_BRIDGE->onPickerOpened(Ljava/lang/Object;)V",
-        )
-
         // Augment the existing native ALL picker model. No replacement dialog/UI is created.
         val builderMethod = EmotePickerStateBuilderFingerprint.method
         val returnIndex = builderMethod.instructions.indexOfLast { it.opcode == Opcode.RETURN_OBJECT }
