@@ -1,11 +1,14 @@
 package app.morphe.extension.twitch.chat;
 
 import android.os.SystemClock;
+import android.graphics.Color;
 import android.util.Log;
 import android.text.Spanned;
 import android.text.SpannableStringBuilder;
 import android.text.SpannedString;
 import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StrikethroughSpan;
 import android.widget.TextView;
 
 import io.github.bakwudo.uyu.extension.settings.Settings;
@@ -31,7 +34,7 @@ public final class DeletedMessagesSupport {
                     return size() > ORIGINAL_CACHE_LIMIT;
                 }
             };
-    
+
     private static final Map<Class<?>, Field> MESSAGE_ID_FIELDS = new java.util.WeakHashMap<>();
     private static final Map<Class<?>, Boolean> MISSING_MESSAGE_ID_FIELDS = new java.util.WeakHashMap<>();
 
@@ -64,7 +67,16 @@ public final class DeletedMessagesSupport {
             CharSequence current = textView.getText();
             if (current == null || current.length() == 0) return;
 
-            if (containsDeletedPlaceholder(current)) return;
+            if (containsDeletedPlaceholder(current)) {
+                SpannedString cached = findCachedOriginal(messageId, SystemClock.uptimeMillis());
+                if (cached != null && cached.length() > 0) {
+                    SpannableStringBuilder restored = new SpannableStringBuilder(cached);
+                    int bodyStart = findMessageBodyStart(restored);
+                    applyDeletedStyle(restored, bodyStart, restored.length());
+                    textView.setText(SpannedString.valueOf(restored), TextView.BufferType.SPANNABLE);
+                }
+                return;
+            }
 
             SpannedString snapshot = new SpannedString(current);
             long now = SystemClock.uptimeMillis();
@@ -196,12 +208,59 @@ public final class DeletedMessagesSupport {
                 android.text.SpannableStringBuilder builder = new android.text.SpannableStringBuilder(message);
                 builder.replace(start, end, body);
                 builder.removeSpan(deletedSpan);
+                applyDeletedStyle(builder, start, start + body.length());
                 return SpannedString.valueOf(builder);
             }
         } catch (Throwable failure) {
             Log.w(DIAGNOSTIC_TAG, "could not restore original deleted chat message", failure);
         }
         return null;
+    }
+
+    private static int findMessageBodyStart(Spanned text) {
+        try {
+            for (ClickableSpan span : text.getSpans(0, text.length(), ClickableSpan.class)) {
+                if (!"ClickableUsernameSpan".equals(span.getClass().getSimpleName())) continue;
+                int end = text.getSpanEnd(span);
+                if (end < 0 || end > text.length()) continue;
+                if (end + 2 <= text.length() && ": ".contentEquals(text.subSequence(end, end + 2))) {
+                    return end + 2;
+                }
+                return end;
+            }
+        } catch (Throwable ignored) {
+        }
+        return 0;
+    }
+
+    private static void applyDeletedStyle(SpannableStringBuilder text, int start, int end) {
+        if (start < 0 || end <= start || end > text.length()) return;
+        String style;
+        try {
+            style = Settings.CHAT_DELETED_MESSAGES_STYLE.get();
+        } catch (Throwable ignored) {
+            style = "mod";
+        }
+        if (style == null) style = "mod";
+        style = style.trim().toLowerCase(java.util.Locale.ROOT);
+        if ("default".equals(style)) style = "mod";
+
+        if ("strikethrough".equals(style)) {
+            for (StrikethroughSpan span : text.getSpans(start, end, StrikethroughSpan.class)) {
+                int spanStart = text.getSpanStart(span);
+                int spanEnd = text.getSpanEnd(span);
+                if (spanStart >= start && spanEnd <= end) text.removeSpan(span);
+            }
+            text.setSpan(new StrikethroughSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } else if ("grey".equals(style)) {
+            for (ForegroundColorSpan span : text.getSpans(start, end, ForegroundColorSpan.class)) {
+                int spanStart = text.getSpanStart(span);
+                int spanEnd = text.getSpanEnd(span);
+                if (spanStart >= start && spanEnd <= end) text.removeSpan(span);
+            }
+            text.setSpan(new ForegroundColorSpan(Color.GRAY), start, end,
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
     }
 
     private static boolean hasSpannedStringField(Object candidate) {
