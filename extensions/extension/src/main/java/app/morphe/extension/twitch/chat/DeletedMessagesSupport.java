@@ -2,6 +2,7 @@ package app.morphe.extension.twitch.chat;
 
 import android.os.SystemClock;
 import android.util.Log;
+import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.style.ClickableSpan;
 
@@ -9,8 +10,24 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.lang.reflect.Field;
 
 public final class DeletedMessagesSupport {
+    private static final String DIAGNOSTIC_TAG = "KizuDeletedStyle";
+    private static final AtomicBoolean ENTRY_TOAST_SHOWN = new AtomicBoolean(false);
+    private static final AtomicBoolean OUTCOME_TOAST_SHOWN = new AtomicBoolean(false);
+    // Leave headroom for roughly 10,000 messages arriving in a ten-minute rapid-chat window.
+    private static final int ORIGINAL_CACHE_LIMIT = 12_000;
+    private static final long ORIGINAL_CACHE_TTL_MS = 15L * 60L * 1000L;
+    private static final Object ORIGINAL_CACHE_LOCK = new Object();
+    private static long lastOriginalCachePruneAt;
+    private static final Map<String, CachedOriginal> ORIGINAL_MESSAGES =
+            new LinkedHashMap<String, CachedOriginal>(512, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, CachedOriginal> eldest) {
+                    return size() > ORIGINAL_CACHE_LIMIT;
+                }
+            };
     private static final Map<String, CachedOriginal> ORIGINAL_MESSAGES =
             new LinkedHashMap<String, CachedOriginal>(512, 0.75f, true) {
                 @Override
