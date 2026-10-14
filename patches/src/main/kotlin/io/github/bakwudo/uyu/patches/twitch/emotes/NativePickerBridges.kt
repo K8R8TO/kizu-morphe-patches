@@ -73,7 +73,7 @@ internal fun BytecodePatchContext.emotePickerStartBridge(start: Method): String 
 }
 
 internal fun BytecodePatchContext.nativePickerBridges(h: NativePickerHooks, footer: Int) {
-    val bridge = mutableClassDefBy(PICKER_BRIDGE)
+    val bridge = mutableClassDefBy(NATIVE_PICKER_BRIDGE)
     fun replace(name: String, locals: Int, body: String) {
         val original = bridge.methods.filter { it.name == name }.uniqueHook("picker $name bridge")
         val method = ImmutableMethod(original.definingClass, original.name, original.parameters, original.returnType,

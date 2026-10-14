@@ -75,7 +75,7 @@ internal val thirdPartyEmotePickerPatch = bytecodePatch {
         val delegate = mutableClassDefBy(h.delegate.definingClass).methods.single { it.reference == h.delegate.reference }
         val bound = emotePickerBindBridge(h.delegate)
         delegate.code().withIndex().filter { it.value.opcode == Opcode.RETURN_VOID }.map { it.index }.asReversed().forEach {
-            delegate.insertAtReturn(it, "invoke-static/range {p0 .. p0}, $bound")
+            delegate.addInstructionsAtControlFlowLabel(it, "invoke-static/range {p0 .. p0}, $bound")
         }
         val url = mutableClassDefBy(h.url.definingClass).methods.single { it.reference == h.url.reference }
         require((url.implementation?.registerCount ?: 0) > 4) { "Emotes: picker URL scratch register unavailable." }

@@ -13,7 +13,7 @@ import io.github.bakwudo.uyu.patches.twitch.shared.*
 
 internal const val CHANNEL_ID = "Ltv/twitch/android/models/Tuid;"
 internal const val PICKER_RUNTIME = "Lapp/morphe/extension/twitch/emotes/EmotePickerRuntime;"
-internal const val PICKER_BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmotePickerBridge;"
+internal const val NATIVE_PICKER_BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmotePickerBridge;"
 internal const val PICKER_LIST = "Ljava/util/List;"
 internal const val PICKER_STRING = "Ljava/lang/String;"
 
