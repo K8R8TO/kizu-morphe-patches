@@ -84,8 +84,6 @@ public final class Settings {
     // Chat.
     public static final BooleanSetting CHAT_DELETED_MESSAGES =
             new BooleanSetting("chat_deleted_messages", true);
-    public static final StringSetting CHAT_DELETED_MESSAGES_STYLE =
-            new StringSetting("chat_deleted_messages_style", "mod");
     public static final BooleanSetting CHAT_TIMESTAMPS =
             new BooleanSetting("chat_timestamps", true);
     public static final BooleanSetting CHAT_MENTION_HIGHLIGHT =
