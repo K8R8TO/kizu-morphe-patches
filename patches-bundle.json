@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-14T00:00:00",
-  "description": "### Kizu 2.0.1-beta.5\n\n**Emotes**\n\n- Add 7TV, BTTV and FFZ emotes to Twitch's native emote picker. Remove the separate Kizu picker button and popup.",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.5/patches-2.0.1-beta.5.mpp",
+  "description": "### Kizu 2.0.1-beta.6\n\n**Emotes**\n\n- Add 7TV, BTTV and FFZ emotes to Twitch's native emote picker. Remove the separate Kizu picker button and popup.",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.6/patches-2.0.1-beta.6.mpp",
   "signature_download_url": "",
-  "version": "2.0.1-beta.5"
+  "version": "2.0.1-beta.6"
 }

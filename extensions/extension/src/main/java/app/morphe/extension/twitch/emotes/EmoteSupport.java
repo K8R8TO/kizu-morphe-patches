@@ -69,6 +69,7 @@ public final class EmoteSupport {
             };
 
     private static volatile String lastRoomId;
+    private static volatile String lastRoomName;
 
     private EmoteSupport() {
     }
@@ -100,11 +101,36 @@ public final class EmoteSupport {
             String normalized = normalizeChannelId(channelId);
             if (normalized != null) {
                 lastRoomId = normalized;
+                lastRoomName = channelName;
             }
         } catch (Throwable ignored) {
         }
     }
 
+    static EmoteCatalog pickerCatalog() { return CATALOG; }
+
+    static boolean pickerEnabled() {
+        return Settings.EMOTES_THIRD_PARTY.get() && Settings.EMOTES_PICKER.get();
+    }
+
+    static boolean providerEnabled(int provider) {
+        if (!Settings.EMOTES_THIRD_PARTY.get()) return false;
+        if (provider == 0) return Settings.EMOTES_BTTV.get();
+        if (provider == 1) return Settings.EMOTES_7TV.get();
+        if (provider == 2) return Settings.EMOTES_FFZ.get();
+        return false;
+    }
+
+    static void ensurePickerCatalog(String channelId) {
+        try {
+            android.content.Context context = Utils.getContext();
+            if (context != null && pickerEnabled()) CATALOG.ensureLoaded(context, channelId);
+        } catch (Throwable ignored) { }
+    }
+
+    static String currentChannelName(String channelId) {
+        return channelId != null && channelId.equals(lastRoomId) ? lastRoomName : null;
+    }
     // Patched in right after Twitch's own setText in the chat-row binder (udc.D). That binder runs
     // inside RecyclerView.onBindViewHolder and has no try/catch, so anything thrown here unwinds
     // through the adapter and takes out the whole chat list and message input. This hook must never
@@ -414,6 +440,7 @@ public final class EmoteSupport {
 
     private static void refreshCatalog(String channelId) {
         try {
+            EmotePickerRuntime.refresh(channelId);
             List<Map.Entry<TextView, BoundMessage>> snapshot = boundMessages();
             for (Map.Entry<TextView, BoundMessage> entry : snapshot) {
                 TextView textView = entry.getKey();

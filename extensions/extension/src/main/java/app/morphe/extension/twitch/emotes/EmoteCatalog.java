@@ -71,6 +71,17 @@ final class EmoteCatalog {
                 () -> loadChannelFfz(applicationContext, channelId, channel));
     }
 
+    Map<String, Emote> providerSnapshot(String channelId, int provider) {
+        ProviderState state;
+        if (channelId == null) {
+            state = provider == 0 ? globalBetterTtv : provider == 1 ? globalSevenTv : provider == 2 ? globalFfz : null;
+        } else {
+            ChannelState channel = getChannel(channelId, false);
+            if (channel == null) return Collections.emptyMap();
+            state = provider == 0 ? channel.betterTtv : provider == 1 ? channel.sevenTv : provider == 2 ? channel.ffz : null;
+        }
+        return state == null ? Collections.emptyMap() : state.emotes;
+    }
     Emote find(String channelId, String name) {
         if (channelId != null) {
             ChannelState channel = getChannel(channelId, false);
