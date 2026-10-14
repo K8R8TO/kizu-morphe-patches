@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "2.0.0",
+  "version": "2.0.1-beta.1",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Kizu 2.0.0 adds Player Controls toggles to hide Create Clip, Cast, and Live Share controls, landscape brightness and volume gestures, and improved touch handling for video quality-menu scrolling.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 2.0.1-beta.1 fixes a VOD crash caused by invalid register typing in the player overlay hook.",
       "default": true,
       "category": null,
       "dependencies": [

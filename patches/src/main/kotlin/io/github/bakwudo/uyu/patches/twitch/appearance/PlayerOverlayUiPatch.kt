@@ -63,12 +63,12 @@ internal val playerOverlayUiPatch = bytecodePatch {
             if (matches.size != 1) {
                 throw PatchException("Expected exactly one verified Lout.j Create Clip assignment.")
             }
-            val index = matches.single().index
+            val match = matches.single()
+            val viewRegister = (match.instruction as TwoRegisterInstruction).registerA
             addInstructions(
-                index + 1,
-                "move-object/from16 v0, p0\n" +
-                    "iget-object v0, v0, Lout;->j:Landroidx/compose/ui/platform/ComposeView;\n" +
-                    "invoke-static {v0}, $SUPPORT_CLASS->bind(Landroid/view/View;)V",
+                match.index + 1,
+                "invoke-static/range { v$viewRegister .. v$viewRegister }, " +
+                    "$SUPPORT_CLASS->bind(Landroid/view/View;)V",
             )
         }
 
