@@ -2,6 +2,7 @@ package app.morphe.extension.twitch.chat;
 
 import android.os.SystemClock;
 import android.util.Log;
+import android.widget.TextView;
 import android.text.Spanned;
 import android.text.SpannedString;
 import android.text.style.ClickableSpan;
@@ -244,7 +245,7 @@ public final class DeletedMessagesSupport {
         try {
             int lineStart = 0;
             for (int i = spanStart - 1; i >= 0; i--) {
-                if (message.charAt(i) == '
+                if (message.charAt(i) == '\
 ') {
                     lineStart = i + 1;
                     break;
