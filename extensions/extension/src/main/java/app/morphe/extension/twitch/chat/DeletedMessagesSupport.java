@@ -128,9 +128,9 @@ public final class DeletedMessagesSupport {
 
     private static String readMessageId(Object model) {
         if (model == null) return null;
+        Field field = null;
         try {
             Class<?> type = model.getClass();
-            Field field;
             synchronized (MESSAGE_ID_FIELDS) {
                 field = MESSAGE_ID_FIELDS.get(type);
                 if (field == null && !MISSING_MESSAGE_ID_FIELDS.containsKey(type)) {
@@ -147,9 +147,39 @@ public final class DeletedMessagesSupport {
                     if (field == null) MISSING_MESSAGE_ID_FIELDS.put(type, Boolean.TRUE);
                 }
             }
-            if (field == null) return null;
-            Object value = field.get(model);
-            return value == null ? null : String.valueOf(value);
+        } catch (Throwable ignored) {
+        }
+
+        if (field != null) {
+            try {
+                Object value = field.get(model);
+                if (value != null) {
+                    String id = String.valueOf(value);
+                    if (!id.isEmpty()) return id;
+                }
+            } catch (Throwable ignored) {
+                // R8 may rename the backing field or deny reflective access; the data-class
+                // toString still includes the stable messageId label used by our fingerprint.
+            }
+        }
+        return readMessageIdFromDataClassString(model);
+    }
+
+    private static String readMessageIdFromDataClassString(Object model) {
+        try {
+            String value = String.valueOf(model);
+            int marker = value.indexOf("MessageRecyclerItem(messageId=");
+            int start = marker >= 0
+                    ? marker + "MessageRecyclerItem(messageId=".length()
+                    : value.indexOf("messageId=");
+            if (start < 0) return null;
+
+            int end = value.indexOf(", sourceChannelId=", start);
+            if (end < 0) end = value.indexOf(',', start);
+            if (end < 0) return null;
+
+            String id = value.substring(start, end).trim();
+            return id.isEmpty() || "null".equals(id) ? null : id;
         } catch (Throwable ignored) {
             return null;
         }
