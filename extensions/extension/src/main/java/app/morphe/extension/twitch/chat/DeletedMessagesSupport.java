@@ -3,14 +3,17 @@ package app.morphe.extension.twitch.chat;
 import android.os.SystemClock;
 import android.util.Log;
 import android.text.Spanned;
+import android.text.SpannableStringBuilder;
 import android.text.SpannedString;
 import android.text.style.ClickableSpan;
+import android.widget.TextView;
 
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.lang.reflect.Field;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DeletedMessagesSupport {
     private static final String DIAGNOSTIC_TAG = "KizuDeletedStyle";
@@ -28,13 +31,7 @@ public final class DeletedMessagesSupport {
                     return size() > ORIGINAL_CACHE_LIMIT;
                 }
             };
-    private static final Map<String, CachedOriginal> ORIGINAL_MESSAGES =
-            new LinkedHashMap<String, CachedOriginal>(512, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<String, CachedOriginal> eldest) {
-                    return size() > ORIGINAL_CACHE_LIMIT;
-                }
-            };
+    
     private static final Map<Class<?>, Field> MESSAGE_ID_FIELDS = new java.util.WeakHashMap<>();
     private static final Map<Class<?>, Boolean> MISSING_MESSAGE_ID_FIELDS = new java.util.WeakHashMap<>();
 
@@ -244,8 +241,7 @@ public final class DeletedMessagesSupport {
         try {
             int lineStart = 0;
             for (int i = spanStart - 1; i >= 0; i--) {
-                if (message.charAt(i) == '
-') {
+                if (message.charAt(i) == 10) {
                     lineStart = i + 1;
                     break;
                 }
