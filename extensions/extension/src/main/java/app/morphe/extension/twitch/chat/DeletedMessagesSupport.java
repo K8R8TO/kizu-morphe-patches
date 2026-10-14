@@ -4,8 +4,10 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 import android.widget.Toast;
+import android.widget.TextView;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
@@ -17,14 +19,140 @@ import io.github.bakwudo.uyu.extension.Utils;
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
 import java.util.Locale;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class DeletedMessagesSupport {
     private static final String DIAGNOSTIC_TAG = "KizuDeletedStyle";
     private static final AtomicBoolean ENTRY_TOAST_SHOWN = new AtomicBoolean(false);
     private static final AtomicBoolean OUTCOME_TOAST_SHOWN = new AtomicBoolean(false);
+    // Leave headroom for roughly 10,000 messages arriving in a ten-minute rapid-chat window.
+    private static final int ORIGINAL_CACHE_LIMIT = 12_000;
+    private static final long ORIGINAL_CACHE_TTL_MS = 15L * 60L * 1000L;
+    private static final Object ORIGINAL_CACHE_LOCK = new Object();
+    private static long lastOriginalCachePruneAt;
+    private static final Map<String, CachedOriginal> ORIGINAL_MESSAGES =
+            new LinkedHashMap<String, CachedOriginal>(512, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<String, CachedOriginal> eldest) {
+                    return size() > ORIGINAL_CACHE_LIMIT;
+                }
+            };
+    private static final Map<Class<?>, Field> MESSAGE_ID_FIELDS = new java.util.WeakHashMap<>();
+    private static final Map<Class<?>, Boolean> MISSING_MESSAGE_ID_FIELDS = new java.util.WeakHashMap<>();
+
+    private static final class CachedOriginal {
+        final SpannedString text;
+        final long capturedAt;
+
+        CachedOriginal(SpannedString text, long capturedAt) {
+            this.text = text;
+            this.capturedAt = capturedAt;
+        }
+    }
 
     private DeletedMessagesSupport() {
+    }
+
+    /**
+     * Called from the existing chat-row bind hook after Twitch sets the row text. Keep a bounded
+     * copy of recent message rows so a later rapid-chat deletion can still show the original even
+     * when Twitch replaces the deleted span's original-message field with its placeholder.
+     * This method is deliberately failure-contained because it runs on Twitch's RecyclerView path.
+     */
+    public static void onRowBound(Object messageModel, TextView textView) {
+        if (textView == null) return;
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get()) return;
+            String messageId = readMessageId(messageModel);
+            if (messageId == null || messageId.isEmpty()) return;
+
+            CharSequence current = textView.getText();
+            if (current == null || current.length() == 0) return;
+
+            if (containsDeletedPlaceholder(current)) {
+                SpannedString cached = findCachedOriginal(messageId, SystemClock.uptimeMillis());
+                if (cached == null || cached.length() == 0) return;
+
+                Spanned styled = styleDeletedMessageFromRow(cached);
+                CharSequence restored = styled == null ? cached : styled;
+                textView.setText(restored, TextView.BufferType.SPANNABLE);
+                Log.i(DIAGNOSTIC_TAG, "restored deleted row from recent message cache");
+                return;
+            }
+
+            SpannedString snapshot = new SpannedString(current);
+            long now = SystemClock.uptimeMillis();
+            synchronized (ORIGINAL_CACHE_LOCK) {
+                ORIGINAL_MESSAGES.put(messageId, new CachedOriginal(snapshot, now));
+                // Expired entries can otherwise occupy the LRU until enough new messages arrive.
+                if (ORIGINAL_MESSAGES.size() > 256
+                        && now - lastOriginalCachePruneAt >= 60_000L) {
+                    lastOriginalCachePruneAt = now;
+                    java.util.Iterator<Map.Entry<String, CachedOriginal>> iterator =
+                            ORIGINAL_MESSAGES.entrySet().iterator();
+                    while (iterator.hasNext()) {
+                        if (now - iterator.next().getValue().capturedAt > ORIGINAL_CACHE_TTL_MS) {
+                            iterator.remove();
+                        }
+                    }
+                }
+            }
+        } catch (Throwable failure) {
+            Log.w(DIAGNOSTIC_TAG, "could not cache or restore a chat row", failure);
+        }
+    }
+
+    private static SpannedString findCachedOriginal(String messageId, long now) {
+        synchronized (ORIGINAL_CACHE_LOCK) {
+            CachedOriginal cached = ORIGINAL_MESSAGES.get(messageId);
+            if (cached == null) return null;
+            if (now - cached.capturedAt > ORIGINAL_CACHE_TTL_MS) {
+                ORIGINAL_MESSAGES.remove(messageId);
+                return null;
+            }
+            return cached.text;
+        }
+    }
+
+    private static boolean containsDeletedPlaceholder(CharSequence text) {
+        final String marker = "<message deleted>";
+        String value = text.toString();
+        for (int start = 0; start + marker.length() <= value.length(); start++) {
+            if (value.regionMatches(true, start, marker, 0, marker.length())) return true;
+        }
+        return false;
+    }
+
+    private static String readMessageId(Object model) {
+        if (model == null) return null;
+        try {
+            Class<?> type = model.getClass();
+            Field field;
+            synchronized (MESSAGE_ID_FIELDS) {
+                field = MESSAGE_ID_FIELDS.get(type);
+                if (field == null && !MISSING_MESSAGE_ID_FIELDS.containsKey(type)) {
+                    for (Class<?> current = type; current != null && current != Object.class;
+                         current = current.getSuperclass()) {
+                        try {
+                            field = current.getDeclaredField("messageId");
+                            field.setAccessible(true);
+                            MESSAGE_ID_FIELDS.put(type, field);
+                            break;
+                        } catch (NoSuchFieldException ignored) {
+                        }
+                    }
+                    if (field == null) MISSING_MESSAGE_ID_FIELDS.put(type, Boolean.TRUE);
+                }
+            }
+            if (field == null) return null;
+            Object value = field.get(model);
+            return value == null ? null : String.valueOf(value);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     /**
@@ -544,3 +672,4 @@ public final class DeletedMessagesSupport {
         return SpannedString.valueOf(builder);
     }
 }
+

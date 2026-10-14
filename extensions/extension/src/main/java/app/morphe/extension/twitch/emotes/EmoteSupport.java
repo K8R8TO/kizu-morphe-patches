@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import app.morphe.extension.twitch.chat.MentionSupport;
+import app.morphe.extension.twitch.chat.DeletedMessagesSupport;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -169,6 +170,7 @@ public final class EmoteSupport {
     }
 
     private static void bindInternal(Object messageModel, TextView textView, String sourceChannelId) {
+        DeletedMessagesSupport.onRowBound(messageModel, textView);
         CharSequence current = textView.getText();
         synchronized (LOCK) {
             BOUND_MESSAGES.remove(textView);
@@ -534,3 +536,4 @@ public final class EmoteSupport {
         }
     }
 }
+

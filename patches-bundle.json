@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-11T00:00:00",
-  "description": "### Kizu 2.0.1-beta.1\n\n**Fixes**\n\n- Fixed an immediate Twitch VOD crash caused by the player overlay patch passing a ComposeView where Twitch expected an ImageView.",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.1/patches-2.0.1-beta.1.mpp",
+  "description": "### Kizu 2.0.1-beta.2\n\n**Fixes**\n\n- Improved deleted-message recovery in rapid chat by caching recent rendered messages and restoring them when Twitch supplies only the deletion placeholder.",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.2/patches-2.0.1-beta.2.mpp",
   "signature_download_url": "",
-  "version": "2.0.1-beta.1"
+  "version": "2.0.1-beta.2"
 }
