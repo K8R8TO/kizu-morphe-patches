@@ -2,7 +2,6 @@ package app.morphe.extension.twitch.chat;
 
 import android.os.SystemClock;
 import android.util.Log;
-import android.widget.TextView;
 import android.text.SpannedString;
 import android.text.style.ClickableSpan;
 
@@ -10,7 +9,6 @@ import io.github.bakwudo.uyu.extension.settings.Settings;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.lang.reflect.Field;
 
 public final class DeletedMessagesSupport {
     private static final Map<String, CachedOriginal> ORIGINAL_MESSAGES =
@@ -52,14 +50,7 @@ public final class DeletedMessagesSupport {
             CharSequence current = textView.getText();
             if (current == null || current.length() == 0) return;
 
-            if (containsDeletedPlaceholder(current)) {
-                SpannedString cached = findCachedOriginal(messageId, SystemClock.uptimeMillis());
-                if (cached == null || cached.length() == 0) return;
-
-                textView.setText(cached, TextView.BufferType.SPANNABLE);
-                Log.i(DIAGNOSTIC_TAG, "restored deleted row from recent message cache");
-                return;
-            }
+            if (containsDeletedPlaceholder(current)) return;
 
             SpannedString snapshot = new SpannedString(current);
             long now = SystemClock.uptimeMillis();
@@ -236,7 +227,8 @@ public final class DeletedMessagesSupport {
         try {
             int lineStart = 0;
             for (int i = spanStart - 1; i >= 0; i--) {
-                if (message.charAt(i) == '\n') {
+                if (message.charAt(i) == '
+') {
                     lineStart = i + 1;
                     break;
                 }
