@@ -64,7 +64,7 @@ internal val playerOverlayUiPatch = bytecodePatch {
                 throw PatchException("Expected exactly one verified Lout.j Create Clip assignment.")
             }
             val match = matches.single()
-            val viewRegister = (match.instruction as TwoRegisterInstruction).registerA
+            val viewRegister = (match.value as TwoRegisterInstruction).registerA
             addInstructions(
                 match.index + 1,
                 "invoke-static/range { v$viewRegister .. v$viewRegister }, " +
