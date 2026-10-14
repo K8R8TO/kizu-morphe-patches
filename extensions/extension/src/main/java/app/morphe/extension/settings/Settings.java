@@ -27,6 +27,10 @@ public final class Settings {
     public static final BooleanSetting HIDE_SUBSCRIPTION_PROMOTIONS =
             new BooleanSetting("hide_subscription_promotions", false);
 
+    /** Hide Twitch channel extensions, their entry points, and their panel/overlay surfaces. */
+    public static final BooleanSetting HIDE_STREAM_EXTENSIONS =
+            new BooleanSetting("hide_stream_extensions", true);
+
     /** Hide Twitch's Go Ad-Free/Turbo control in the Following feed. */
     public static final BooleanSetting HIDE_TURBO_UPSELL =
             new BooleanSetting("hide_turbo_upsell", true);

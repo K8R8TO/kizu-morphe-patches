@@ -22,6 +22,10 @@ public final class Settings {
     public static final BooleanSetting HIDE_SUBSCRIPTION_PROMOTIONS =
             new BooleanSetting("hide_subscription_promotions", false);
 
+    /** Hide Twitch channel extensions, their entry points, and their panel/overlay surfaces. */
+    public static final BooleanSetting HIDE_STREAM_EXTENSIONS =
+            new BooleanSetting("hide_stream_extensions", true);
+
     public static final BooleanSetting DANMAKU_ENABLED =
             new BooleanSetting("danmaku_enabled", false);
     public static final BooleanSetting DANMAKU_PORTRAIT =

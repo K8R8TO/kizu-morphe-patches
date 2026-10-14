@@ -133,6 +133,8 @@ public class UyuSettingsFragment extends PreferenceFragment {
     }
 
     private void addAppearanceSettings(PreferenceScreen screen) {
+        addSwitch(screen, Settings.HIDE_STREAM_EXTENSIONS, "Hide Stream Extensions",
+                "Hide channel extension icons, panels and video overlays.");
         addSwitch(screen, Settings.HIDE_SUBSCRIBE_BUTTONS, "Hide the subscribe and Bits buttons",
                 "Hides the row above chat with the Bits, gift a sub and subscribe buttons.");
         addSwitch(screen, Settings.HIDE_CHAT_BITS_BUTTON, "Hide the Bits button in the chat box",

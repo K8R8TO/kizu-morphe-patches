@@ -6,6 +6,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import app.morphe.patcher.patch.resourcePatch
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
@@ -21,12 +22,50 @@ import io.github.bakwudo.uyu.patches.util.instanceField
 import io.github.bakwudo.uyu.patches.util.replaceMethodBody
 import io.github.bakwudo.uyu.patches.util.thisRegister
 import io.github.bakwudo.uyu.patches.util.writesRegister
+import org.w3c.dom.Element
+import java.io.StringReader
+import javax.xml.parsers.DocumentBuilderFactory
+import org.xml.sax.InputSource
 
 private const val EXTENSION_CLASS = "$EXTENSION_PACKAGE/appearance/HidePromotionsPatch;"
 
+private val streamExtensionsResources = resourcePatch {
+    execute {
+        val public = DocumentBuilderFactory.newInstance().apply { isNamespaceAware = true }
+            .newDocumentBuilder().parse(InputSource(StringReader(get("res/values/public.xml").readText())))
+            .getElementsByTagName("public")
+        val ids = (0 until public.length).map { public.item(it) as Element }
+            .filter { it.getAttribute("type") == "id" }
+            .associate { it.getAttribute("name") to it.getAttribute("id") }
+        val fingerprints = mapOf(
+            "extension_button_container" to ("0x7f0b0890" to "res/layout/chat_header.xml"),
+            "extension_detail_container" to ("0x7f0b0891" to "res/layout/panel_extension_info_bottom_sheet.xml"),
+            "extension_icons_container" to ("0x7f0b0892" to "res/layout/extension_entry_point_icons.xml"),
+            "extension_overlay_container" to ("0x7f0b0894" to "res/layout/panel_extension_view.xml"),
+            "extension_webview_container" to ("0x7f0b0898" to "res/layout/panel_extension_view.xml"),
+            "extensions_container" to ("0x7f0b089a" to "res/layout/chat_view_delegate.xml"),
+            "leaderboards_extensions_container" to ("0x7f0b0b48" to "res/layout/chat_view_delegate.xml"),
+        )
+        fingerprints.forEach { (name, fingerprint) ->
+            val (expectedId, layoutPath) = fingerprint
+            if (ids[name] != expectedId) {
+                throw PatchException("Stream extensions resource fingerprint changed for $name.")
+            }
+            document(layoutPath).use { layout ->
+                val nodes = layout.getElementsByTagName("*")
+                val matches = (0 until nodes.length).mapNotNull { nodes.item(it) as? Element }
+                    .count { it.getAttribute("android:id") in setOf("@id/$name", "@+id/$name") }
+                if (matches != 1) {
+                    throw PatchException("Expected one $name view in $layoutPath, found $matches.")
+                }
+            }
+        }
+    }
+}
+
 internal val hidePromotionsPatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
-    dependsOn(settingsPatch, nativeTheatrePatch)
+    dependsOn(settingsPatch, nativeTheatrePatch, streamExtensionsResources)
 
     execute {
         setPatchIncluded("hidePromotions")
