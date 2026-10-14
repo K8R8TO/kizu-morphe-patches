@@ -334,6 +334,10 @@ public final class EmoteSupport {
                 continue;
             }
 
+            if (DeletedMessagesSupport.isGreyDeletedMessage(original)) {
+                DeletedMessagesSupport.applyGrayFilter(drawable);
+            }
+
             if (builder == null) {
                 builder = new SpannableStringBuilder(original);
             }

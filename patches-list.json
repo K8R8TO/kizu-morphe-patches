@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "2.0.1-beta.7",
+  "version": "2.0.1-beta.8",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 2.0.1-beta.7 restores deleted messages in rapid chats with Mod, Strikethrough, and Gray styles while keeping rich spans and native third-party emotes.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 2.0.1-beta.8 applies deleted-message styles at Twitch's message factory like PurpleTV, preserving rich text, clickable links, and inline emotes.",
       "default": true,
       "category": null,
       "dependencies": [

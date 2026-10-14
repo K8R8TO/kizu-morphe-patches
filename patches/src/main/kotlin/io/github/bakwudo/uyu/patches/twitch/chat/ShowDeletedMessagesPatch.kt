@@ -81,7 +81,7 @@ internal val showDeletedMessagesPatch = bytecodePatch {
         val caller = mutableClassDefBy(site.owner).methods.single { signature(it) == site.method }.toMutable()
         val continuation = caller.instructions.getOrNull(site.index + 2) ?: throw PatchException("Deleted-message factory has no continuation.")
         caller.addInstructionsWithLabels(site.index, """
-            invoke-static/range {v${site.source} .. v${site.source}}, $SUPPORT->restoreDeletedMessageFromRow(Landroid/text/Spanned;)Landroid/text/Spanned;
+            invoke-static/range {v${site.source} .. v${site.source}}, $SUPPORT->styleDeletedMessageFromFactory(Landroid/text/Spanned;)Landroid/text/Spanned;
             move-result-object v${site.scratch}
             if-eqz v${site.scratch}, :kizu_keep_native_deleted
             move-object/16 v${site.result}, v${site.scratch}

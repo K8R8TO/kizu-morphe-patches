@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-14T00:00:00",
-  "description": "### Kizu 2.0.1-beta.7\n\n**Chat**\n\n- Restore deleted messages from the recent-message cache in rapid chats.\n- Restore Mod, Strikethrough, and Gray styling while preserving rich message spans.\n\n**Emotes**\n\n- Keep 7TV, BTTV and FFZ emotes in Twitch's native emote picker.",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.7/patches-2.0.1-beta.7.mpp",
+  "description": "### Kizu 2.0.1-beta.8\n\n**Chat**\n\n- Match PurpleTV's deleted-message styling at Twitch's deleted-message factory: Mod uses Twitch's native moderation style, while Strikethrough and Gray style the original rich message.\n- Preserve clickable links and grayscale inline emotes in Gray mode, including third-party emotes.",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.8/patches-2.0.1-beta.8.mpp",
   "signature_download_url": "",
-  "version": "2.0.1-beta.7"
+  "version": "2.0.1-beta.8"
 }

@@ -2,11 +2,15 @@ package app.morphe.extension.twitch.chat;
 
 import android.os.SystemClock;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.text.Spanned;
 import android.text.SpannableStringBuilder;
 import android.text.SpannedString;
 import android.text.style.ClickableSpan;
+import android.text.style.DynamicDrawableSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StrikethroughSpan;
 import android.widget.TextView;
@@ -48,6 +52,11 @@ public final class DeletedMessagesSupport {
         }
     }
 
+    /** Marker retained through EmoteSupport's text rebuild so later emotes inherit Gray mode. */
+    public static final class DeletedStyleMarker {
+        private DeletedStyleMarker() { }
+    }
+
     private DeletedMessagesSupport() {
     }
 
@@ -68,6 +77,13 @@ public final class DeletedMessagesSupport {
             if (current == null || current.length() == 0) return;
 
             if (containsDeletedPlaceholder(current)) {
+                Spanned recovered = current instanceof Spanned
+                        ? restoreDeletedMessageFromRow((Spanned) current)
+                        : null;
+                if (recovered != null && recovered.length() > 0) {
+                    textView.setText(recovered, TextView.BufferType.SPANNABLE);
+                    return;
+                }
                 SpannedString cached = findCachedOriginal(messageId, SystemClock.uptimeMillis());
                 if (cached != null && cached.length() > 0) {
                     SpannableStringBuilder restored = new SpannableStringBuilder(cached);
@@ -193,6 +209,78 @@ public final class DeletedMessagesSupport {
         }
     }
 
+    /**
+     * Mirrors PurpleTV's hook at ChatMessageSpanFactoryV2's deleted-message factory call:
+     * Mod falls through to Twitch's factory with moderator access, while the other modes
+     * style the original rich message and skip the factory's deleted placeholder.
+     */
+    public static Spanned styleDeletedMessageFromFactory(Spanned message) {
+        try {
+            if (!Settings.CHAT_DELETED_MESSAGES.get() || message == null || message.length() == 0) {
+                return null;
+            }
+            if (containsDeletedPlaceholder(message)) return null;
+
+            String style = normalizeStyle();
+            if ("mod".equals(style)) return null;
+
+            SpannableStringBuilder builder = new SpannableStringBuilder(message);
+            int bodyStart = findMessageBodyStart(builder);
+            if ("strikethrough".equals(style)) {
+                if (builder.getSpans(0, builder.length(), StrikethroughSpan.class).length > 0) {
+                    return message;
+                }
+                if (bodyStart < builder.length()) {
+                    builder.setSpan(new StrikethroughSpan(), bodyStart, builder.length(),
+                            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
+            } else if ("grey".equals(style)) {
+                for (ForegroundColorSpan span : builder.getSpans(
+                        0, builder.length(), ForegroundColorSpan.class)) {
+                    builder.removeSpan(span);
+                }
+                grayInlineDrawables(builder);
+                builder.setSpan(new ForegroundColorSpan(Color.GRAY), 0, builder.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                builder.setSpan(new DeletedStyleMarker(), 0, builder.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            } else {
+                return null;
+            }
+            return SpannedString.valueOf(builder);
+        } catch (Throwable failure) {
+            Log.e(DIAGNOSTIC_TAG, "could not style original deleted message", failure);
+            return null;
+        }
+    }
+
+    public static boolean isGreyDeletedMessage(CharSequence text) {
+        if (!(text instanceof Spanned)) return false;
+        Spanned spanned = (Spanned) text;
+        return spanned.getSpans(0, spanned.length(), DeletedStyleMarker.class).length > 0;
+    }
+
+    /** Apply a per-drawable grayscale filter; unlike mutating the shared bitmap, this is row-local. */
+    public static void applyGrayFilter(Drawable drawable) {
+        if (drawable == null) return;
+        try {
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.setSaturation(0f);
+            drawable.setColorFilter(new ColorMatrixColorFilter(matrix));
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static void grayInlineDrawables(Spanned text) {
+        try {
+            for (DynamicDrawableSpan span : text.getSpans(
+                    0, text.length(), DynamicDrawableSpan.class)) {
+                applyGrayFilter(span.getDrawable());
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** Restore the original rich-text body from Twitch's deleted-message span. */
     public static Spanned restoreDeletedMessageFromRow(Spanned message) {
         if (message == null || message.length() == 0) return null;
@@ -235,17 +323,11 @@ public final class DeletedMessagesSupport {
 
     private static void applyDeletedStyle(SpannableStringBuilder text, int start, int end) {
         if (start < 0 || end <= start || end > text.length()) return;
-        String style;
-        try {
-            style = Settings.CHAT_DELETED_MESSAGES_STYLE.get();
-        } catch (Throwable ignored) {
-            style = "mod";
-        }
-        if (style == null) style = "mod";
-        style = style.trim().toLowerCase(java.util.Locale.ROOT);
-        if ("default".equals(style)) style = "mod";
+        String style = normalizeStyle();
 
         if ("strikethrough".equals(style)) {
+            start = findMessageBodyStart(text);
+            if (start >= end) return;
             for (StrikethroughSpan span : text.getSpans(start, end, StrikethroughSpan.class)) {
                 int spanStart = text.getSpanStart(span);
                 int spanEnd = text.getSpanEnd(span);
@@ -253,14 +335,32 @@ public final class DeletedMessagesSupport {
             }
             text.setSpan(new StrikethroughSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else if ("grey".equals(style)) {
-            for (ForegroundColorSpan span : text.getSpans(start, end, ForegroundColorSpan.class)) {
-                int spanStart = text.getSpanStart(span);
-                int spanEnd = text.getSpanEnd(span);
-                if (spanStart >= start && spanEnd <= end) text.removeSpan(span);
+            for (ForegroundColorSpan span : text.getSpans(0, text.length(), ForegroundColorSpan.class)) {
+                text.removeSpan(span);
             }
-            text.setSpan(new ForegroundColorSpan(Color.GRAY), start, end,
+            grayInlineDrawables(text);
+            text.setSpan(new ForegroundColorSpan(Color.GRAY), 0, text.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            if (text.getSpans(0, text.length(), DeletedStyleMarker.class).length == 0) {
+                text.setSpan(new DeletedStyleMarker(), 0, text.length(),
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
         }
+    }
+
+    private static String normalizeStyle() {
+        try {
+            String style = Settings.CHAT_DELETED_MESSAGES_STYLE.get();
+            if (style == null) return "mod";
+            style = style.trim().toLowerCase(java.util.Locale.ROOT);
+            if ("default".equals(style)) return "mod";
+            if ("gray".equals(style)) return "grey";
+            if ("strikethrough".equals(style) || "grey".equals(style) || "mod".equals(style)) {
+                return style;
+            }
+        } catch (Throwable ignored) {
+        }
+        return "mod";
     }
 
     private static boolean hasSpannedStringField(Object candidate) {
