@@ -9,6 +9,7 @@ import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.RegisterRangeInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import io.github.bakwudo.uyu.patches.util.addInstructionsAtControlFlowLabel
 import io.github.bakwudo.uyu.patches.twitch.shared.*
 import org.w3c.dom.Element
 import java.io.StringReader
