@@ -22,7 +22,7 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
     dependsOn(sharedExtensionPatch)
 
     execute {
-        // Lr6f;->h is the backing LinkedHashMap consumed by H(String) in Twitch 31.3.1.
+        // H(String) reads the native emote catalog through Lr6f.c -> Lh7a.c; the extension injects there.
         val autocompleteDef = classDefByOrNull(AUTOCOMPLETE_CLASS)
             ?: throw PatchException("Kizu autocomplete: Twitch 31.3.1 class Lr6f; was not found.")
         val autocompleteClass = mutableClassDefBy(autocompleteDef)

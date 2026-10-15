@@ -4,7 +4,7 @@
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.20 refreshes the active native autocomplete map when third-party emote catalogs update, while retaining bare-token autocomplete.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.20 injects 7TV, BTTV and FFZ entries into the native emote-model catalog, refreshes it when catalog data arrives, and retains bare-token autocomplete.",
       "default": true,
       "category": null,
       "dependencies": [

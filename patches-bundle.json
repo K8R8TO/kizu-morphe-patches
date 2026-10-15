@@ -1,6 +1,6 @@
 {
   "created_at": "2026-10-16T03:00:00",
-  "description": "### Kizu 2.0.1-beta.20\n\n- Refresh the active native autocomplete map as 7TV, BTTV and FFZ catalogs finish loading, following Canic's callback behavior.\n- Keep bare-token autocomplete and native Twitch emote suggestions intact.\n- Add runtime diagnostics for catalog availability and native map injection failures.",
+  "description": "### Kizu 2.0.1-beta.20\n\n- Inject third-party emotes into Twitch 31.3.1's actual native model catalog (Lh7a.c), rather than its separate string-alias map.\n- Refresh the active native catalog when 7TV, BTTV and FFZ data arrives.\n- Retain bare-token autocomplete and add diagnostics for catalog injection failures.",
   "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.20/patches-2.0.1-beta.20.mpp",
   "signature_download_url": "",
   "version": "2.0.1-beta.20"

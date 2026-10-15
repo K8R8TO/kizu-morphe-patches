@@ -34,12 +34,27 @@ public final class EmoteAutocomplete {
     public static void updateNativeProvider(Object provider) {
         if (provider == null) return;
         try {
-            Map map = findBackingMap(provider);
-            if (map == null) {
-                Log.w(TAG, "Autocomplete provider backing map h was not a LinkedHashMap.");
+            Object catalog = findNativeCatalog(provider);
+            if (catalog == null) {
+                Log.w(TAG, "Could not locate Twitch's native Lh7a autocomplete catalog through Lr6f.c.");
                 return;
             }
-            activeProvider = new WeakReference<>(provider);
+            updateNativeCatalog(catalog);
+        } catch (Throwable error) {
+            dirty = true;
+            Log.w(TAG, "Could not locate Twitch's native autocomplete catalog; preserving native behavior.", error);
+        }
+    }
+
+    /** Updates Lh7a.c, the LinkedHashMap<String, Lwof> actually read by Lh7a.j(CharSequence). */
+    private static void updateNativeCatalog(Object catalog) {
+        try {
+            Map map = findBackingMap(catalog);
+            if (map == null) {
+                Log.w(TAG, "Twitch's Lh7a.c emote-model map was not a LinkedHashMap.");
+                return;
+            }
+            activeProvider = new WeakReference<>(catalog);
             EmoteSupport.ensureAutocompleteCatalog(io.github.bakwudo.uyu.extension.Utils.getContext());
             String signature = settingsSignature() + "|" + String.valueOf(EmoteSupport.getCurrentChannelId());
             synchronized (LOCK) {
@@ -52,13 +67,13 @@ public final class EmoteAutocomplete {
                     dirty = true;
                 }
                 if (!dirty && signature.equals(lastSignature)) return;
-                rebuild(map, provider.getClass().getClassLoader());
+                rebuild(map, catalog.getClass().getClassLoader());
                 lastSignature = signature;
                 dirty = false;
             }
         } catch (Throwable error) {
             dirty = true;
-            Log.w(TAG, "Could not update Twitch's native autocomplete map; preserving native behavior.", error);
+            Log.w(TAG, "Could not update Twitch's native emote-model map; preserving native behavior.", error);
         }
     }
 
@@ -73,7 +88,7 @@ public final class EmoteAutocomplete {
 
         Runnable refresh = () -> {
             Object current = activeProvider.get();
-            if (current != null) updateNativeProvider(current);
+            if (current != null) updateNativeCatalog(current);
         };
         try {
             if (Looper.myLooper() == Looper.getMainLooper()) refresh.run();
@@ -127,29 +142,45 @@ public final class EmoteAutocomplete {
                 Settings.EMOTES_7TV.get() + "|" + Settings.EMOTES_FFZ.get();
     }
 
-    private static Map findBackingMap(Object provider) throws Exception {
-        // DEX-verified field: Lr6f;->h:Ljava/lang/Object;, consumed as LinkedHashMap by H(String).
+    private static Object findNativeCatalog(Object provider) throws Exception {
+        // DEX-verified: Lr6f.c is Lh7a; the autocomplete model catalog used by H(String).
+        Class<?> catalogType = Class.forName("h7a", false, provider.getClass().getClassLoader());
         for (Class<?> type = provider.getClass(); type != null; type = type.getSuperclass()) {
             try {
-                Field field = type.getDeclaredField("h");
+                Field field = type.getDeclaredField("c");
                 field.setAccessible(true);
-                Object value = field.get(provider);
+                Object candidate = field.get(provider);
+                if (catalogType.isInstance(candidate)) return candidate;
+            } catch (NoSuchFieldException ignored) {
+                // Try the next class in the hierarchy.
+            }
+        }
+        return null;
+    }
+
+    private static Map findBackingMap(Object catalog) throws Exception {
+        // DEX-verified: Lh7a.c is the LinkedHashMap<String, Lwof> read by Lh7a.j(CharSequence).
+        for (Class<?> type = catalog.getClass(); type != null; type = type.getSuperclass()) {
+            try {
+                Field field = type.getDeclaredField("c");
+                field.setAccessible(true);
+                Object value = field.get(catalog);
                 if (value instanceof LinkedHashMap) return (Map) value;
             } catch (NoSuchFieldException ignored) {
                 // Try the next class in the hierarchy.
             }
         }
-        // Defensive fallback if a future build renames the field but keeps the native-model map.
-        for (Class<?> type = provider.getClass(); type != null; type = type.getSuperclass()) {
+        // Defensive fallback: select a native LinkedHashMap whose values are Twitch emote models.
+        for (Class<?> type = catalog.getClass(); type != null; type = type.getSuperclass()) {
             for (Field field : type.getDeclaredFields()) {
                 try {
                     field.setAccessible(true);
-                    Object value = field.get(provider);
+                    Object value = field.get(catalog);
                     if (!(value instanceof LinkedHashMap)) continue;
                     Map candidate = (Map) value;
                     for (Object entryValue : candidate.values()) {
                         if (entryValue != null &&
-                                Class.forName("wof", false, provider.getClass().getClassLoader())
+                                Class.forName("wof", false, catalog.getClass().getClassLoader())
                                         .isInstance(entryValue)) return candidate;
                     }
                 } catch (Throwable ignored) { }
@@ -196,7 +227,7 @@ public final class EmoteAutocomplete {
                 URL_EMOTES.put(emote.name, emote);
                 injected++;
             }
-            Log.i(TAG, "Injected " + injected + " third-party emote names into native autocomplete map; map size=" + map.size());
+            Log.i(TAG, "Injected " + injected + " third-party emote models into Lh7a.c; map size=" + map.size());
         } catch (Throwable error) {
             restore(map);
             ORIGINALS.clear();
