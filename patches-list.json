@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "2.0.1-beta.21",
+  "version": "2.0.1-beta.22",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.21 adds third-party autocomplete items directly to Twitch's native result list and uses the Twitch class loader for native suggestion models.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. Beta.22 adds 7TV, BTTV and FFZ items directly to Twitch's native autocomplete result list, resolving native model classes with Twitch's class loader.",
       "default": true,
       "category": null,
       "dependencies": [
