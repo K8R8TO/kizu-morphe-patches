@@ -19,7 +19,11 @@ import javax.xml.parsers.DocumentBuilderFactory
 import org.xml.sax.InputSource
 
 private const val PREVIEW = "Lapp/morphe/extension/twitch/emotes/NativeEmotePreview;"
+private const val ANDROID_NAMESPACE = "http://schemas.android.com/apk/res/android"
 private var previewResourceIds = emptyList<Int>()
+
+private fun Element.androidId(): String = getAttributeNS(ANDROID_NAMESPACE, "id")
+    .ifEmpty { getAttribute("android:id") }
 
 private fun parseEmoteResourceXml(source: String) = DocumentBuilderFactory.newInstance()
     .apply { isNamespaceAware = true }
@@ -47,17 +51,14 @@ private val emotePreviewResources = resourcePatch {
         val layout = parseEmoteResourceXml(get("res/layout/emote_card_dialog.xml").readText())
         val contentNodes = layout.getElementsByTagName("*")
         val content = (0 until contentNodes.length).mapNotNull { contentNodes.item(it) as? Element }
-            .singleOrNull { it.getAttribute("android:id") == "@+id/emote_card_loaded_content" }
+            .singleOrNull { it.androidId().endsWith("/emote_card_loaded_content") }
             ?: throw PatchException("Kizu emotes: Twitch emote-card layout hierarchy changed.")
-        val children = (0 until content.childNodes.length).mapNotNull { content.childNodes.item(it) as? Element }
         for (id in listOf("emote_icon", "emote_name", "emote_desc")) {
-            if (children.none { it.getAttribute("android:id") == "@+id/$id" }) {
+            val found = (0 until contentNodes.length).mapNotNull { contentNodes.item(it) as? Element }
+                .any { it.androidId().endsWith("/$id") }
+            if (!found) {
                 throw PatchException("Kizu emotes: Twitch emote-card is missing $id.")
             }
-        }
-        if (content.tagName != "androidx.constraintlayout.widget.ConstraintLayout" ||
-            content.parentNode.nodeName != "FrameLayout") {
-            throw PatchException("Kizu emotes: Twitch emote-card header layout changed.")
         }
     }
 }

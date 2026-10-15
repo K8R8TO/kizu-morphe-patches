@@ -78,6 +78,8 @@ public final class Settings {
             new BooleanSetting("emotes_picker", true);
     public static final BooleanSetting EMOTES_AUTOCOMPLETE =
             new BooleanSetting("emotes_autocomplete", true);
+    public static final BooleanSetting EMOTES_TAP_PREVIEW =
+            new BooleanSetting("emotes_tap_preview", true);
     public static final BooleanSetting EMOTES_ZERO_WIDTH =
             new BooleanSetting("emotes_zero_width", true);
 
@@ -172,3 +174,4 @@ public final class Settings {
     private Settings() {
     }
 }
+

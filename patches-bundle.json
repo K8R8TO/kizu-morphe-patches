@@ -1,8 +1,8 @@
 {
   "created_at": "2026-10-14T00:00:00",
-  "description": "### Kizu 2.0.1-beta.12\n\n**Third-party emotes**\n\n- Add tap previews for 7TV, BTTV, and FFZ emotes using Twitch's native emote-card sheet.\n- Add emote autocomplete to Twitch's chat input, with clickable suggestions from enabled providers and the current channel's emote sets.\n- Keep autocomplete controlled by the existing Third-party autocomplete setting.",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.12/patches-2.0.1-beta.12.mpp",
+  "description": "### Kizu 2.0.1-beta.13\n\n**Third-party emotes**\n\n- Add separate Emotes settings for tap previews and autocomplete.\n- Tap previews open Twitch's native emote-card sheet for 7TV, BTTV, and FFZ chat emotes.\n- Autocomplete offers clickable suggestions from enabled providers and the current channel's emote sets.",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.13/patches-2.0.1-beta.13.mpp",
   "signature_download_url": "",
-  "version": "2.0.1-beta.12"
+  "version": "2.0.1-beta.13"
 }
 

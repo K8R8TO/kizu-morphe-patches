@@ -35,19 +35,17 @@ final class NativeEmotePreview {
         View originalImage = content.findViewById(ids[2]);
         TextView name = content.findViewById(ids[3]);
         TextView provider = content.findViewById(ids[4]);
-        if (!(content.getParent() instanceof FrameLayout) || originalImage == null || name == null || provider == null) {
+        if (content == null || originalImage == null || name == null || provider == null) {
             return;
         }
 
-        ViewGroup section = (ViewGroup) content.getParent();
-        for (int index = 0; index < section.getChildCount(); index++) {
-            View child = section.getChildAt(index);
-            child.setVisibility(child == content ? View.VISIBLE : View.GONE);
-        }
-        for (int index = 0; index < content.getChildCount(); index++) {
-            View child = content.getChildAt(index);
-            child.setVisibility(child == originalImage || child == name || child == provider ? View.VISIBLE : View.GONE);
-        }
+        ViewGroup sheet = ancestor(root, FrameLayout.class);
+        if (sheet == null) return;
+        retainPreviewPath(sheet, content, originalImage, name, provider);
+        retainPreviewPath(content, content, originalImage, name, provider);
+        originalImage.setVisibility(View.VISIBLE);
+        name.setVisibility(View.VISIBLE);
+        provider.setVisibility(View.VISIBLE);
 
         ImageView image = new ImageView(dialog.getContext());
         image.setId(originalImage.getId());
@@ -88,6 +86,38 @@ final class NativeEmotePreview {
             context = base;
         }
         return null;
+    }
+
+    private static ViewGroup ancestor(View view, Class<? extends ViewGroup> type) {
+        View current = view;
+        while (current != null) {
+            if (type.isInstance(current)) return (ViewGroup) current;
+            if (!(current.getParent() instanceof View)) return null;
+            current = (View) current.getParent();
+        }
+        return null;
+    }
+
+    private static void retainPreviewPath(ViewGroup parent, View content, View image, View name, View provider) {
+        for (int index = 0; index < parent.getChildCount(); index++) {
+            View child = parent.getChildAt(index);
+            boolean keep = child == content || child == image || child == name || child == provider ||
+                    contains(child, content) || contains(child, image) || contains(child, name) || contains(child, provider);
+            child.setVisibility(keep ? View.VISIBLE : View.GONE);
+            if (keep && child instanceof ViewGroup && child != image && child != name && child != provider) {
+                retainPreviewPath((ViewGroup) child, content, image, name, provider);
+            }
+        }
+    }
+
+    private static boolean contains(View root, View wanted) {
+        if (root == wanted) return true;
+        if (!(root instanceof ViewGroup)) return false;
+        ViewGroup group = (ViewGroup) root;
+        for (int index = 0; index < group.getChildCount(); index++) {
+            if (contains(group.getChildAt(index), wanted)) return true;
+        }
+        return false;
     }
 }
 

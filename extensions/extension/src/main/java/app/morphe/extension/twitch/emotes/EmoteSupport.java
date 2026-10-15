@@ -149,7 +149,7 @@ public final class EmoteSupport {
     static void preview(TextView textView, Emote emote) {
         try {
             if (textView == null || emote == null || !textView.isAttachedToWindow() || !textView.isShown() ||
-                    !Settings.EMOTES_THIRD_PARTY.get()) return;
+                    !Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_TAP_PREVIEW.get()) return;
             BoundMessage message;
             synchronized (LOCK) { message = BOUND_MESSAGES.get(textView); }
             if (message == null) return;
@@ -401,7 +401,7 @@ public final class EmoteSupport {
                     end,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             );
-            if (Settings.EMOTES_THIRD_PARTY.get()) {
+            if (Settings.EMOTES_THIRD_PARTY.get() && Settings.EMOTES_TAP_PREVIEW.get()) {
                 builder.setSpan(new EmoteClickSpan(emote), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
                 hasTapPreview = true;
             }

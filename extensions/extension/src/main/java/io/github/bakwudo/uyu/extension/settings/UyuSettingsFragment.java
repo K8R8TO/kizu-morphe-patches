@@ -218,8 +218,10 @@ public class UyuSettingsFragment extends PreferenceFragment {
                 "Play animated third-party emotes. Turn this off to use static frames.");
         addSwitch(screen, Settings.EMOTES_PICKER, "Third-party emotes in Twitch picker",
                 "Add 7TV, BTTV and FFZ emotes to Twitch's native emote list.");
-        addSwitch(screen, Settings.EMOTES_AUTOCOMPLETE, "Third-party autocomplete",
-                "Offer third-party emote names while typing in chat.");
+        addSwitch(screen, Settings.EMOTES_AUTOCOMPLETE, "Emote autocomplete",
+                "Offer 7TV, BTTV and FFZ emote suggestions while typing in chat.");
+        addSwitch(screen, Settings.EMOTES_TAP_PREVIEW, "Emote tap previews",
+                "Open Twitch's emote card when tapping a 7TV, BTTV or FFZ chat emote.");
         addSwitch(screen, Settings.EMOTES_ZERO_WIDTH, "Zero-width emotes",
                 "Allow third-party overlay emotes marked as zero-width.");
     }
@@ -404,3 +406,4 @@ public class UyuSettingsFragment extends PreferenceFragment {
         group.addPreference(preference);
     }
 }
+
