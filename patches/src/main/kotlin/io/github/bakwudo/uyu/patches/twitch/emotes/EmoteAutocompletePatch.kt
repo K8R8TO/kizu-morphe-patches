@@ -3,6 +3,7 @@ package io.github.bakwudo.uyu.patches.twitch.emotes
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.Opcode
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
@@ -22,7 +23,7 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
             method.name == "<init>" && method.returnType == "V" &&
                 method.parameterTypes.map { it.toString() } == listOf(INPUT_CONTEXT)
         } ?: throw PatchException("Kizu emotes: expected TwitchEmoteInputView(ThemedReactContext).")
-        val returnIndex = constructor.instructions.indexOfLast { it.opcode.name == "return-void" }
+        val returnIndex = constructor.implementation?.instructions?.indexOfLast { it.opcode == Opcode.RETURN_VOID } ?: -1
         if (returnIndex < 0) throw PatchException("Kizu emotes: emote-input constructor has no return-void.")
         constructor.addInstructions(
             returnIndex,

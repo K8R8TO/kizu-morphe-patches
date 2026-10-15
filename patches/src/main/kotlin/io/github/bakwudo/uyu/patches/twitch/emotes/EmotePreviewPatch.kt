@@ -11,6 +11,8 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
+import io.github.bakwudo.uyu.patches.twitch.shared.references
+import io.github.bakwudo.uyu.patches.twitch.shared.isInstance
 import org.w3c.dom.Element
 import java.io.StringReader
 import javax.xml.parsers.DocumentBuilderFactory

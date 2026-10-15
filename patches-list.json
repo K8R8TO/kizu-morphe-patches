@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "2.0.1-beta.10",
+  "version": "2.0.1-beta.11",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 2.0.1-beta.10 adds tap previews for third-party emotes and clickable 7TV, BTTV, and FFZ autocomplete suggestions in chat.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 2.0.1-beta.11 adds tap previews for third-party emotes and clickable 7TV, BTTV, and FFZ autocomplete suggestions in chat.",
       "default": true,
       "category": null,
       "dependencies": [
