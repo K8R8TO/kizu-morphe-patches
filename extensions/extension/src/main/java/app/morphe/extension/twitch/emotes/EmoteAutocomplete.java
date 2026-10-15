@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
@@ -89,33 +90,44 @@ public final class EmoteAutocomplete {
 
         void scheduleUpdate() {
             MAIN.removeCallbacks(updateTask);
-            MAIN.post(updateTask);
+            // Twitch reconciles its controlled React Native value and caret after the native
+            // TextWatcher/selection callbacks. Wait until that transaction and its layout pass
+            // have finished before reading the cursor or placing the popup.
+            MAIN.postDelayed(updateTask, 100L);
         }
 
         void update() {
-            if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
-                    !input.hasFocus() || !input.isShown() || !input.isAttachedToWindow()) {
-                hide();
-                return;
-            }
-            Editable text = input.getText();
-            int cursor = input.getSelectionStart();
-            if (text == null || cursor < 0 || cursor > text.length()) { hide(); return; }
-            int start = cursor;
-            int end = cursor;
-            while (start > 0 && isTokenCharacter(text.charAt(start - 1))) start--;
-            while (end < text.length() && isTokenCharacter(text.charAt(end))) end++;
-            boolean leadingColon = start > 0 && text.charAt(start - 1) == ':';
-            tokenStart = leadingColon ? start - 1 : start;
-            tokenEnd = end;
-            String prefix = text.subSequence(start, cursor).toString();
-            if (prefix.length() < 2) { hide(); return; }
+            try {
+                if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
+                        !input.isShown() || !input.isAttachedToWindow() || input.getWindowToken() == null) {
+                    hide();
+                    return;
+                }
+                Editable text = input.getText();
+                int cursor = input.getSelectionStart();
+                int selectionEnd = input.getSelectionEnd();
+                if (text == null || cursor < 0 || cursor > text.length() || cursor != selectionEnd) {
+                    hide();
+                    return;
+                }
+                int start = cursor;
+                int end = cursor;
+                while (start > 0 && isTokenCharacter(text.charAt(start - 1))) start--;
+                while (end < text.length() && isTokenCharacter(text.charAt(end))) end++;
+                boolean leadingColon = start > 0 && text.charAt(start - 1) == ':';
+                tokenStart = leadingColon ? start - 1 : start;
+                tokenEnd = end;
+                String prefix = text.subSequence(start, cursor).toString();
+                if (prefix.length() < 2) { hide(); return; }
 
-            EmoteSupport.ensureAutocompleteCatalog(input.getContext());
-            List<Emote> matches = EmoteSupport.autocomplete(
-                    EmoteSupport.getCurrentChannelId(), prefix, MAX_SUGGESTIONS);
-            if (matches.isEmpty()) { hide(); return; }
-            show(matches);
+                EmoteSupport.ensureAutocompleteCatalog(input.getContext());
+                List<Emote> matches = EmoteSupport.autocomplete(
+                        EmoteSupport.getCurrentChannelId(), prefix, MAX_SUGGESTIONS);
+                if (matches.isEmpty()) { hide(); return; }
+                show(matches);
+            } catch (Throwable ignored) {
+                hide();
+            }
         }
 
         private void show(List<Emote> matches) {
@@ -142,19 +154,26 @@ public final class EmoteAutocomplete {
                 rows.addView(row, new LinearLayout.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
             }
-            int screenWidth = input.getResources().getDisplayMetrics().widthPixels;
-            int width = Math.min(screenWidth - dp(24, density), Math.max(input.getWidth(), dp(240, density)));
+            View windowRoot = input.getRootView();
+            int availableWidth = windowRoot.getWidth();
+            if (availableWidth <= 0) availableWidth = input.getResources().getDisplayMetrics().widthPixels;
+            int inset = dp(8, density);
+            int width = Math.min(Math.max(dp(1, density), availableWidth - inset * 2),
+                    Math.max(input.getWidth(), dp(240, density)));
             popup = new PopupWindow(rows, width, ViewGroup.LayoutParams.WRAP_CONTENT, false);
             popup.setBackgroundDrawable(background);
             popup.setOutsideTouchable(false);
-            popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NOT_NEEDED);
+            popup.setInputMethodMode(PopupWindow.INPUT_METHOD_NEEDED);
+            popup.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             popup.setElevation(dp(8, density));
-            if (input.getWindowToken() != null) {
-                rows.measure(
-                        View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-                        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
-                popup.showAsDropDown(input, 0, -input.getHeight() - rows.getMeasuredHeight(), Gravity.START);
-            }
+            rows.measure(
+                    View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED));
+            int[] location = new int[2];
+            input.getLocationInWindow(location);
+            int x = Math.min(Math.max(inset, location[0]), availableWidth - width - inset);
+            int y = Math.max(inset, location[1] - rows.getMeasuredHeight() - dp(8, density));
+            popup.showAtLocation(windowRoot, Gravity.TOP | Gravity.START, x, y);
         }
 
         private void select(Emote emote) {
