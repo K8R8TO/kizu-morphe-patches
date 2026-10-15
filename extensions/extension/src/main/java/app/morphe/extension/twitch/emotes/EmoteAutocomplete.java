@@ -1,250 +1,129 @@
 package app.morphe.extension.twitch.emotes;
 
 import android.util.Log;
-import android.os.Handler;
-import android.os.Looper;
 
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Locale;
+import java.util.Set;
 
 import io.github.bakwudo.uyu.extension.settings.Settings;
 
-/** Adapts Canic's native autocomplete-map technique to Twitch 31.3.1's verified DEX models. */
+/**
+ * Adds third-party emotes to Twitch 31.3.1's native autocomplete return list.
+ * Native model classes are resolved through Twitch's class loader supplied by Lr6f.
+ */
 @SuppressWarnings({"unused", "rawtypes", "unchecked"})
 public final class EmoteAutocomplete {
     private static final String TAG = "KizuEmoteAutocomplete";
-    private static final Object MISSING = new Object();
-    private static final Object LOCK = new Object();
-    private static final Map<String, Object> ORIGINALS = new LinkedHashMap<>();
-    private static final Map<String, Emote> URL_EMOTES = new ConcurrentHashMap<>();
-
-    private static WeakReference<Map> activeMap = new WeakReference<>(null);
-    private static volatile WeakReference<Object> activeProvider = new WeakReference<>(null);
-    private static volatile boolean dirty = true;
-    private static String lastSignature = "";
+    private static final int MAX_SUGGESTIONS = 10;
+    private static final int MAX_THIRD_PARTY_SUGGESTIONS = 5;
+    private static final ThreadLocal<String> CURRENT_QUERY = new ThreadLocal<>();
 
     private EmoteAutocomplete() { }
 
-    /** Called at the start of Twitch 31.3.1's Lr6f;->H(String):List builder. */
-    public static void updateNativeProvider(Object provider) {
-        if (provider == null) return;
-        try {
-            Object catalog = findNativeCatalog(provider);
-            if (catalog == null) {
-                Log.w(TAG, "Could not locate Twitch's native Lh7a autocomplete catalog through Lr6f.c.");
-                return;
-            }
-            updateNativeCatalog(catalog);
-        } catch (Throwable error) {
-            dirty = true;
-            Log.w(TAG, "Could not locate Twitch's native autocomplete catalog; preserving native behavior.", error);
-        }
+    /** Capture the untouched composer text before Twitch rewrites its input registers. */
+    public static void captureQuery(String query) {
+        CURRENT_QUERY.set(query);
     }
 
-    /** Updates Lh7a.c, the LinkedHashMap<String, Lwof> actually read by Lh7a.j(CharSequence). */
-    private static void updateNativeCatalog(Object catalog) {
-        try {
-            Map map = findBackingMap(catalog);
-            if (map == null) {
-                Log.w(TAG, "Twitch's Lh7a.c emote-model map was not a LinkedHashMap.");
-                return;
-            }
-            activeProvider = new WeakReference<>(catalog);
-            EmoteSupport.ensureAutocompleteCatalog(io.github.bakwudo.uyu.extension.Utils.getContext());
-            String signature = settingsSignature() + "|" + String.valueOf(EmoteSupport.getCurrentChannelId());
-            synchronized (LOCK) {
-                Map previous = activeMap.get();
-                if (previous != map) {
-                    restore(previous);
-                    ORIGINALS.clear();
-                    URL_EMOTES.clear();
-                    activeMap = new WeakReference<>(map);
-                    dirty = true;
-                }
-                if (!dirty && signature.equals(lastSignature)) return;
-                rebuild(map, catalog.getClass().getClassLoader());
-                lastSignature = signature;
-                dirty = false;
-            }
-        } catch (Throwable error) {
-            dirty = true;
-            Log.w(TAG, "Could not update Twitch's native emote-model map; preserving native behavior.", error);
-        }
-    }
+    /** No separate popup/provider cache exists; each native query rebuilds its own result rows. */
+    static void refreshAll() { }
 
     /**
-     * Refresh the active native provider when catalog data changes. This mirrors Canic's
-     * catalog callback: invalidating alone can leave the active map empty until another query.
+     * Augments the exact native list returned by Lr6f.H(String). This intentionally does not
+     * depend on the internal autocomplete map; Twitch renders and selects these native suggestion
+     * models exactly as it does its own suggestions.
      */
-    static void refreshAll() {
-        dirty = true;
-        Object provider = activeProvider.get();
-        if (provider == null) return;
-
-        Runnable refresh = () -> {
-            Object current = activeProvider.get();
-            if (current != null) updateNativeCatalog(current);
-        };
+    public static List augmentNativeSuggestions(List nativeSuggestions, Object provider) {
+        String query = CURRENT_QUERY.get();
+        CURRENT_QUERY.remove();
         try {
-            if (Looper.myLooper() == Looper.getMainLooper()) refresh.run();
-            else new Handler(Looper.getMainLooper()).post(refresh);
-        } catch (Throwable error) {
-            Log.w(TAG, "Could not schedule an autocomplete catalog refresh.", error);
-        }
-    }
-
-    /** URL resolver receives Lwof.b(), the synthetic ID supplied in the native model constructor. */
-    public static String getAutocompleteUrl(String key) {
-        try {
-            if (key == null || !Settings.EMOTES_THIRD_PARTY.get() ||
-                    !Settings.EMOTES_AUTOCOMPLETE.get()) return null;
-            Emote emote = URL_EMOTES.get(key);
-            if (emote == null || !EmoteSupport.providerEnabled(emote.provider)) return null;
-            return emote.url;
-        } catch (Throwable error) {
-            Log.w(TAG, "Could not resolve a third-party autocomplete URL.", error);
-            return null;
-        }
-    }
-
-    /** Adapt Canic's bare-token opening hook to Twitch 31.3.1's Ldlf.i0(CharSequence). */
-    public static boolean shouldOpenAutocomplete(CharSequence text) {
-        if (!enabled() || text == null) return false;
-        String value = text.toString();
-        int start = Math.max(value.lastIndexOf(' '), value.lastIndexOf('\n')) + 1;
-        String token = value.substring(start);
-        return token.length() >= 2 && token.charAt(0) != '@';
-    }
-
-    /** Return the active token start, skipping Twitch's optional leading colon. */
-    public static int getBareAutocompleteStart(CharSequence text) {
-        if (!shouldOpenAutocomplete(text)) return -1;
-        String value = text.toString();
-        int start = Math.max(value.lastIndexOf(' '), value.lastIndexOf('\n')) + 1;
-        return start < value.length() && value.charAt(start) == ':' ? start + 1 : start;
-    }
-
-    private static boolean enabled() {
-        try {
-            return Settings.EMOTES_THIRD_PARTY.get() && Settings.EMOTES_AUTOCOMPLETE.get();
-        } catch (Throwable ignored) {
-            return false;
-        }
-    }
-
-    private static String settingsSignature() {
-        return enabled() + "|" + Settings.EMOTES_BTTV.get() + "|" +
-                Settings.EMOTES_7TV.get() + "|" + Settings.EMOTES_FFZ.get();
-    }
-
-    private static Object findNativeCatalog(Object provider) throws Exception {
-        // DEX-verified: Lr6f.c is Lh7a; the autocomplete model catalog used by H(String).
-        Class<?> catalogType = Class.forName("h7a", false, provider.getClass().getClassLoader());
-        for (Class<?> type = provider.getClass(); type != null; type = type.getSuperclass()) {
-            try {
-                Field field = type.getDeclaredField("c");
-                field.setAccessible(true);
-                Object candidate = field.get(provider);
-                if (catalogType.isInstance(candidate)) return candidate;
-            } catch (NoSuchFieldException ignored) {
-                // Try the next class in the hierarchy.
+            if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
+                    query == null || query.isEmpty() || query.charAt(0) == '@' || provider == null) {
+                return nativeSuggestions;
             }
-        }
-        return null;
-    }
 
-    private static Map findBackingMap(Object catalog) throws Exception {
-        // DEX-verified: Lh7a.c is the LinkedHashMap<String, Lwof> read by Lh7a.j(CharSequence).
-        for (Class<?> type = catalog.getClass(); type != null; type = type.getSuperclass()) {
-            try {
-                Field field = type.getDeclaredField("c");
-                field.setAccessible(true);
-                Object value = field.get(catalog);
-                if (value instanceof LinkedHashMap) return (Map) value;
-            } catch (NoSuchFieldException ignored) {
-                // Try the next class in the hierarchy.
-            }
-        }
-        // Defensive fallback: select a native LinkedHashMap whose values are Twitch emote models.
-        for (Class<?> type = catalog.getClass(); type != null; type = type.getSuperclass()) {
-            for (Field field : type.getDeclaredFields()) {
-                try {
-                    field.setAccessible(true);
-                    Object value = field.get(catalog);
-                    if (!(value instanceof LinkedHashMap)) continue;
-                    Map candidate = (Map) value;
-                    for (Object entryValue : candidate.values()) {
-                        if (entryValue != null &&
-                                Class.forName("wof", false, catalog.getClass().getClassLoader())
-                                        .isInstance(entryValue)) return candidate;
+            int tokenStart = Math.max(query.lastIndexOf(' '), query.lastIndexOf('\n')) + 1;
+            String prefix = query.substring(tokenStart);
+            if (prefix.startsWith(":")) prefix = prefix.substring(1);
+            if (prefix.length() < 2) return nativeSuggestions;
+
+            EmoteSupport.ensureAutocompleteCatalog(
+                    io.github.bakwudo.uyu.extension.Utils.getContext());
+            List<Emote> matches = EmoteSupport.autocomplete(
+                    EmoteSupport.getCurrentChannelId(), prefix, MAX_THIRD_PARTY_SUGGESTIONS);
+            if (matches.isEmpty()) return nativeSuggestions;
+
+            ArrayList result = new ArrayList(MAX_SUGGESTIONS);
+            Set<String> names = new HashSet<>();
+            int thirdPartyLimit = Math.min(MAX_THIRD_PARTY_SUGGESTIONS, matches.size());
+            int nativeLimit = MAX_SUGGESTIONS - thirdPartyLimit;
+            if (nativeSuggestions != null) {
+                for (Object suggestion : nativeSuggestions) {
+                    String nativeName = suggestionName(suggestion);
+                    if (nativeName == null || names.add(nativeName.toLowerCase(Locale.ROOT))) {
+                        result.add(suggestion);
                     }
-                } catch (Throwable ignored) { }
-            }
-        }
-        return null;
-    }
-
-    private static void rebuild(Map map, ClassLoader loader) {
-        restore(map);
-        ORIGINALS.clear();
-        URL_EMOTES.clear();
-        if (!enabled()) return;
-
-        try {
-            List<Emote> emotes = EmoteSupport.autocompleteAll();
-            if (emotes.isEmpty()) {
-                Log.d(TAG, "Third-party autocomplete catalog is empty; waiting for catalog refresh.");
-                return;
+                    if (result.size() >= nativeLimit) break;
+                }
             }
 
-            // Verified directly against Twitch 31.3.1 DEX: Luof(String,String,xof,zof).
+            // These descriptors and constructors were checked against Twitch 31.3.1's DEX.
+            // Use the Twitch provider's class loader, not the Morphe extension's class loader.
+            ClassLoader loader = provider.getClass().getClassLoader();
             Class<?> assetType = Class.forName("xof", false, loader);
+            Class<?> emoteType = Class.forName("wof", false, loader);
             Class<?> modelType = Class.forName("uof", false, loader);
+            Class<?> suggestionType = Class.forName("wu1", false, loader);
             Class<?> emoteKind = Class.forName("zof", false, loader);
             Constructor<?> modelConstructor = modelType.getConstructor(
                     String.class, String.class, assetType, emoteKind);
+            Constructor<?> suggestionConstructor = suggestionType.getConstructor(
+                    emoteType, String.class);
             Object otherKind = emoteKind.getMethod("valueOf", String.class).invoke(null, "OTHER");
             Object staticAsset = assetType.getMethod("valueOf", String.class).invoke(null, "STATIC");
             Object animatedAsset = assetType.getMethod("valueOf", String.class).invoke(null, "ANIMATED");
 
-            int injected = 0;
-            for (Emote emote : emotes) {
-                if (emote == null || emote.name == null || emote.name.isEmpty() ||
-                        emote.url == null || emote.url.isEmpty() ||
-                        !EmoteSupport.providerEnabled(emote.provider)) continue;
-
-                String id = "KIZU-" + emote.provider + "-" + emote.name;
-                ORIGINALS.put(emote.name, map.containsKey(emote.name) ? map.get(emote.name) : MISSING);
+            int added = 0;
+            for (Emote emote : matches) {
+                if (emote == null || emote.name == null || emote.url == null ||
+                        !names.add(emote.name.toLowerCase(Locale.ROOT)) ||
+                        !EmoteSupport.providerEnabled(emote.provider)) {
+                    continue;
+                }
+                Object asset = emote.animated ? animatedAsset : staticAsset;
                 Object model = modelConstructor.newInstance(
-                        id, emote.name, emote.animated ? animatedAsset : staticAsset, otherKind);
-                map.put(emote.name, model);
-                URL_EMOTES.put(id, emote);
-                URL_EMOTES.put(emote.name, emote);
-                injected++;
+                        "KIZU-" + emote.provider + "-" + emote.name,
+                        emote.name,
+                        asset,
+                        otherKind);
+                result.add(suggestionConstructor.newInstance(model, emote.url));
+                added++;
+                if (result.size() >= MAX_SUGGESTIONS) break;
             }
-            Log.i(TAG, "Injected " + injected + " third-party emote models into Lh7a.c; map size=" + map.size());
+
+            if (added > 0) {
+                Log.d(TAG, "Added " + added + " third-party suggestions for prefix '" + prefix + "'.");
+            }
+            return result.isEmpty() ? nativeSuggestions : result;
         } catch (Throwable error) {
-            restore(map);
-            ORIGINALS.clear();
-            URL_EMOTES.clear();
-            Log.w(TAG, "Twitch 31.3.1 native model construction failed; original map restored.", error);
+            Log.w(TAG, "Could not augment Twitch's native autocomplete results; preserving original rows.", error);
+            return nativeSuggestions;
         }
     }
 
-    private static void restore(Map map) {
-        if (map == null || ORIGINALS.isEmpty()) return;
+    private static String suggestionName(Object suggestion) {
+        if (suggestion == null) return null;
         try {
-            for (Map.Entry<String, Object> entry : ORIGINALS.entrySet()) {
-                if (entry.getValue() == MISSING) map.remove(entry.getKey());
-                else map.put(entry.getKey(), entry.getValue());
-            }
-        } catch (Throwable error) {
-            Log.w(TAG, "Could not fully restore original native autocomplete entries.", error);
+            Object value = suggestion.getClass().getMethod("a").invoke(suggestion);
+            if (!(value instanceof String)) return null;
+            String name = ((String) value).trim();
+            return name.startsWith("@") ? null : name;
+        } catch (Throwable ignored) {
+            return null;
         }
     }
 }

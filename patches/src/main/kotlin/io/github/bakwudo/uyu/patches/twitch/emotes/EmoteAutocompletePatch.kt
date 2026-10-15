@@ -5,15 +5,15 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLa
 import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.smali.ExternalLabel
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
 private const val AUTOCOMPLETE_CLASS = "Lr6f;"
 private const val RESTRICTION_CLASS = "Ldlf;"
-private const val URL_UTIL_CLASS = "Ltv/twitch/android/util/EmoteUrlUtil;"
 private const val BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmoteAutocomplete;"
 private const val STRING = "Ljava/lang/String;"
-private const val CONTEXT = "Landroid/content/Context;"
 private const val CHAR_SEQUENCE = "Ljava/lang/CharSequence;"
 private const val LIST = "Ljava/util/List;"
 
@@ -22,7 +22,6 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
     dependsOn(sharedExtensionPatch)
 
     execute {
-        // H(String) reads the native emote catalog through Lr6f.c -> Lh7a.c; the extension injects there.
         val autocompleteDef = classDefByOrNull(AUTOCOMPLETE_CLASS)
             ?: throw PatchException("Kizu autocomplete: Twitch 31.3.1 class Lr6f; was not found.")
         val autocompleteClass = mutableClassDefBy(autocompleteDef)
@@ -33,44 +32,38 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
         } ?: throw PatchException(
             "Kizu autocomplete: expected unique Lr6f;->H(Ljava/lang/String;)Ljava/util/List; builder.",
         )
-        if (builder.implementation == null) {
-            throw PatchException("Kizu autocomplete: native H(String) builder has no implementation.")
-        }
+        val implementation = builder.implementation
+            ?: throw PatchException("Kizu autocomplete: native autocomplete builder has no implementation.")
+
+        // Save the original composer text before Twitch mutates p1 for its own filtering.
         builder.addInstructions(
             0,
-            "invoke-static {p0}, $BRIDGE->updateNativeProvider(Ljava/lang/Object;)V",
+            "invoke-static {p1}, $BRIDGE->captureQuery(Ljava/lang/String;)V",
         )
 
-        // H() passes Lwof.b() (the first model string, the synthetic emote ID) to this URL resolver.
-        val urlClassDef = classDefByOrNull(URL_UTIL_CLASS)
-            ?: throw PatchException("Kizu autocomplete: Twitch EmoteUrlUtil class was not found.")
-        val urlMethod = urlClassDef.methods.singleOrNull { method ->
-            method.name == "c" &&
-                method.returnType == STRING &&
-                method.parameterTypes.map { it.toString() } == listOf(CONTEXT, STRING)
-        } ?: throw PatchException(
-            "Kizu autocomplete: expected unique EmoteUrlUtil.c(Context,String):String in Twitch 31.3.1.",
-        )
-        val mutableUrlClass = mutableClassDefBy(urlClassDef)
-        val mutableUrlMethod = mutableUrlClass.methods.single {
-            it.name == urlMethod.name &&
-                it.returnType == urlMethod.returnType &&
-                it.parameterTypes == urlMethod.parameterTypes
+        // Add third-party native suggestion objects to every native return path.
+        val returnIndices = implementation.instructions.mapIndexedNotNull { index, instruction ->
+            if (instruction.opcode == Opcode.RETURN_OBJECT) index else null
+        }.asReversed()
+        if (returnIndices.isEmpty()) {
+            throw PatchException("Kizu autocomplete: native autocomplete builder has no object return.")
         }
-        val urlImplementation = mutableUrlMethod.implementation
-            ?: throw PatchException("Kizu autocomplete: EmoteUrlUtil.c has no implementation.")
-        mutableUrlMethod.addInstructionsWithLabels(
-            0,
-            """
-                invoke-static {p1}, $BRIDGE->getAutocompleteUrl(Ljava/lang/String;)Ljava/lang/String;
-                move-result-object v0
-                if-eqz v0, :kizu_native_url
-                return-object v0
-            """.trimIndent(),
-            ExternalLabel("kizu_native_url", urlImplementation.instructions.first()),
-        )
+        for (returnIndex in returnIndices) {
+            val returnRegister =
+                (implementation.instructions.elementAt(returnIndex) as OneRegisterInstruction).registerA
+            builder.addInstructions(
+                returnIndex,
+                """
+                    move-object/from16 v0, v$returnRegister
+                    move-object/from16 v1, p0
+                    invoke-static {v0, v1}, $BRIDGE->augmentNativeSuggestions(Ljava/util/List;Ljava/lang/Object;)Ljava/util/List;
+                    move-result-object v0
+                    move-object/16 v$returnRegister, v0
+                """.trimIndent(),
+            )
+        }
 
-        // Match Canic's bare-token autocomplete hooks. Methods and B:I are verified in the target DEX.
+        // Keep the tested bare-token trigger/start hooks.
         val restrictionDef = classDefByOrNull(RESTRICTION_CLASS)
             ?: throw PatchException("Kizu autocomplete: Twitch restriction class Ldlf; was not found.")
         val restrictionClass = mutableClassDefBy(restrictionDef)
