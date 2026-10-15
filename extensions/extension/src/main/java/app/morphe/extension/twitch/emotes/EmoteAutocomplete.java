@@ -32,6 +32,24 @@ public final class EmoteAutocomplete {
     /** No separate popup/provider cache exists; each native query rebuilds its own result rows. */
     static void refreshAll() { }
 
+    /** Let Twitch open its native autocomplete popup for bare emote-name tokens. */
+    public static boolean shouldOpenAutocomplete(CharSequence text) {
+        if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
+                text == null) return false;
+        String value = text.toString();
+        int start = Math.max(value.lastIndexOf(' '), value.lastIndexOf('\n')) + 1;
+        String token = value.substring(start);
+        return token.length() >= 2 && token.charAt(0) != '@';
+    }
+
+    /** Return the start offset for the active token, skipping an optional leading colon. */
+    public static int getBareAutocompleteStart(CharSequence text) {
+        if (!shouldOpenAutocomplete(text)) return -1;
+        String value = text.toString();
+        int start = Math.max(value.lastIndexOf(' '), value.lastIndexOf('\n')) + 1;
+        return start < value.length() && value.charAt(start) == ':' ? start + 1 : start;
+    }
+
     /**
      * Augments the exact native list returned by Lr6f.H(String). This intentionally does not
      * depend on the internal autocomplete map; Twitch renders and selects these native suggestion
