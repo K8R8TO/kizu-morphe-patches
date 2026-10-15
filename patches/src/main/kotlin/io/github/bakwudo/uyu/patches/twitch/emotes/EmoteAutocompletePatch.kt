@@ -29,6 +29,14 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
             returnIndex,
             "invoke-static/range { p0 .. p0 }, $BRIDGE->install(Ljava/lang/Object;)V",
         )
+
+        val selectionChanged = inputClass.methods.singleOrNull { method ->
+            method.name == "onSelectionChanged" && method.returnType == "V" &&
+                method.parameterTypes.map { it.toString() } == listOf("I", "I")
+        } ?: throw PatchException("Kizu emotes: expected TwitchEmoteInputView.onSelectionChanged(int,int).")
+        selectionChanged.addInstructions(
+            0,
+            "invoke-static/range { p0 .. p0 }, $BRIDGE->selectionChanged(Ljava/lang/Object;)V",
+        )
     }
 }
-

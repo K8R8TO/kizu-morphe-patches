@@ -44,7 +44,7 @@ public final class EmoteAutocomplete {
             View.OnFocusChangeListener previous = input.getOnFocusChangeListener();
             input.setOnFocusChangeListener((view, focused) -> {
                 if (previous != null) previous.onFocusChange(view, focused);
-                if (focused) controller.update(); else controller.hide();
+                if (focused) controller.scheduleUpdate(); else controller.hide();
             });
         }
         EmoteSupport.ensureAutocompleteCatalog(input.getContext());
@@ -60,8 +60,18 @@ public final class EmoteAutocomplete {
                     if (controller != null) snapshot.add(controller);
                 }
             }
-            for (Controller controller : snapshot) controller.update();
+            for (Controller controller : snapshot) controller.scheduleUpdate();
         });
+    }
+
+    public static void selectionChanged(Object target) {
+        if (!(target instanceof EditText)) return;
+        EditText input = (EditText) target;
+        synchronized (CONTROLLERS) {
+            WeakReference<Controller> reference = CONTROLLERS.get(input);
+            Controller controller = reference == null ? null : reference.get();
+            if (controller != null) controller.scheduleUpdate();
+        }
     }
 
     private static final class Controller implements TextWatcher, View.OnAttachStateChangeListener {
@@ -69,12 +79,18 @@ public final class EmoteAutocomplete {
         private PopupWindow popup;
         private int tokenStart;
         private int tokenEnd;
+        private final Runnable updateTask = this::update;
 
         Controller(EditText input) { this.input = input; }
 
         @Override public void beforeTextChanged(CharSequence text, int start, int count, int after) { }
         @Override public void onTextChanged(CharSequence text, int start, int before, int count) { }
-        @Override public void afterTextChanged(Editable text) { update(); }
+        @Override public void afterTextChanged(Editable text) { scheduleUpdate(); }
+
+        void scheduleUpdate() {
+            MAIN.removeCallbacks(updateTask);
+            MAIN.post(updateTask);
+        }
 
         void update() {
             if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
@@ -159,7 +175,7 @@ public final class EmoteAutocomplete {
             if (current != null && current.isShowing()) current.dismiss();
         }
 
-        @Override public void onViewAttachedToWindow(View view) { update(); }
+        @Override public void onViewAttachedToWindow(View view) { scheduleUpdate(); }
         @Override public void onViewDetachedFromWindow(View view) { hide(); }
 
         private static boolean isTokenCharacter(char value) {
@@ -169,4 +185,3 @@ public final class EmoteAutocomplete {
         private static int dp(int value, float density) { return Math.round(value * density); }
     }
 }
-

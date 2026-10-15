@@ -1,10 +1,10 @@
 {
   "NOTE": "Do NOT manually edit this file. This file is automatically updated when semantic release (release.yml) runs. Manually editing this file can break your releases and break third party tools that use this metadata.",
-  "version": "2.0.1-beta.13",
+  "version": "2.0.1-beta.14",
   "patches": [
     {
       "name": "Twitch Enhancement",
-      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 2.0.1-beta.13 adds separate Emotes toggles for third-party emote tap previews and autocomplete.",
+      "description": "Kizu Twitch enhancements for Twitch 31.3.1. 2.0.1-beta.14 fixes emote autocomplete and adds uyu's Danmaku chat with configurable settings.",
       "default": true,
       "category": null,
       "dependencies": [
@@ -34,4 +34,3 @@
     }
   ]
 }
-
