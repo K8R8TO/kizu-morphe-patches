@@ -146,6 +146,36 @@ public final class EmoteSupport {
         }
     }
 
+    /**
+     * Returns all enabled third-party emotes for Twitch's native autocomplete backing map.
+     */
+    static List<Emote> autocompleteAll() {
+        try {
+            if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get()) {
+                return Collections.emptyList();
+            }
+            String channelId = lastRoomId;
+            android.content.Context context = Utils.getContext();
+            if (context != null) CATALOG.ensureLoaded(context, channelId);
+
+            LinkedHashMap<String, Emote> merged = new LinkedHashMap<>();
+            for (int provider = 0; provider < 3; provider++) {
+                if (!providerEnabled(provider)) continue;
+                String[] scopes = channelId == null
+                        ? new String[] {null}
+                        : new String[] {channelId, null};
+                for (String scope : scopes) {
+                    for (Emote emote : CATALOG.providerSnapshot(scope, provider).values()) {
+                        merged.putIfAbsent(emote.name, emote);
+                    }
+                }
+            }
+            return new ArrayList<>(merged.values());
+        } catch (Throwable ignored) {
+            return Collections.emptyList();
+        }
+    }
+
     static void preview(TextView textView, Emote emote) {
         try {
             if (textView == null || emote == null || !textView.isAttachedToWindow() || !textView.isShown() ||
