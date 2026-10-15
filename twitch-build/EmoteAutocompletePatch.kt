@@ -38,7 +38,7 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
         // Save the original composer text before Twitch mutates p1 for its own filtering.
         builder.addInstructions(
             0,
-            "invoke-static {p1}, $BRIDGE->captureQuery(Ljava/lang/String;)V",
+            "invoke-static {p1, p0}, $BRIDGE->captureQuery(Ljava/lang/String;Ljava/lang/Object;)V",
         )
 
         // Add third-party native suggestion objects to every native return path.
@@ -55,8 +55,7 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
                 returnIndex,
                 """
                     move-object/from16 v0, v$returnRegister
-                    move-object/from16 v1, p0
-                    invoke-static {v0, v1}, $BRIDGE->augmentNativeSuggestions(Ljava/util/List;Ljava/lang/Object;)Ljava/util/List;
+                    invoke-static {v0}, $BRIDGE->augmentNativeSuggestions(Ljava/util/List;)Ljava/util/List;
                     move-result-object v0
                     move-object/16 v$returnRegister, v0
                 """.trimIndent(),

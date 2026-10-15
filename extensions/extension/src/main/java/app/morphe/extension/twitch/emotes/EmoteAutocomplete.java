@@ -21,12 +21,14 @@ public final class EmoteAutocomplete {
     private static final int MAX_SUGGESTIONS = 10;
     private static final int MAX_THIRD_PARTY_SUGGESTIONS = 5;
     private static final ThreadLocal<String> CURRENT_QUERY = new ThreadLocal<>();
+    private static final ThreadLocal<ClassLoader> CURRENT_LOADER = new ThreadLocal<>();
 
     private EmoteAutocomplete() { }
 
     /** Capture the untouched composer text before Twitch rewrites its input registers. */
-    public static void captureQuery(String query) {
+    public static void captureQuery(String query, Object provider) {
         CURRENT_QUERY.set(query);
+        CURRENT_LOADER.set(provider == null ? null : provider.getClass().getClassLoader());
     }
 
     /** No separate popup/provider cache exists; each native query rebuilds its own result rows. */
@@ -55,12 +57,14 @@ public final class EmoteAutocomplete {
      * depend on the internal autocomplete map; Twitch renders and selects these native suggestion
      * models exactly as it does its own suggestions.
      */
-    public static List augmentNativeSuggestions(List nativeSuggestions, Object provider) {
+    public static List augmentNativeSuggestions(List nativeSuggestions) {
         String query = CURRENT_QUERY.get();
+        ClassLoader loader = CURRENT_LOADER.get();
         CURRENT_QUERY.remove();
+        CURRENT_LOADER.remove();
         try {
             if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
-                    query == null || query.isEmpty() || query.charAt(0) == '@' || provider == null) {
+                    query == null || query.isEmpty() || query.charAt(0) == '@' || loader == null) {
                 return nativeSuggestions;
             }
 
@@ -91,7 +95,6 @@ public final class EmoteAutocomplete {
 
             // These descriptors and constructors were checked against Twitch 31.3.1's DEX.
             // Use the Twitch provider's class loader, not the Morphe extension's class loader.
-            ClassLoader loader = provider.getClass().getClassLoader();
             Class<?> assetType = Class.forName("xof", false, loader);
             Class<?> emoteType = Class.forName("wof", false, loader);
             Class<?> modelType = Class.forName("uof", false, loader);
