@@ -77,7 +77,10 @@ internal val thirdPartyEmotePreviewPatch = bytecodePatch {
                 it.parameterTypes.map(CharSequence::toString) == listOf("Landroid/content/Context;", "I") &&
                 it.returnType == "V" }
             .singleOrNull() ?: throw PatchException("Kizu emotes: native Twitch bottom-sheet constructor was not unique.")
-        val declaration = classDefBy(constructor.definingClass).methods.filter { it.reference.toString() == constructor.toString() }
+        val declaration = classDefBy(constructor.definingClass).methods.filter {
+            it.name == "<init>" && it.parameterTypes.map(CharSequence::toString) ==
+                constructor.parameterTypes.map(CharSequence::toString) && it.returnType == constructor.returnType
+        }
             .singleOrNull() ?: throw PatchException("Kizu emotes: native bottom-sheet constructor declaration was not found.")
         if (!AccessFlags.PUBLIC.isSet(declaration.accessFlags) || previewResourceIds.size != 6) {
             throw PatchException("Kizu emotes: native preview bridge contract changed.")
