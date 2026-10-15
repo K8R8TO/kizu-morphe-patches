@@ -1,6 +1,8 @@
 package app.morphe.extension.twitch.emotes;
 
 import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Constructor;
@@ -22,6 +24,7 @@ public final class EmoteAutocomplete {
     private static final Map<String, Emote> URL_EMOTES = new ConcurrentHashMap<>();
 
     private static WeakReference<Map> activeMap = new WeakReference<>(null);
+    private static volatile WeakReference<Object> activeProvider = new WeakReference<>(null);
     private static volatile boolean dirty = true;
     private static String lastSignature = "";
 
@@ -36,6 +39,7 @@ public final class EmoteAutocomplete {
                 Log.w(TAG, "Autocomplete provider backing map h was not a LinkedHashMap.");
                 return;
             }
+            activeProvider = new WeakReference<>(provider);
             EmoteSupport.ensureAutocompleteCatalog(io.github.bakwudo.uyu.extension.Utils.getContext());
             String signature = settingsSignature() + "|" + String.valueOf(EmoteSupport.getCurrentChannelId());
             synchronized (LOCK) {
@@ -58,9 +62,25 @@ public final class EmoteAutocomplete {
         }
     }
 
-    /** A catalog load/channel change invalidates the map; rebuild at the next native query. */
+    /**
+     * Refresh the active native provider when catalog data changes. This mirrors Canic's
+     * catalog callback: invalidating alone can leave the active map empty until another query.
+     */
     static void refreshAll() {
         dirty = true;
+        Object provider = activeProvider.get();
+        if (provider == null) return;
+
+        Runnable refresh = () -> {
+            Object current = activeProvider.get();
+            if (current != null) updateNativeProvider(current);
+        };
+        try {
+            if (Looper.myLooper() == Looper.getMainLooper()) refresh.run();
+            else new Handler(Looper.getMainLooper()).post(refresh);
+        } catch (Throwable error) {
+            Log.w(TAG, "Could not schedule an autocomplete catalog refresh.", error);
+        }
     }
 
     /** URL resolver receives Lwof.b(), the synthetic ID supplied in the native model constructor. */
@@ -146,7 +166,10 @@ public final class EmoteAutocomplete {
 
         try {
             List<Emote> emotes = EmoteSupport.autocompleteAll();
-            if (emotes.isEmpty()) return;
+            if (emotes.isEmpty()) {
+                Log.d(TAG, "Third-party autocomplete catalog is empty; waiting for catalog refresh.");
+                return;
+            }
 
             // Verified directly against Twitch 31.3.1 DEX: Luof(String,String,xof,zof).
             Class<?> assetType = Class.forName("xof", false, loader);
@@ -158,6 +181,7 @@ public final class EmoteAutocomplete {
             Object staticAsset = assetType.getMethod("valueOf", String.class).invoke(null, "STATIC");
             Object animatedAsset = assetType.getMethod("valueOf", String.class).invoke(null, "ANIMATED");
 
+            int injected = 0;
             for (Emote emote : emotes) {
                 if (emote == null || emote.name == null || emote.name.isEmpty() ||
                         emote.url == null || emote.url.isEmpty() ||
@@ -170,7 +194,9 @@ public final class EmoteAutocomplete {
                 map.put(emote.name, model);
                 URL_EMOTES.put(id, emote);
                 URL_EMOTES.put(emote.name, emote);
+                injected++;
             }
+            Log.i(TAG, "Injected " + injected + " third-party emote names into native autocomplete map; map size=" + map.size());
         } catch (Throwable error) {
             restore(map);
             ORIGINALS.clear();
