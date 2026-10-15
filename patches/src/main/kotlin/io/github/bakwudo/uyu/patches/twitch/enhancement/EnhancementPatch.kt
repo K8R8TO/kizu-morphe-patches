@@ -12,6 +12,8 @@ import io.github.bakwudo.uyu.patches.twitch.reload.nativeReloadPatch
 import io.github.bakwudo.uyu.patches.twitch.chat.showDeletedMessagesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerPatch
+import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmoteAutocompletePatch
+import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePreviewPatch
 import io.github.bakwudo.uyu.patches.twitch.login.fixLoginPatch
 import io.github.bakwudo.uyu.patches.twitch.navigation.defaultHomeTabPatch
 import io.github.bakwudo.uyu.patches.twitch.notifications.fixNotificationsPatch
@@ -38,6 +40,8 @@ val twitchEnhancementPatch = bytecodePatch(
         showDeletedMessagesPatch,
         thirdPartyEmotesPatch,
         thirdPartyEmotePickerPatch,
+        thirdPartyEmoteAutocompletePatch,
+        thirdPartyEmotePreviewPatch,
         privacyPatch,
         playerGesturesResourcePatch,
         preventSwipeToPortraitPatch,
@@ -46,3 +50,4 @@ val twitchEnhancementPatch = bytecodePatch(
         installReloadStream()
     }
 }
+

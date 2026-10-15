@@ -1,35 +1,33 @@
 package io.github.bakwudo.uyu.patches.twitch.emotes
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 import io.github.bakwudo.uyu.patches.twitch.shared.sharedExtensionPatch
 
-private const val AUTOCOMPLETE_CLASS =
-    "Ltv/twitch/android/shared/messageinput/impl/autocomplete/EmoteAutoCompleteMapProvider$1;"
-private const val BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmotePickerBridge;"
-private const val LIST = "Ljava/util/List;"
+private const val INPUT_CLASS = "Lcom/twitchrn/emoteinput/TwitchEmoteInputView;"
+private const val INPUT_CONTEXT = "Lcom/facebook/react/uimanager/ThemedReactContext;"
+private const val BRIDGE = "Lapp/morphe/extension/twitch/emotes/EmoteAutocomplete;"
 
 internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(sharedExtensionPatch)
 
     execute {
-        val classDef = classDefByOrNull(AUTOCOMPLETE_CLASS) ?: return@execute
-
-        val mutable = mutableClassDefBy(classDef)
-        val method = mutable.methods.firstOrNull { candidate ->
-            candidate.name == "invoke" &&
-                candidate.parameterTypes.any { it.toString() == LIST }
-        } ?: return@execute
-
-        val listIndex = method.parameterTypes.indexOfFirst { it.toString() == LIST }
-        if (listIndex < 0) return@execute
-
-        val register = "p" + (listIndex + 1)
-        method.addInstructions(
-            0,
-            "invoke-static/range { " + register + " .. " + register + " }, " + BRIDGE + "->addAutocomplete(Ljava/lang/Object;)V",
+        val classDef = classDefByOrNull(INPUT_CLASS)
+            ?: throw PatchException("Kizu emotes: Twitch 31.3.1 emote-input view was not found.")
+        val inputClass = mutableClassDefBy(classDef)
+        val constructor = inputClass.methods.singleOrNull { method ->
+            method.name == "<init>" && method.returnType == "V" &&
+                method.parameterTypes.map { it.toString() } == listOf(INPUT_CONTEXT)
+        } ?: throw PatchException("Kizu emotes: expected TwitchEmoteInputView(ThemedReactContext).")
+        val returnIndex = constructor.instructions.indexOfLast { it.opcode.name == "return-void" }
+        if (returnIndex < 0) throw PatchException("Kizu emotes: emote-input constructor has no return-void.")
+        constructor.addInstructions(
+            returnIndex,
+            "invoke-static/range { p0 .. p0 }, $BRIDGE->install(Ljava/lang/Object;)V",
         )
     }
 }
+

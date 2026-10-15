@@ -60,7 +60,8 @@ Kizu's goal is simple: add useful Twitch enhancements, privacy/cleanup controls,
 - One master **3rd party emotes** toggle.
 - Animated third-party emotes.
 - Third-party **emote picker**.
-- Third-party **autocomplete**.
+- Third-party **autocomplete** in Twitch's chat input.
+- Tap previews for third-party emotes using Twitch's native emote-card sheet.
 - **Zero-width / overlay emotes**.
 - Emote caching and image loading.
 - Twitch 31.3.1-specific emote URL compatibility.
@@ -163,3 +164,4 @@ Experimental features stay out of stable releases until they are verified.
 This repository is a combined/derivative project. Upstream projects are credited above, and their respective licenses and attribution requirements continue to apply to the reused components.
 
 Kizu does not claim ownership of Twitch or any upstream project, service, or framework listed in this README.
+

@@ -4,6 +4,7 @@ import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.SpannedString;
+import android.text.method.LinkMovementMethod;
 import android.text.style.ReplacementSpan;
 import android.view.View;
 import android.widget.TextView;
@@ -40,6 +41,7 @@ public final class EmoteSupport {
     private static final WeakHashMap<TextView, BoundMessage> BOUND_MESSAGES = new WeakHashMap<>();
     private static final EmoteCatalog CATALOG = new EmoteCatalog(EmoteSupport::refreshCatalog);
     private static final EmoteImageLoader IMAGES = new EmoteImageLoader(EmoteSupport::refreshImage);
+    private static final NativeEmotePreview PREVIEW = new NativeEmotePreview();
     private static final View.OnAttachStateChangeListener VIEW_LIFECYCLE =
             new View.OnAttachStateChangeListener() {
                 @Override
@@ -102,12 +104,61 @@ public final class EmoteSupport {
             if (normalized != null) {
                 lastRoomId = normalized;
                 lastRoomName = channelName;
+                android.content.Context context = Utils.getContext();
+                if (context != null && Settings.EMOTES_THIRD_PARTY.get()) CATALOG.ensureLoaded(context, normalized);
+                EmoteAutocomplete.refreshAll();
             }
         } catch (Throwable ignored) {
         }
     }
 
     static EmoteCatalog pickerCatalog() { return CATALOG; }
+
+    static void ensureAutocompleteCatalog(android.content.Context context) {
+        try {
+            if (context != null && Settings.EMOTES_THIRD_PARTY.get() && Settings.EMOTES_AUTOCOMPLETE.get()) {
+                CATALOG.ensureLoaded(context, lastRoomId);
+            }
+        } catch (Throwable ignored) { }
+    }
+
+    static List<Emote> autocomplete(String channelId, String prefix, int limit) {
+        try {
+            if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
+                    prefix == null || prefix.length() < 2 || limit <= 0) return Collections.emptyList();
+            String query = prefix.toLowerCase(Locale.ROOT);
+            LinkedHashMap<String, Emote> matches = new LinkedHashMap<>();
+            for (int provider = 0; provider < 3 && matches.size() < limit; provider++) {
+                if (!providerEnabled(provider)) continue;
+                for (String scope : channelId == null ? new String[] {null} : new String[] {channelId, null}) {
+                    for (Emote emote : CATALOG.providerSnapshot(scope, provider).values()) {
+                        if (emote.name.toLowerCase(Locale.ROOT).startsWith(query)) {
+                            matches.putIfAbsent(emote.name, emote);
+                            if (matches.size() >= limit) break;
+                        }
+                    }
+                    if (matches.size() >= limit) break;
+                }
+            }
+            return new ArrayList<>(matches.values());
+        } catch (Throwable ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+    static void preview(TextView textView, Emote emote) {
+        try {
+            if (textView == null || emote == null || !textView.isAttachedToWindow() || !textView.isShown() ||
+                    !Settings.EMOTES_THIRD_PARTY.get()) return;
+            BoundMessage message;
+            synchronized (LOCK) { message = BOUND_MESSAGES.get(textView); }
+            if (message == null) return;
+            Emote current = CATALOG.find(message.channelId, emote.name);
+            if (current == null || !current.url.equals(emote.url)) return;
+            android.graphics.drawable.Drawable drawable = IMAGES.createDrawable(textView.getResources(), current);
+            if (drawable != null) PREVIEW.open(textView, current, drawable);
+        } catch (Throwable ignored) { }
+    }
 
     static boolean pickerEnabled() {
         return Settings.EMOTES_THIRD_PARTY.get() && Settings.EMOTES_PICKER.get();
@@ -304,6 +355,7 @@ public final class EmoteSupport {
         Map<String, Emote> missingImages = null;
         int length = original.length();
         int index = 0;
+        boolean hasTapPreview = false;
         while (index < length) {
             while (index < length && isSeparator(original.charAt(index))) {
                 index++;
@@ -349,6 +401,10 @@ public final class EmoteSupport {
                     end,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
             );
+            if (Settings.EMOTES_THIRD_PARTY.get()) {
+                builder.setSpan(new EmoteClickSpan(emote), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+                hasTapPreview = true;
+            }
 
             // Chat text normally has a whitespace separator before each token. A zero-width
             // emote must also consume that separator, otherwise it is shifted to the right
@@ -390,6 +446,9 @@ public final class EmoteSupport {
             textView.setText(message.original, TextView.BufferType.SPANNABLE);
         }
         MentionSupport.apply(textView);
+        if (hasTapPreview && textView.getMovementMethod() == null) {
+            textView.setMovementMethod(LinkMovementMethod.getInstance());
+        }
     }
 
     private static boolean hasReplacementSpan(
@@ -444,6 +503,7 @@ public final class EmoteSupport {
 
     private static void refreshCatalog(String channelId) {
         try {
+            EmoteAutocomplete.refreshAll();
             EmotePickerRuntime.refresh(channelId);
             List<Map.Entry<TextView, BoundMessage>> snapshot = boundMessages();
             for (Map.Entry<TextView, BoundMessage> entry : snapshot) {
@@ -541,4 +601,5 @@ public final class EmoteSupport {
         }
     }
 }
+
 
