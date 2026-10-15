@@ -14,12 +14,13 @@ import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotesPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePickerPatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmoteAutocompletePatch
 import io.github.bakwudo.uyu.patches.twitch.emotes.thirdPartyEmotePreviewPatch
-import io.github.bakwudo.uyu.patches.twitch.danmaku.danmakuCommentsPatch
+import io.github.bakwudo.uyu.patches.twitch.danmaku.applyDanmakuComments
 import io.github.bakwudo.uyu.patches.twitch.login.fixLoginPatch
 import io.github.bakwudo.uyu.patches.twitch.navigation.defaultHomeTabPatch
 import io.github.bakwudo.uyu.patches.twitch.notifications.fixNotificationsPatch
 import io.github.bakwudo.uyu.patches.twitch.privacy.privacyPatch
 import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
+import io.github.bakwudo.uyu.patches.twitch.theatre.nativeTheatrePatch
 import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
 
 @Suppress("unused")
@@ -30,6 +31,7 @@ val twitchEnhancementPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_TWITCH)
     dependsOn(
         settingsPatch,
+        nativeTheatrePatch,
         defaultHomeTabPatch,
         fixLoginPatch,
         fixNotificationsPatch,
@@ -43,12 +45,12 @@ val twitchEnhancementPatch = bytecodePatch(
         thirdPartyEmotePickerPatch,
         thirdPartyEmoteAutocompletePatch,
         thirdPartyEmotePreviewPatch,
-        danmakuCommentsPatch,
         privacyPatch,
         playerGesturesResourcePatch,
         preventSwipeToPortraitPatch,
     )
     execute {
+        applyDanmakuComments()
         installReloadStream()
     }
 }

@@ -5,7 +5,6 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLa
 import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.patch.BytecodePatchContext
 import app.morphe.patcher.patch.PatchException
-import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
@@ -15,14 +14,11 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 import io.github.bakwudo.uyu.patches.twitch.settings.setPatchIncluded
 import io.github.bakwudo.uyu.patches.twitch.settings.settingsPatch
-import io.github.bakwudo.uyu.patches.twitch.shared.Constants.COMPATIBILITY_TWITCH
-import io.github.bakwudo.uyu.patches.twitch.shared.EXTENSION_PACKAGE
-import io.github.bakwudo.uyu.patches.twitch.theatre.nativeTheatrePatch
 import io.github.bakwudo.uyu.patches.util.addInstructionsAtControlFlowLabel
 import io.github.bakwudo.uyu.patches.util.instanceField
 import io.github.bakwudo.uyu.patches.util.replaceMethodBody
 
-internal const val DANMAKU_EXTENSION_PACKAGE = "$EXTENSION_PACKAGE/danmaku"
+internal const val DANMAKU_EXTENSION_PACKAGE = "Lio/github/bakwudo/uyu/extension/danmaku"
 internal const val DANMAKU_EXTENSION_CLASS = "$DANMAKU_EXTENSION_PACKAGE/DanmakuPatch;"
 private const val VIEW_DELEGATES_CLASS = "$DANMAKU_EXTENSION_PACKAGE/ViewDelegates;"
 
@@ -31,26 +27,12 @@ internal const val RX_VIEW_DELEGATE = "Ltv/twitch/android/core/mvp/viewdelegate/
 private const val PLAYER_STATE_HELPER = "uyuReportPlayerState"
 
 @Suppress("unused")
-val danmakuCommentsPatch = bytecodePatch(
-    name = "Danmaku comments",
-    description = "Adds an option to scroll chat messages across the video on live streams, " +
-        "Niconico style, in landscape fullscreen and optionally in portrait, the mini player and " +
-        "picture in picture. A button in the player turns it on and off, and the rows, speed, " +
-        "number of comments, font and colors can be changed in the uyu settings. An option " +
-        "hides Twitch's chat in landscape so the stream fills the screen. Streams open in Twitch's " +
-        "native player instead of the new React Native one, which this relies on.",
-) {
-    compatibleWith(COMPATIBILITY_TWITCH)
-
-    dependsOn(settingsPatch, nativeTheatrePatch)
-
-    execute {
-        setPatchIncluded("danmakuComments")
-        hookChatMessages()
-        hookTheatre()
-        hookPlayerState()
-        hookLandscapeChat()
-    }
+internal fun BytecodePatchContext.applyDanmakuComments() {
+    setPatchIncluded("danmakuComments")
+    hookChatMessages()
+    hookTheatre()
+    hookPlayerState()
+    hookLandscapeChat()
 }
 
 /**

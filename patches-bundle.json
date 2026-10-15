@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-14T00:00:00",
-  "description": "### Kizu 2.0.1-beta.14\n\n**Third-party emotes**\n\n- Fix emote autocomplete updates when Twitch changes the input caret.\n- Keep separate Emotes settings for tap previews and autocomplete.\n\n**Danmaku chat**\n\n- Add uyu's scrolling live chat overlay with its existing Danmaku settings.\n- Requires Twitch's native live player; settings are available under Kizu after patching.",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.14/patches-2.0.1-beta.14.mpp",
+  "description": "### Kizu 2.0.1-beta.15\n\n- Fix the Danmaku extension class path so the patch can find Kizu's bundled runtime.\n- Include Danmaku hooks inside Twitch Enhancement so Morphe shows one patch.\n- Keep the beta.14 emote autocomplete fix.",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.15/patches-2.0.1-beta.15.mpp",
   "signature_download_url": "",
-  "version": "2.0.1-beta.14"
+  "version": "2.0.1-beta.15"
 }
