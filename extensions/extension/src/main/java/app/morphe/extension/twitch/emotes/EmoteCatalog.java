@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 final class EmoteCatalog {
     private static final String TAG = "KizuEmoteCatalog";
     private static final long CACHE_TTL_MS = 6L * 60L * 60L * 1000L;
-    private static final long RETRY_BACKOFF_MS = 5L * 60L * 1000L;
+    private static final long RETRY_BACKOFF_MS = 20L * 1000L;
     private static final int MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
     private static final int MAX_CHANNEL_CATALOGS = 32;
     private static final String USER_AGENT = "HoomanMorpheTwitchEmotes/1.0";
@@ -43,8 +43,8 @@ final class EmoteCatalog {
     private final ProviderState globalBetterTtv = new ProviderState();
     private final ProviderState globalFfz = new ProviderState();
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(
-            2,
-            2,
+            4,
+            4,
             0L,
             TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(64),
@@ -587,22 +587,34 @@ final class EmoteCatalog {
     }
 
     private static String request(String url, boolean allowNotFound) throws IOException {
+        long startedAt = System.currentTimeMillis();
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
-        connection.setConnectTimeout(7_000);
-        connection.setReadTimeout(10_000);
+        connection.setConnectTimeout(5_000);
+        connection.setReadTimeout(7_000);
         connection.setRequestProperty("Accept", "application/json");
         connection.setRequestProperty("User-Agent", USER_AGENT);
+        int status = -1;
         try {
-            int status = connection.getResponseCode();
+            status = connection.getResponseCode();
             if (allowNotFound && status == HttpURLConnection.HTTP_NOT_FOUND) {
+                Log.i(TAG, "HTTP provider request completed status=404 elapsedMs=" +
+                        (System.currentTimeMillis() - startedAt));
                 return "{}";
             }
             if (status < 200 || status >= 300) {
                 throw new IOException("HTTP " + status + " for " + url);
             }
             try (InputStream input = connection.getInputStream()) {
-                return new String(readLimited(input, MAX_RESPONSE_BYTES), StandardCharsets.UTF_8);
+                String body = new String(readLimited(input, MAX_RESPONSE_BYTES), StandardCharsets.UTF_8);
+                Log.i(TAG, "HTTP provider request completed status=" + status + " elapsedMs=" +
+                        (System.currentTimeMillis() - startedAt) + " bytes=" +
+                        body.getBytes(StandardCharsets.UTF_8).length);
+                return body;
             }
+        } catch (IOException error) {
+            Log.w(TAG, "HTTP provider request failed status=" + status + " elapsedMs=" +
+                    (System.currentTimeMillis() - startedAt) + " reason=" + error.getClass().getSimpleName());
+            throw error;
         } finally {
             connection.disconnect();
         }
