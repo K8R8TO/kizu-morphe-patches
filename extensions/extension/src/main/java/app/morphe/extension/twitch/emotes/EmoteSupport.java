@@ -1,5 +1,6 @@
 package app.morphe.extension.twitch.emotes;
 
+import android.util.Log;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -141,9 +142,15 @@ public final class EmoteSupport {
                 }
             }
             return new ArrayList<>(matches.values());
-        } catch (Throwable ignored) {
+        } catch (Throwable error) {
+            Log.w("KizuEmoteSupport", "Autocomplete catalog lookup failed for prefix='" +
+                    prefix + "' and channelId=" + channelId, error);
             return Collections.emptyList();
         }
+    }
+
+    static String autocompleteDiagnostics(String channelId, String prefix) {
+        return CATALOG.diagnostics(channelId, prefix);
     }
 
     /**
