@@ -45,7 +45,8 @@ internal val thirdPartyEmoteAutocompletePatch = bytecodePatch {
                 invoke-static {p1}, $BRIDGE->shouldOpenAutocomplete(Ljava/lang/CharSequence;)Z
                 move-result v0
                 if-eqz v0, :kizu_native_open
-                const/4 v0, 0x1
+                # Kizu owns eligible emote searches; suppress Twitch's competing vertical popup.
+                const/4 v0, 0x0
                 return v0
             """.trimIndent(),
             ExternalLabel("kizu_native_open", openImpl.instructions.first()),
