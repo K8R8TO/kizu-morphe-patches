@@ -63,21 +63,54 @@ public final class EmoteAutocomplete {
         CURRENT_QUERY.remove();
         CURRENT_LOADER.remove();
         try {
-            if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
-                    query == null || query.isEmpty() || query.charAt(0) == '@' || loader == null) {
+            if (query == null || query.isEmpty()) {
+                Log.w(TAG, "Autocomplete hook ran without a captured composer query; nativeCount=" +
+                        (nativeSuggestions == null ? 0 : nativeSuggestions.size()));
                 return nativeSuggestions;
             }
+            if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get()) {
+                Log.i(TAG, "Autocomplete disabled by settings: thirdParty=" +
+                        Settings.EMOTES_THIRD_PARTY.get() + ", autocomplete=" +
+                        Settings.EMOTES_AUTOCOMPLETE.get());
+                return nativeSuggestions;
+            }
+            if (query.charAt(0) == '@') return nativeSuggestions;
 
             int tokenStart = Math.max(query.lastIndexOf(' '), query.lastIndexOf('\n')) + 1;
             String prefix = query.substring(tokenStart);
             if (prefix.startsWith(":")) prefix = prefix.substring(1);
             if (prefix.length() < 2) return nativeSuggestions;
+            if (loader == null) {
+                Log.w(TAG, "No Twitch classloader captured for prefix='" + prefix +
+                        "'; preserving native suggestions.");
+                return nativeSuggestions;
+            }
 
+            String channelId = EmoteSupport.getCurrentChannelId();
+            Log.i(TAG, "Lookup begin: prefix='" + prefix + "', channelId=" +
+                    (channelId == null ? "<null>" : channelId) + ", nativeCount=" +
+                    (nativeSuggestions == null ? 0 : nativeSuggestions.size()));
+            Log.i(TAG, "Provider toggles: BTTV=" + EmoteSupport.providerEnabled(0) +
+                    ", 7TV=" + EmoteSupport.providerEnabled(1) +
+                    ", FFZ=" + EmoteSupport.providerEnabled(2));
             EmoteSupport.ensureAutocompleteCatalog(
                     io.github.bakwudo.uyu.extension.Utils.getContext());
+            Log.i(TAG, "Catalog snapshot for prefix='" + prefix + "': " +
+                    EmoteSupport.autocompleteDiagnostics(channelId, prefix));
             List<Emote> matches = EmoteSupport.autocomplete(
-                    EmoteSupport.getCurrentChannelId(), prefix, MAX_THIRD_PARTY_SUGGESTIONS);
-            if (matches.isEmpty()) return nativeSuggestions;
+                    channelId, prefix, MAX_THIRD_PARTY_SUGGESTIONS);
+            StringBuilder matchedNames = new StringBuilder();
+            for (Emote emote : matches) {
+                if (emote == null) continue;
+                if (matchedNames.length() > 0) matchedNames.append(", ");
+                matchedNames.append(emote.name).append('(').append(emote.provider).append(')');
+            }
+            Log.i(TAG, "Lookup result: prefix='" + prefix + "', matchCount=" + matches.size() +
+                    ", matches=[" + matchedNames + "]");
+            if (matches.isEmpty()) {
+                Log.i(TAG, "No third-party matches; returning native suggestions unchanged.");
+                return nativeSuggestions;
+            }
 
             ArrayList result = new ArrayList(MAX_SUGGESTIONS);
             Set<String> names = new HashSet<>();
@@ -126,9 +159,8 @@ public final class EmoteAutocomplete {
                 if (result.size() >= MAX_SUGGESTIONS) break;
             }
 
-            if (added > 0) {
-                Log.d(TAG, "Added " + added + " third-party suggestions for prefix '" + prefix + "'.");
-            }
+            Log.i(TAG, "Suggestion construction: prefix='" + prefix + "', inputMatches=" +
+                    matches.size() + ", added=" + added + ", returnedRows=" + result.size());
             return result.isEmpty() ? nativeSuggestions : result;
         } catch (Throwable error) {
             Log.w(TAG, "Could not augment Twitch's native autocomplete results; preserving original rows.", error);
