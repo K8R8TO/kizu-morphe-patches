@@ -115,6 +115,22 @@ public final class EmoteSupport {
 
     static EmoteCatalog pickerCatalog() { return CATALOG; }
 
+    static android.graphics.drawable.Drawable autocompleteDrawable(
+            android.content.res.Resources resources, Emote emote) {
+        try {
+            return IMAGES.createDrawable(resources, emote);
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    static void requestAutocompleteImage(android.content.Context context, Emote emote, int targetHeight) {
+        try {
+            if (context != null && emote != null) IMAGES.request(context, emote, targetHeight);
+        } catch (Throwable ignored) {
+        }
+    }
+
     static void ensureAutocompleteCatalog(android.content.Context context) {
         try {
             if (context != null && Settings.EMOTES_THIRD_PARTY.get() && Settings.EMOTES_AUTOCOMPLETE.get()) {
@@ -128,27 +144,34 @@ public final class EmoteSupport {
             if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
                     prefix == null || prefix.length() < 2 || limit <= 0) return Collections.emptyList();
             String query = prefix.toLowerCase(Locale.ROOT);
-            LinkedHashMap<String, Emote> matches = new LinkedHashMap<>();
-            for (int provider = 0; provider < 3 && matches.size() < limit; provider++) {
+            LinkedHashMap<String, Emote> starts = new LinkedHashMap<>();
+            LinkedHashMap<String, Emote> contains = new LinkedHashMap<>();
+            String[] scopes = channelId == null ? new String[] {null} : new String[] {channelId, null};
+            for (int provider = 0; provider < 3; provider++) {
                 if (!providerEnabled(provider)) continue;
-                for (String scope : channelId == null ? new String[] {null} : new String[] {channelId, null}) {
+                for (String scope : scopes) {
                     for (Emote emote : CATALOG.providerSnapshot(scope, provider).values()) {
-                        if (emote.name.toLowerCase(Locale.ROOT).startsWith(query)) {
-                            matches.putIfAbsent(emote.name, emote);
-                            if (matches.size() >= limit) break;
-                        }
+                        if (emote == null || emote.name == null) continue;
+                        String name = emote.name.toLowerCase(Locale.ROOT);
+                        String key = name;
+                        if (name.startsWith(query)) starts.putIfAbsent(key, emote);
+                        else if (name.contains(query)) contains.putIfAbsent(key, emote);
                     }
-                    if (matches.size() >= limit) break;
                 }
             }
-            return new ArrayList<>(matches.values());
+            ArrayList<Emote> result = new ArrayList<>(Math.min(limit, starts.size() + contains.size()));
+            result.addAll(starts.values().stream().limit(limit).collect(java.util.stream.Collectors.toList()));
+            for (Emote emote : contains.values()) {
+                if (result.size() >= limit) break;
+                result.add(emote);
+            }
+            return result;
         } catch (Throwable error) {
             Log.w("KizuEmoteSupport", "Autocomplete catalog lookup failed for prefix='" +
                     prefix + "' and channelId=" + channelId, error);
             return Collections.emptyList();
         }
     }
-
     static String autocompleteDiagnostics(String channelId, String prefix) {
         return CATALOG.diagnostics(channelId, prefix);
     }
@@ -238,6 +261,10 @@ public final class EmoteSupport {
     public static void bind(Object messageModel, TextView textView, String sourceChannelId) {
         if (textView == null) {
             return;
+        }
+        try {
+            EmoteAutocomplete.attachFromChatRow(textView);
+        } catch (Throwable ignored) {
         }
         try {
             bindInternal(messageModel, textView, sourceChannelId);
@@ -526,6 +553,7 @@ public final class EmoteSupport {
     // whole app, so keep it contained.
     private static void refreshImage(String url) {
         try {
+            EmoteAutocomplete.onImageLoaded(url);
             List<Map.Entry<TextView, BoundMessage>> snapshot = boundMessages();
             for (Map.Entry<TextView, BoundMessage> entry : snapshot) {
                 TextView textView = entry.getKey();
