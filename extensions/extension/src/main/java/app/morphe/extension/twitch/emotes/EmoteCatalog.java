@@ -1,6 +1,7 @@
 package app.morphe.extension.twitch.emotes;
 
 import android.content.Context;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,6 +18,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -27,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 final class EmoteCatalog {
+    private static final String TAG = "KizuEmoteCatalog";
     private static final long CACHE_TTL_MS = 6L * 60L * 60L * 1000L;
     private static final long RETRY_BACKOFF_MS = 5L * 60L * 1000L;
     private static final int MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
@@ -82,6 +85,58 @@ final class EmoteCatalog {
         }
         return state == null ? Collections.emptyMap() : state.emotes;
     }
+
+    String diagnostics(String channelId, String prefix) {
+        String normalizedPrefix = prefix == null ? "" : prefix.toLowerCase(Locale.ROOT);
+        StringBuilder summary = new StringBuilder();
+        ChannelState channel = channelId == null ? null : getChannel(channelId, false);
+        appendDiagnostic(summary, "channel.7tv",
+                channel == null ? null : channel.sevenTv, normalizedPrefix);
+        appendDiagnostic(summary, "channel.bttv",
+                channel == null ? null : channel.betterTtv, normalizedPrefix);
+        appendDiagnostic(summary, "channel.ffz",
+                channel == null ? null : channel.ffz, normalizedPrefix);
+        appendDiagnostic(summary, "global.7tv", globalSevenTv, normalizedPrefix);
+        appendDiagnostic(summary, "global.bttv", globalBetterTtv, normalizedPrefix);
+        appendDiagnostic(summary, "global.ffz", globalFfz, normalizedPrefix);
+        return summary.toString();
+    }
+
+    private static void appendDiagnostic(
+            StringBuilder summary, String label, ProviderState state, String prefix) {
+        if (summary.length() > 0) summary.append(' ');
+        summary.append(label).append('{');
+        if (state == null) {
+            summary.append("absent}");
+            return;
+        }
+
+        int prefixMatches = 0;
+        int sampleCount = 0;
+        boolean exactMatch = false;
+        StringBuilder sample = new StringBuilder();
+        long now = System.currentTimeMillis();
+        for (Emote emote : state.emotes.values()) {
+            if (emote == null || emote.name == null) continue;
+            String lowerName = emote.name.toLowerCase(Locale.ROOT);
+            if (!lowerName.startsWith(prefix)) continue;
+            prefixMatches++;
+            exactMatch |= lowerName.equals(prefix);
+            if (sampleCount < 3) {
+                if (sample.length() > 0) sample.append(", ");
+                sample.append(emote.name);
+                sampleCount++;
+            }
+        }
+        summary.append("count=").append(state.emotes.size())
+                .append(",loading=").append(state.loading.get())
+                .append(",loadedAgeMs=").append(state.loadedAt == 0L ? -1L : now - state.loadedAt)
+                .append(",retryInMs=").append(Math.max(0L, state.retryAfter - now))
+                .append(",prefixMatches=").append(prefixMatches)
+                .append(",exact=").append(exactMatch)
+                .append(",sample=[").append(sample).append("]}");
+    }
+
     Emote find(String channelId, String name) {
         if (channelId != null) {
             ChannelState channel = getChannel(channelId, false);
@@ -129,7 +184,8 @@ final class EmoteCatalog {
         }
         try {
             executor.execute(load);
-        } catch (RejectedExecutionException ignored) {
+        } catch (RejectedExecutionException error) {
+            Log.w(TAG, "Could not schedule emote catalog load", error);
             state.loading.set(false);
             state.retryAfter = now + RETRY_BACKOFF_MS;
         }
@@ -146,8 +202,11 @@ final class EmoteCatalog {
             Map<String, Emote> loaded = new LinkedHashMap<>();
             parseSevenTv(response.value, loaded);
             globalSevenTv.publish(loaded, response.fresh);
+            Log.i(TAG, "Loaded provider=7TV scope=global count=" + loaded.size() +
+                    " fresh=" + response.fresh);
             updated = true;
-        } catch (Exception ignored) {
+        } catch (Exception error) {
+            Log.w(TAG, "Failed provider=7TV scope=global", error);
             globalSevenTv.failed();
         } finally {
             globalSevenTv.loading.set(false);
@@ -168,8 +227,11 @@ final class EmoteCatalog {
             Map<String, Emote> loaded = new LinkedHashMap<>();
             parseBetterTtvArray(response.value, loaded);
             globalBetterTtv.publish(loaded, response.fresh);
+            Log.i(TAG, "Loaded provider=BTTV scope=global count=" + loaded.size() +
+                    " fresh=" + response.fresh);
             updated = true;
-        } catch (Exception ignored) {
+        } catch (Exception error) {
+            Log.w(TAG, "Failed provider=BTTV scope=global", error);
             globalBetterTtv.failed();
         } finally {
             globalBetterTtv.loading.set(false);
@@ -193,8 +255,11 @@ final class EmoteCatalog {
                 parseSevenTv(set, loaded);
             }
             channel.sevenTv.publish(loaded, response.fresh);
+            Log.i(TAG, "Loaded provider=7TV scope=channel channelId=" + channelId +
+                    " count=" + loaded.size() + " fresh=" + response.fresh);
             updated = true;
-        } catch (Exception ignored) {
+        } catch (Exception error) {
+            Log.w(TAG, "Failed provider=7TV scope=channel channelId=" + channelId, error);
             channel.sevenTv.failed();
         } finally {
             channel.sevenTv.loading.set(false);
@@ -216,8 +281,11 @@ final class EmoteCatalog {
             parseBetterTtvArray(response.value.optJSONArray("channelEmotes"), loaded);
             parseBetterTtvArray(response.value.optJSONArray("sharedEmotes"), loaded);
             channel.betterTtv.publish(loaded, response.fresh);
+            Log.i(TAG, "Loaded provider=BTTV scope=channel channelId=" + channelId +
+                    " count=" + loaded.size() + " fresh=" + response.fresh);
             updated = true;
-        } catch (Exception ignored) {
+        } catch (Exception error) {
+            Log.w(TAG, "Failed provider=BTTV scope=channel channelId=" + channelId, error);
             channel.betterTtv.failed();
         } finally {
             channel.betterTtv.loading.set(false);
@@ -238,8 +306,11 @@ final class EmoteCatalog {
             Map<String, Emote> loaded = new LinkedHashMap<>();
             parseFfzSets(response.value.optJSONObject("sets"), loaded);
             globalFfz.publish(loaded, response.fresh);
+            Log.i(TAG, "Loaded provider=FFZ scope=global count=" + loaded.size() +
+                    " fresh=" + response.fresh);
             updated = true;
-        } catch (Exception ignored) {
+        } catch (Exception error) {
+            Log.w(TAG, "Failed provider=FFZ scope=global", error);
             globalFfz.failed();
         } finally {
             globalFfz.loading.set(false);
@@ -260,8 +331,11 @@ final class EmoteCatalog {
             Map<String, Emote> loaded = new LinkedHashMap<>();
             parseFfzSets(response.value.optJSONObject("sets"), loaded);
             channel.ffz.publish(loaded, response.fresh);
+            Log.i(TAG, "Loaded provider=FFZ scope=channel channelId=" + channelId +
+                    " count=" + loaded.size() + " fresh=" + response.fresh);
             updated = true;
-        } catch (Exception ignored) {
+        } catch (Exception error) {
+            Log.w(TAG, "Failed provider=FFZ scope=channel channelId=" + channelId, error);
             channel.ffz.failed();
         } finally {
             channel.ffz.loading.set(false);
