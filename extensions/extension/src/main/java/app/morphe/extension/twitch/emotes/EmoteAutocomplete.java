@@ -163,6 +163,10 @@ public final class EmoteAutocomplete {
      * Retain Twitch's native trigger adjustment, but no longer patch its private suggestion
      * provider. The custom strip is populated independently from Kizu's third-party catalog.
      */
+    /**
+     * True when the Kizu strip should own this token. The bytecode hook uses this to suppress
+     * Twitch's competing vertical emote dropdown. Mentions and slash commands retain native UI.
+     */
     public static boolean shouldOpenAutocomplete(CharSequence text) {
         if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() || text == null) {
             return false;
@@ -170,10 +174,12 @@ public final class EmoteAutocomplete {
         String value = text.toString();
         int start = Math.max(value.lastIndexOf(' '), value.lastIndexOf('\n')) + 1;
         String token = value.substring(start);
-        return token.length() >= MIN_PREFIX_LENGTH && token.charAt(0) != '@';
+        if (token.isEmpty() || token.charAt(0) == '@' || token.charAt(0) == '/') return false;
+        if (token.charAt(0) == ':') token = token.substring(1);
+        return token.length() >= MIN_PREFIX_LENGTH;
     }
 
-    /** Return the active token start, skipping an optional colon for Twitch's native dropdown. */
+    /** Return the active token start, skipping an optional colon when Kizu owns the search. */
     public static int getBareAutocompleteStart(CharSequence text) {
         if (!shouldOpenAutocomplete(text)) return -1;
         String value = text.toString();
@@ -248,14 +254,14 @@ public final class EmoteAutocomplete {
                 while (start > 0 && !Character.isWhitespace(text.charAt(start - 1))) start--;
                 int end = cursor;
                 while (end < text.length() && !Character.isWhitespace(text.charAt(end))) end++;
-                String token = text.substring(start, end);
-
-                // ':' keeps using Twitch's native dropdown; the independent strip is for typing
-                // emote names directly, which is the PurpleTV behavior this patch is adopting.
-                if (token.startsWith(":") || token.startsWith("@")) {
+                String rawToken = text.substring(start, end);
+                // Keep Twitch's native UI for mentions and slash commands. For emote names,
+                // accept bare text ("Kappa") and colon-prefixed text (":Kappa") in one strip.
+                if (rawToken.startsWith("@") || rawToken.startsWith("/")) {
                     hidePopup();
                     return;
                 }
+                String token = rawToken.startsWith(":") ? rawToken.substring(1) : rawToken;
                 if (token.length() < MIN_PREFIX_LENGTH) {
                     hidePopup();
                     return;
