@@ -2,15 +2,20 @@
 
 ## Current known-good state
 
-- Stable: `1.9.2`
-- Current prerelease: `1.9.3-beta.23`
+- Stable: `2.0.0`
+- Current prerelease target: `2.0.1-beta.24` (diagnostic-only; runtime result pending)
 - Target Twitch: `31.3.1` / build `3103016`
 - Package: `tv.twitch.android.app`
 - Current Morphe Manager/Patcher baseline: `1.34.0 / 1.15.1`
 - Prerelease feed branch: `dev`
 - Stable feed branch: `main`
 
-## 1.9.3 player-controls history
+### 2.0.1-beta.24 — autocomplete diagnostics only
+- Based on beta.23 and intended to change logging only, not autocomplete behavior.
+- Logs query capture, Twitch classloader availability, channel ID, enabled provider toggles, catalog counts/loading/retry state, prefix matches, and suggestion construction outcomes.
+- Runtime logs are needed before choosing a functional fix; this build must not be promoted to stable.
+
+## Historical player-controls development
 
 The 1.9.3 series is prerelease-only until explicitly promoted.
 
