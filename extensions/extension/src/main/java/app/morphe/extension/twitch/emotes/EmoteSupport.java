@@ -134,6 +134,7 @@ public final class EmoteSupport {
     static void ensureAutocompleteCatalog(android.content.Context context) {
         try {
             if (context != null && Settings.EMOTES_THIRD_PARTY.get() && Settings.EMOTES_AUTOCOMPLETE.get()) {
+                NativeEmoteCatalog.ensureLoaded(context);
                 CATALOG.ensureLoaded(context, lastRoomId);
             }
         } catch (Throwable ignored) { }
@@ -146,6 +147,14 @@ public final class EmoteSupport {
             String query = prefix.toLowerCase(Locale.ROOT);
             LinkedHashMap<String, Emote> starts = new LinkedHashMap<>();
             LinkedHashMap<String, Emote> contains = new LinkedHashMap<>();
+            // Seed suggestions from the bundled Twitch-native catalog before the network catalogs.
+            // Native entries are inserted first, so same-name collisions resolve to Twitch's emote.
+            for (Emote emote : NativeEmoteCatalog.snapshot()) {
+                if (emote == null || emote.name == null) continue;
+                String name = emote.name.toLowerCase(Locale.ROOT);
+                if (name.startsWith(query)) starts.putIfAbsent(name, emote);
+                else if (name.contains(query)) contains.putIfAbsent(name, emote);
+            }
             String[] scopes = channelId == null ? new String[] {null} : new String[] {channelId, null};
             for (int provider = 0; provider < 3; provider++) {
                 if (!providerEnabled(provider)) continue;
