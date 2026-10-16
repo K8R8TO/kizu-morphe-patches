@@ -43,8 +43,8 @@ final class EmoteCatalog {
     private final ProviderState globalBetterTtv = new ProviderState();
     private final ProviderState globalFfz = new ProviderState();
     private final ThreadPoolExecutor executor = new ThreadPoolExecutor(
-            4,
-            4,
+            6,
+            6,
             0L,
             TimeUnit.MILLISECONDS,
             new LinkedBlockingQueue<>(64),
