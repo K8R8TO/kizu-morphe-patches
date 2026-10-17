@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-16T09:35:28",
-  "description": "### Kizu 2.0.1-beta.27\n\n- Adds a bundled native Twitch emote catalog to the horizontal strip and merges local account emotes.\n- Combines Twitch-native emotes with 7TV/BTTV/FFZ in one strip, suppressing the competing vertical emote popup while preserving mention and slash-command autocomplete.\n- Shows native global emotes immediately, merges account-recent native emotes from Twitch's local database, and refreshes after each third-party provider or image loads.\n- Reduces provider retry backoff from five minutes to 20 seconds, increases catalog workers from four to six, shortens HTTP timeouts, and logs request latency/status/response size. Test-only prerelease; stable v2.0.0 is unchanged.",
-  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.27/patches-2.0.1-beta.27.mpp",
+  "description": "### Kizu 2.0.1-beta.28\n\n- Starts composer discovery from Twitch Activity lifecycle before chat-message binding, with layout-aware retries as a fallback for late-inflated chat inputs.\n- Warms the bundled Twitch-native emote catalog and global provider catalogs early; local native prefix matches do not wait for network catalog requests.\n- Reuses the horizontal PopupWindow and updates strip contents/position in place instead of dismissing and recreating it for every keystroke or provider/image update.\n- Adds elapsed-time diagnostics for Activity/root discovery, listener attachment, first text change, native and merged prefix matching, and first strip display.\n- Experimental testing pre-release. Stable v2.0.0 remains unchanged.",
+  "download_url": "https://github.com/K8R8TO/kizu-morphe-patches/releases/download/v2.0.1-beta.28/patches-2.0.1-beta.28.mpp",
   "signature_download_url": "",
-  "version": "2.0.1-beta.27"
+  "version": "2.0.1-beta.28"
 }
