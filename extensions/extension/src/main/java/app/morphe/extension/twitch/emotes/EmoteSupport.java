@@ -106,7 +106,11 @@ public final class EmoteSupport {
                 lastRoomId = normalized;
                 lastRoomName = channelName;
                 android.content.Context context = Utils.getContext();
-                if (context != null && Settings.EMOTES_THIRD_PARTY.get()) CATALOG.ensureLoaded(context, normalized);
+                if (context != null) {
+                    EmoteAutocomplete.startActivityDiscovery(context);
+                    if (Settings.EMOTES_THIRD_PARTY.get()) CATALOG.ensureLoaded(context, normalized);
+                    if (Settings.EMOTES_AUTOCOMPLETE.get()) NativeEmoteCatalog.ensureLoaded(context);
+                }
                 EmoteAutocomplete.refreshAll();
             }
         } catch (Throwable ignored) {
@@ -138,6 +142,39 @@ public final class EmoteSupport {
                 CATALOG.ensureLoaded(context, lastRoomId);
             }
         } catch (Throwable ignored) { }
+    }
+
+    /** Fast local-only query used before provider/network catalog work. */
+    static List<Emote> autocompleteNative(String prefix, int limit) {
+        try {
+            if (!Settings.EMOTES_THIRD_PARTY.get() || !Settings.EMOTES_AUTOCOMPLETE.get() ||
+                    prefix == null || prefix.length() < 2 || limit <= 0) {
+                return Collections.emptyList();
+            }
+            String query = prefix.toLowerCase(Locale.ROOT);
+            LinkedHashMap<String, Emote> starts = new LinkedHashMap<>();
+            LinkedHashMap<String, Emote> contains = new LinkedHashMap<>();
+            for (Emote emote : NativeEmoteCatalog.snapshot()) {
+                if (emote == null || emote.name == null) continue;
+                String name = emote.name.toLowerCase(Locale.ROOT);
+                if (name.startsWith(query)) starts.putIfAbsent(name, emote);
+                else if (name.contains(query)) contains.putIfAbsent(name, emote);
+            }
+
+            ArrayList<Emote> result = new ArrayList<>(Math.min(limit, starts.size() + contains.size()));
+            for (Emote emote : starts.values()) {
+                if (result.size() >= limit) break;
+                result.add(emote);
+            }
+            for (Emote emote : contains.values()) {
+                if (result.size() >= limit) break;
+                result.add(emote);
+            }
+            return result;
+        } catch (Throwable error) {
+            Log.w("KizuEmoteSupport", "Native autocomplete lookup failed", error);
+            return Collections.emptyList();
+        }
     }
 
     static List<Emote> autocomplete(String channelId, String prefix, int limit) {
