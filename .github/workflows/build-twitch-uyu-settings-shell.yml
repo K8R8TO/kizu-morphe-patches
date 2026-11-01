@@ -63,7 +63,7 @@ jobs:
           sha256sum out/patches-list.json
 
       - name: Upload Kizu MPP
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kizu-release-files
           path: |
